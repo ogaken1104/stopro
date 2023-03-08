@@ -69,6 +69,25 @@ def plot_std_lattice(p, vname, ax, limit, grid):
     return mappable, cax
 
 
+def plot_loss(hdf_operator):
+    # plot for loss vs iteration
+    itr_step = 1
+    loss = hdf_operator.load_record('fun')
+    loss = loss[1:]  # Nelder-Meadによる最適化分を除外してプロット
+    loss_index = np.arange(len(loss))*itr_step
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111)
+    clr = COLOR['dark']
+    # ax.plot(range(5,100,5),np.array(loss),color=clr,label=lbl)
+    ax.plot(loss_index, loss, color=clr, marker='o')
+    ax.set_ylabel('loss', fontsize=22)
+    ax.set_xlabel('iteration', fontsize=22)
+    fig.tight_layout()
+    fig.savefig(f'../fig/loss.png')
+    plt.clf()
+    plt.close()
+
+
 def plot_each_sinusoidal(contents, params, lbls, vnames, infer_p):
     hdf_operator = HdfOperator()
 

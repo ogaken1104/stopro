@@ -2,6 +2,7 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from stopro.data_generator.data_generator import DataGenerator
 
@@ -111,3 +112,15 @@ class StokesDataGenerator(DataGenerator):
 
     def plot_result(self):
         pass
+
+    def plot_heatmap(self, fig, ax, X, Y, C, shading=None, norm=None, cmap=None, vmin=None, vmax=None):
+        if norm:
+            mappable = ax.pcolormesh(X, Y, C, shading=shading, norm=norm(
+                vmin=vmin, vmax=vmax), cmap=cmap)
+        else:
+            mappable = ax.pcolormesh(
+                X, Y, C, shading=shading, cmap=cmap, vmin=vmin, vmax=vmax)
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+        fig.colorbar(mappable, cax=cax)
+        ax.set_aspect('equal', adjustable='box')

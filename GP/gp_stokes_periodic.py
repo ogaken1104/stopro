@@ -184,25 +184,6 @@ class GPPeriodic(GPmodel):
             def Kdivdiv(r, rp): return d0d0(r, rp, θuxux)+d0d1(r, rp,
                                                                θuxuy)+d1d0_rev(r, rp, θuxuy)+d1d1(r, rp, θuyuy)
 
-            Kuxdifux = setup_kernel_include_dif_prime(Kuxux)
-            Kuxdifuy = setup_kernel_include_dif_prime(Kuxuy)
-            Kuydifux = setup_kernel_include_dif_prime(Kuxuy)
-            Kuydifuy = setup_kernel_include_dif_prime(Kuyuy)
-            Kdifuxdifux = setup_kernel_difdif(Kuxux)
-            Kdifuxdifuy = setup_kernel_difdif(Kuxuy)
-            Kdifuxfx = setup_kernel_include_difu(Kuxfx)
-            Kdifuxfy = setup_kernel_include_difu(Kuxfy)
-            Kdifuxdiv = setup_kernel_include_difu(Kuxdiv)
-            Kdifuydifuy = setup_kernel_difdif(Kuyuy)
-            Kdifuyfx = setup_kernel_include_difu(Kuyfx)
-            Kdifuyfy = setup_kernel_include_difu(Kuyfy)
-            Kdifuydiv = setup_kernel_include_difu(Kuydiv)
-
-            Kdifuxp = setup_kernel_include_difu(Kuxp)
-            Kdifuxdifp = setup_kernel_difdif(Kuxp)
-            Kdifuyp = setup_kernel_include_difu(Kuyp)
-            Kdifuydifp = setup_kernel_difdif(Kuyp)
-
             Kuxdifux_x = setup_kernel_include_dif_prime(Kuxux, self.lbox_x)
             Kuxdifuy_x = setup_kernel_include_dif_prime(Kuxuy, self.lbox_x)
             Kuydifux_x = setup_kernel_include_dif_prime(Kuxuy, self.lbox_x)
@@ -350,7 +331,7 @@ class GPPeriodic(GPmodel):
             Ks = [
                 [Kuxux, Kuxuy, Kuxdifux_x, Kuxdifux_y, Kuxdifuy_x, Kuxdifuy_y,
                     Kuxfx, Kuxfy, Kuxdiv, Kuxdifp_x, Kuxdifp_y],
-                [Kuyuy, Kuydifux_x, Kuydifux_y, Kuydifuy_x, Kuydifuy_y,
+                [Kuxuy, Kuyuy, Kuydifux_x, Kuydifux_y, Kuydifuy_x, Kuydifuy_y,
                     Kuyfx, Kuyfy, Kuydiv, Kuydifp_x, Kuydifp_y],
             ]
 
