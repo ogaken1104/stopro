@@ -113,9 +113,9 @@ class Drag(StokesDataGenerator):
         self.r = []
         self.f = []
         self.generate_u(u_num)
+        self.generate_difu(difu_num)
         self.generate_f(f_num, f_pad)
         self.generate_div(div_num, div_pad)
-        self.generate_difu(difu_num)
         self.generate_difp(difp_num)
         return self.r, self.f
 
@@ -187,17 +187,17 @@ class Drag(StokesDataGenerator):
         ms2 = 2
         fig, axs = plt.subplots(
             figsize=(3*3, 3*2), nrows=2, ncols=3, sharex=True, sharey=True)
-        clrs = [self.COLOR['dark_highlight'],self.COLOR['dark_highlight'],'darkblue', 'darkblue', 'darkblue', self.COLOR['superfine'], self.COLOR['superfine'], self.COLOR['superfine'], self.COLOR['superfine'], self.COLOR['superfine'], self.COLOR['superfine']]
+        clrs = [self.COLOR['dark_highlight'], self.COLOR['superfine'], self.COLOR['superfine'], self.COLOR['dark_highlight'],self.COLOR['superfine'], self.COLOR['superfine'], 'darkblue', 'darkblue', 'darkblue', self.COLOR['superfine'], self.COLOR['superfine']]
         lbls = ['ux', 'uy', 'p', 'fx', 'fy', 'div']
         axes = axs.reshape(-1)
         for i, ax in enumerate(axes):
             if i == 0 or i == 1:
                 ax.set_title(lbls[i])
                 ax.plot(self.r[i][:, 0], self.r[i][:, 1], ls='None', marker='o', color=clrs[i], ms=3)
-                index = i + 5
-                ax.plot(self.r[index][:, 0], self.r[index][:, 1], ls='None', marker='o', color=clrs[index], ms=ms)
-                index = i + 6 
-                ax.plot(self.r[index][:, 0], self.r[index][:, 1], ls='None', marker='o', color=clrs[index], ms=ms)
+                index = i*2 + 2
+                ax.plot(self.r[index][:, 0], self.r[index][:, 1], ls='None', marker='o', color=self.COLOR['superfine'], ms=ms)
+                index = i*2 + 3 
+                ax.plot(self.r[index][:, 0], self.r[index][:, 1], ls='None', marker='o', color=self.COLOR['superfine'], ms=ms)
             elif i == 2:
                 ax.set_title(lbls[i])
                 index = 9
@@ -205,7 +205,7 @@ class Drag(StokesDataGenerator):
                 index = 10
                 ax.plot(self.r[index][:, 0], self.r[index][:, 1], ls='None', marker='o', color=clrs[index], ms=ms)
             else:
-                index = i-1
+                index = i+3
                 ax.set_title(lbls[i])
                 ax.plot(self.r[index][:, 0], self.r[index][:, 1], ls='None', marker='o', color=clrs[index], ms=ms2)
             ax.set_aspect('equal', adjustable='box')
