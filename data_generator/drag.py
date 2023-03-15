@@ -84,8 +84,8 @@ class Drag(StokesDataGenerator):
         return r
 
     def make_r_mesh_circular(self, num_per_side, dr=0.1):
-        x_start = self.particle_center-dr
-        x_end = self.particle_center+dr
+        x_start = self.particle_center-(self.particle_radius+dr)
+        x_end = self.particle_center+(self.particle_radius+dr)
         y_start = x_start
         y_end = x_end
 

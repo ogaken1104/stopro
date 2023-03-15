@@ -33,7 +33,7 @@ class Cylinder(Drag):
 
     def generate_test(self, test_num=None):
         try:
-            with open('/work/jh210017a/q24012/template_data/0308_drag_test_484.pickle', 'rb') as file:
+            with open('/work/jh210017a/q24012/template_data/0314_cylinder_test_484.pickle', 'rb') as file:
                 save_dict = pickle.load(file)
         except:
             with open('/home/ogawa_kenta/template_data/0308_drag_test_676.pickle', 'rb') as file:
@@ -151,10 +151,11 @@ class Cylinder(Drag):
         num_per_side = int(np.sqrt(len(r_ux)))
         x_grid = np.linspace(0., np.max(r_ux[:, 0]), num_per_side)
         y_grid = np.linspace(0., np.max(r_ux[:, 1]), num_per_side)
+        cmaps = [cmo.cm.dense, cmo.cm.balance]
         for i, ax in enumerate(axs):
             f_mesh = self.f_test[i].reshape(num_per_side, num_per_side)
             self.plot_heatmap(fig, ax, x_grid, y_grid, f_mesh,
-                              shading="gouraud", cmap=cmo.cm.balance)
+                              shading="gouraud", cmap=cmaps[i])
         fig.tight_layout()
         if save:
             dir_path = f'{path}/fig'
