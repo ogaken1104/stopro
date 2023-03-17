@@ -16,10 +16,11 @@ class Cylinder(Drag):
     """data generator for flow past a cylinder
     """
 
-    def __init__(self, L=1., H=1., particle_radius=0.0390625, particle_center=0.5, particle_y_velocity=0., slide=0.03, random_arrange=False, delta_p=-1.):
+    def __init__(self, L=1., H=1., particle_radius=0.0390625, particle_center=0.5, particle_y_velocity=0., slide=0.03, random_arrange=False, delta_p=-1., use_force_as_constant_pressure=True):
         super().__init__(L, H, particle_radius, particle_center,
                          particle_y_velocity, slide, random_arrange)
         self.delta_p = delta_p
+        self.use_force_as_constant_pressure = use_force_as_constant_pressure
 
     def generate_training_data(self, u_num_surface=None, u_num_wall=None, f_num=None, f_pad=None, div_num=None, div_pad=None, difu_num=None, difp_num=None, num_inner=5, dr=0.2):
         self.r = []
@@ -42,15 +43,20 @@ class Cylinder(Drag):
         #     raise FileNotFoundError('File was not found')
         r, ux, uy = save_dict['r'], save_dict['ux'], save_dict['uy']
 
+        # r = self.make_r_mesh(0., self.L, 0., self.H, test_num, test_num)
+        # ux = np.ones(len(r))
+        # uy = np.ones(len(r))
+
         self.r_test += [r, r]
         self.f_test += [ux, uy]
         return self.r_test, self.f_test
 
-    def generate_u(self, u_num_surface, u_num_wall):
+    def generate_u(self, u_num_surface, u_num_wall, use_inner=False):
         # dirichlet b.c. on the surface of the cylinder
-        r_ux_surface = self.make_r_surface(u_num_surface)
+        # use_inner = True
+        r_ux_surface = self.make_r_surface(u_num_surface, use_inner)
         ux_surface = np.zeros(len(r_ux_surface))
-        r_uy_surface = self.make_r_surface(u_num_surface)
+        r_uy_surface = self.make_r_surface(u_num_surface, use_inner)
         uy_surface = np.full(len(r_uy_surface), self.particle_y_velocity)
         # non-slip dirichlet b.c. on the wall
         r_ux_wall = self.make_r_mesh(0., self.L, 0., self.H, u_num_wall, 2)
@@ -69,7 +75,10 @@ class Cylinder(Drag):
     def generate_f(self, f_num, f_pad, num_inner, dr):
         r_fx = self.make_r_mesh_mixed(num_inner, f_num, dr, f_pad)
         r_fy = self.make_r_mesh_mixed(num_inner, f_num, dr, f_pad)
-        force_x = - self.delta_p/self.L
+        if self.use_force_as_constant_pressure:
+            force_x = - self.delta_p/self.L
+        else:
+            force_x = 0.
         force_y = 0.
         fx = np.full(len(r_fx), force_x)
         fy = np.full(len(r_fy), force_y)
@@ -95,7 +104,10 @@ class Cylinder(Drag):
     def generate_difp(self, difp_num):
         r_difp = self.make_r_mesh(
             0, self.L, self.slide, self.H-self.slide, 1, difp_num)
-        difp = np.zeros(len(r_difp))
+        if self.use_force_as_constant_pressure:
+            difp = np.zeros(len(r_difp))
+        else:
+            difp = np.full(len(r_difp), self.delta_p)
         self.r += [r_difp]
         self.f += [difp]
 

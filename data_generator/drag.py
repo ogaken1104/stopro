@@ -43,7 +43,7 @@ class Drag(StokesDataGenerator):
         if not use_inner:
             r_mesh, θ_mesh = np.meshgrid(self.particle_radius, θ)
         else:
-            radius_range = np.linspace(0.03, self.particle_radius, 3)
+            radius_range = np.linspace(0.013, self.particle_radius, 3)
             r_mesh, θ_mesh = np.meshgrid(radius_range, θ)
         if not self.random_arrange:
             pass

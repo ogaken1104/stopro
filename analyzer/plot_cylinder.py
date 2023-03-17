@@ -6,6 +6,7 @@ import yaml
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 
 import stopro.analyzer.make_each_plot as plot_modules
+from stopro.data_generator.cylinder import Cylinder
 from stopro.data_generator.drag import Drag
 from stopro.data_handler.data_handle_module import HdfOperator
 
@@ -25,7 +26,7 @@ def plot_each_cylinder(contents, params, lbls, vnames):
     r_train, f_train = hdf_operator.load_train_data(
         lbls['train'], vnames['train'])
 
-    sample = Drag(**params['training_data']['condition'])
+    sample = Cylinder(**params['training_data']['condition'])
 
     r_ux = r_test[0]
     num_per_side = int(np.sqrt(len(r_ux)))
