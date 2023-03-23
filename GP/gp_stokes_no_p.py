@@ -8,10 +8,11 @@ from stopro.GP.kernels import define_kernel
 
 
 class GPUseNoP(GPmodel):
-    def __init__(self, lbox=None, use_difp=False, use_difu=False):
+    def __init__(self, lbox: np.ndarray = None, use_difp: bool = False, use_difu: bool = False, infer_governing_eqs: bool = False):
         self.lbox = lbox
         self.use_difp = use_difp
         self.use_difu = use_difu
+        self.infer_governing_eqs = infer_governing_eqs
 
     def setup_training_and_predicting_functions(self, kernel_type, kernel_form, approx_non_pd=False):
         def outermap(f):
@@ -123,6 +124,11 @@ class GPUseNoP(GPmodel):
         LL_rev = outermap(_LL_rev)
         d10_rev = outermap(_d10_rev)
         d11_rev = outermap(_d11_rev)
+
+        def _d00_rev(r, rp, θ): return grad(Kernel_rev, 0)(r, rp, θ)[0]
+        def _d01_rev(r, rp, θ): return grad(Kernel_rev, 0)(r, rp, θ)[1]
+        d00_rev = outermap(_d00_rev)
+        d01_rev = outermap(_d01_rev)
 
         def setup_kernel_include_dif_prime(K_func):
             def K_difp(r, rp): return K_func(
@@ -277,11 +283,80 @@ class GPUseNoP(GPmodel):
             Kpdifux = setup_kernel_include_dif_prime(Kpux)
             Kpdifuy = setup_kernel_include_dif_prime(Kpuy)
 
-            if self.use_difp:
+            if self.infer_governing_eqs:
+                def Kfxfx(r, rp): return d0d0(r, rp, θpp) - \
+                    d0L_rev(r, rp, θuxp)-Ld0(r, rp, θuxp)+LL(r, rp, θuxux)
+
+                def Kfxfy(r, rp): return d0d1(r, rp, θpp) - \
+                    d0L_rev(r, rp, θuyp)-Ld1(r, rp, θuxp)+LL(r, rp, θuxuy)
+
+                def Kfyfy(r, rp): return d1d1(r, rp, θpp) - \
+                    d1L_rev(r, rp, θuyp)-Ld1(r, rp, θuyp)+LL(r, rp, θuyuy)
+
+                def Kfxdiv(r, rp): return d0d0_rev(r, rp, θuxp) + \
+                    d0d1_rev(r, rp, θuyp)-Ld0(r, rp, θuxux)-Ld1(r, rp, θuxuy)
+
+                def Kfydiv(r, rp): return d1d0_rev(r, rp, θuxp)+d1d1_rev(r,
+                                                                         rp, θuyp)-Ld0_rev(r, rp, θuxuy)-Ld1(r, rp, θuyuy)
+
+                def Kdivdiv(r, rp): return d0d0(r, rp, θuxux)+d0d1(r, rp,
+                                                                   θuxuy)+d1d0_rev(r, rp, θuxuy)+d1d1(r, rp, θuyuy)
+
+                def Kfxp(r, rp): return d00(r, rp, θpp)-L0(r, rp, θuxp)
+                def Kfyp(r, rp): return d01(r, rp, θpp)-L0(r, rp, θuyp)
+                def Kdivp(r, rp): return d00(r, rp, θuxp) + d01(r, rp, θuyp)
+
+                Kdifuxfx = setup_kernel_include_difu(Kuxfx)
+                Kdifuxfy = setup_kernel_include_difu(Kuxfy)
+                Kdifuxdiv = setup_kernel_include_difu(Kuxdiv)
+                Kdifuydifuy = setup_kernel_difdif(Kuyuy)
+                Kdifuyfx = setup_kernel_include_difu(Kuyfx)
+                Kdifuyfy = setup_kernel_include_difu(Kuyfy)
+                Kdifuydiv = setup_kernel_include_difu(Kuydiv)
+                Kfxdifp = setup_kernel_include_dif_prime(Kfxp)
+                Kfydifp = setup_kernel_include_dif_prime(Kfyp)
+                Kdivdifp = setup_kernel_include_dif_prime(Kdivp)
+
+                def Kfxux(r, rp): return d00_rev(r, rp, θuxp)-L0(r, rp, θuxux)
+                def Kfxuy(r, rp): return d00_rev(r, rp, θuyp)-L0(r, rp, θuxuy)
+                def Kfyux(r, rp): return d01_rev(
+                    r, rp, θuxp)-L0_rev(r, rp, θuxuy)
+
+                def Kfyuy(r, rp): return d01_rev(r, rp, θuyp)-L0(r, rp, θuyuy)
+
+                Kfxdifux = setup_kernel_include_dif_prime(Kfxux)
+                Kfxdifuy = setup_kernel_include_dif_prime(Kfxuy)
+                Kfydifux = setup_kernel_include_dif_prime(Kfyux)
+                Kfydifuy = setup_kernel_include_dif_prime(Kfyuy)
+
+                def Kdivux(r, rp): return d00(
+                    r, rp, θuxux) + d01_rev(r, rp, θuxuy)
+
+                def Kdivuy(r, rp): return d00(r, rp, θuxuy) + d01(r, rp, θuyuy)
+                Kdivdifux = setup_kernel_include_dif_prime(Kdivux)
+                Kdivdifuy = setup_kernel_include_dif_prime(Kdivuy)
+
+                def Kdivfx(r, rp): return d0d0(r, rp, θuxp) + d1d0(r,
+                                                                   rp, θuyp) - d0L(r, rp, θuxux) - d1L_rev(r, rp, θuxuy)
+
+                def Kdivfy(r, rp): return d0d1(r, rp, θuxp) + d1d1(r,
+                                                                   rp, θuyp) - d0L(r, rp, θuxuy) - d1L(r, rp, θuyuy)
+
+                def Kfyfx(r, rp): return d1d0(r, rp, θpp) - \
+                    d1L_rev(r, rp, θuxp)-Ld0(r, rp, θuyp)+LL_rev(r, rp, θuxuy)
+
+                Ks = [
+                    [Kfxux, Kfxuy, Kfxdifux, Kfxdifuy,
+                        Kfxfx, Kfxfy, Kfxdiv, Kfxdifp],
+                    [Kfyux, Kfyuy, Kfydifux, Kfydifuy,
+                        Kfyfx, Kfyfy, Kfydiv, Kfydifp],
+                    [Kdivux, Kdivuy, Kdivdifux, Kdivdifuy,
+                        Kdivfx, Kdivfy, Kdivdiv, Kdivdifp],
+                ]
+            elif self.use_difp:
                 Kuxdifp = setup_kernel_include_dif_prime(Kuxp)
                 Kuydifp = setup_kernel_include_dif_prime(Kuyp)
                 Kpdifp = setup_kernel_include_dif_prime(Kpp)
-
                 Ks = [
                     [Kuxux, Kuxuy, Kuxdifux, Kuxdifuy,
                         Kuxfx, Kuxfy, Kuxdiv, Kuxdifp],
@@ -301,17 +376,40 @@ class GPUseNoP(GPmodel):
         def testK_all(θ, test_pts):
             θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
 
-            def Kuxux(r, rp): return K(r, rp, θuxux)
-            def Kuxuy(r, rp): return K(r, rp, θuxuy)
-            def Kuyuy(r, rp): return K(r, rp, θuyuy)
-            def Kuxp(r, rp): return K(r, rp, θuxp)
-            def Kuyp(r, rp): return K(r, rp, θuyp)
-            def Kpp(r, rp): return K(r, rp, θpp)
+            if self.infer_governing_eqs:
+                def Kfxfx(r, rp): return d0d0(r, rp, θpp) - \
+                    d0L_rev(r, rp, θuxp)-Ld0(r, rp, θuxp)+LL(r, rp, θuxux)
 
-            Ks = [
-                [Kuxux, Kuxuy],
-                [Kuyuy],
-            ]
+                def Kfxfy(r, rp): return d0d1(r, rp, θpp) - \
+                    d0L_rev(r, rp, θuyp)-Ld1(r, rp, θuxp)+LL(r, rp, θuxuy)
+
+                def Kfyfy(r, rp): return d1d1(r, rp, θpp) - \
+                    d1L_rev(r, rp, θuyp)-Ld1(r, rp, θuyp)+LL(r, rp, θuyuy)
+
+                def Kfxdiv(r, rp): return d0d0_rev(r, rp, θuxp) + \
+                    d0d1_rev(r, rp, θuyp)-Ld0(r, rp, θuxux)-Ld1(r, rp, θuxuy)
+
+                def Kfydiv(r, rp): return d1d0_rev(r, rp, θuxp)+d1d1_rev(r,
+                                                                         rp, θuyp)-Ld0_rev(r, rp, θuxuy)-Ld1(r, rp, θuyuy)
+
+                def Kdivdiv(r, rp): return d0d0(r, rp, θuxux)+d0d1(r, rp,
+                                                                   θuxuy)+d1d0_rev(r, rp, θuxuy)+d1d1(r, rp, θuyuy)
+                Ks = [
+                    [Kfxfx, Kfxfy, Kfxdiv],
+                    [Kfyfy, Kfydiv],
+                    [Kdivdiv]
+                ]
+            else:
+                def Kuxux(r, rp): return K(r, rp, θuxux)
+                def Kuxuy(r, rp): return K(r, rp, θuxuy)
+                def Kuyuy(r, rp): return K(r, rp, θuyuy)
+                def Kuxp(r, rp): return K(r, rp, θuxp)
+                def Kuyp(r, rp): return K(r, rp, θuyp)
+                def Kpp(r, rp): return K(r, rp, θpp)
+                Ks = [
+                    [Kuxux, Kuxuy],
+                    [Kuyuy],
+                ]
 
             return self.calculate_K_symmetric(test_pts, Ks)
 
