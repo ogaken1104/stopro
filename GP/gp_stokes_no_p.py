@@ -8,17 +8,15 @@ from stopro.GP.kernels import define_kernel
 
 
 class GPUseNoP(GPmodel):
-    def __init__(self, lbox: np.ndarray = None, use_difp: bool = False, use_difu: bool = False, infer_governing_eqs: bool = False):
+    def __init__(self, lbox: np.ndarray=None, use_difp: bool=False, use_difu: bool=False, infer_governing_eqs: bool=False):
         self.lbox = lbox
         self.use_difp = use_difp
         self.use_difu = use_difu
         self.infer_governing_eqs = infer_governing_eqs
 
-    def setup_training_and_predicting_functions(self, kernel_type, kernel_form, approx_non_pd=False):
+    def setup_training_and_predicting_functions(self, Kernel, approx_non_pd=False):
         def outermap(f):
             return vmap(vmap(f, in_axes=(None, 0, None)), in_axes=(0, None, None))
-
-        Kernel = define_kernel(kernel_type, kernel_form)
         # define kernel for use
         K = outermap(Kernel)
         def Kernel_rev(r1, r2, θ): return Kernel(r2, r1, θ)
@@ -155,7 +153,10 @@ class GPUseNoP(GPmodel):
             args: training points r_ux,r_uy,r_p,r_fx,r_fy,r_div
             """
 
-            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ[:18], 6)
+            std_noise_list = [None]*8
+            if len(θ) > 18:
+                std_noise_list[:len(θ)-18] = θ[18:len(θ)]
 
             def Kuxux(r, rp): return K(r, rp, θuxux)
             def Kuxuy(r, rp): return K(r, rp, θuxuy)
@@ -249,10 +250,11 @@ class GPUseNoP(GPmodel):
                     [Kdivdiv],
                 ]
 
-            return self.calculate_K_symmetric(train_pts, Ks)
+            print(std_noise_list)
+            return self.calculate_K_symmetric(train_pts, Ks, std_noise_list)
 
         def mixedK_all(θ, test_pts, train_pts):
-            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ[:18], 6)
 
             def Kuxux(r, rp): return K(r, rp, θuxux)
             def Kuxuy(r, rp): return K(r, rp, θuxuy)
@@ -374,7 +376,7 @@ class GPUseNoP(GPmodel):
             return self.calculate_K_asymmetric(train_pts, test_pts, Ks)
 
         def testK_all(θ, test_pts):
-            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ[:18], 6)
 
             if self.infer_governing_eqs:
                 def Kfxfx(r, rp): return d0d0(r, rp, θpp) - \

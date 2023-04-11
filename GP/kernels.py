@@ -57,6 +57,11 @@ def K_2d_SquareExp_Pro(r1, r2, θ):
     logγ, loglx, logly = θ
     return jnp.exp(logγ)*(K_SquareExp(r1[0], r2[0], loglx)*K_SquareExp(r1[1], r2[1], logly))
 
+# def K_2d_SquareExp_Pro_noise(r1, r2, θ):
+#     logγ, loglx, logly, lognoise = θ
+#     # noise is considered as first power
+#     return jnp.exp(logγ)*(K_SquareExp(r1[0], r2[0], loglx)*K_SquareExp(r1[1], r2[1], logly))+jnp.exp(lognoise)
+
 
 ######### テスト： ハイパーパラメータをそのままの値で与える場合 #################
 def K_SquareExp_noexp(x1, x2, l):
@@ -182,6 +187,7 @@ def K_2d_x_Periodic_y_SE_Pro(r1, r2, θ, lbox):
 def K_2d_x_Periodic_y_SE_Add(r1, r2, θ, lbox):
     logγ, loglx, logly = θ
     return jnp.exp(logγ)*(K_periodic(r1[0], r2[0], loglx, repitition=lbox) + K_SquareExp(r1[1], r2[1], logly))
+
 
 
 def define_kernel(kernel_type, kernel_form='product', input_dim=2, lbox=None, distance_func=False):

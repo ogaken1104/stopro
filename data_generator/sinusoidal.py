@@ -14,7 +14,7 @@ from stopro.data_handler.data_handle_module import HdfOperator
 
 
 class Sinusoidal(StokesDataGenerator):
-    def __init__(self, oscillation_amplitude=None, channel_length=None, channel_width=None, slide=0.03, random_arrange=False, use_gradp_training=False, infer_gradp=False, infer_ux_wall=False, use_only_bottom_u=False, use_only_inlet_gradp=False, cut_last_x=False, use_difp=False, use_difu=False, use_inlet_outlet_u=False, x_start=0., use_random_u=False, delta_p=-30, use_force_as_constant_pressure=False, use_1d_u=False, seed=43):
+    def __init__(self, oscillation_amplitude=None, channel_length=None, channel_width=None, slide=0.03, random_arrange=False, use_gradp_training=False, infer_gradp=False, infer_ux_wall=False, use_only_bottom_u=False, use_only_inlet_gradp=False, cut_last_x=False, use_difp=False, use_difu=False, use_inlet_outlet_u=False, x_start=0., use_random_u=False, delta_p=-30, use_force_as_constant_pressure=False, use_1d_u=False, seed=43, use_noisy_ux=False, noise_fraction=0.01):
         super().__init__(random_arrange)
         self.a = oscillation_amplitude
         self.L = channel_length
@@ -44,6 +44,8 @@ class Sinusoidal(StokesDataGenerator):
         self.use_force_as_constant_pressure = use_force_as_constant_pressure
         self.use_1d_u = use_1d_u
         self.seed = seed
+        self.use_noisy_ux = use_noisy_ux
+        self.noise_fraction = noise_fraction
 
     def calc_y_top(self, xs):
         return self.a*jnp.sin(2*jnp.pi*xs/self.L)+self.w/2
@@ -296,13 +298,13 @@ class Sinusoidal(StokesDataGenerator):
             #     ux = ux[::split]
             #     ux = uy[::split]
             ########## when using fem as reference solution #################
-            with open('/work/jh210017a/q24012/template_data/test_from_fenics/0303_random_training_50.pickle', 'rb') as file:
+            with open(f'{os.environ["HOME"]}/template_data/test_from_fenics/0303_random_training_50.pickle', 'rb') as file:
                 save_dict = pickle.load(file)
             r_train = save_dict['r']
             f_train = save_dict['u']
             r_ux_all, r_uy_all = r_train
             ux_all, uy_all = f_train
-            split = 2
+            split = 4
             # points for ux
             xs = r_ux_all[:, 0]
             xs_unique = np.sort(np.unique(xs))
@@ -325,9 +327,9 @@ class Sinusoidal(StokesDataGenerator):
             index2_y = 10
             ys_for_uy = np.array(
                 [ys_unique[index_y], ys_unique[index2_y], ys_unique[-index2_y], ys_unique[-index_y]])
-            ys_for_uy = np.array(
-                [ys_unique[index_y], ys_unique[15], ys_unique[-index_y]]
-            )
+            # ys_for_uy = np.array(
+            #     [ys_unique[index_y], ys_unique[15], ys_unique[-index_y]]
+            # )
 
             r_uy = np.empty((0, 2))
             uy = np.empty(0)
@@ -365,6 +367,24 @@ class Sinusoidal(StokesDataGenerator):
                 r_uy = r_u_wall
                 ux = u_wall
                 uy = u_wall
+        
+        if self.use_noisy_ux:
+            # データの読み込み
+            try:
+                with open('/work/jh210017a/q24012/template_data/test_from_fenics/0303_interpolation_50.pickle', 'rb') as file:
+                    save_dict = pickle.load(file)
+            except:
+                with open(f'{os.environ["HOME"]}/template_data/test_from_fenics/0303_interpolation_50.pickle', 'rb') as file:
+                    save_dict = pickle.load(file)
+            ux_max = np.max(save_dict['ux'])
+            ux_min = np.min(save_dict['ux'])
+            # print(ux_max, ux_min)
+            std_noise = (ux_max-ux_min)*self.noise_fraction # （最大値-最小値）*noise_fractionの大きさの標準偏差を用いてノイズを生成する
+            noise_ux = np.random.normal(0., std_noise, len(ux))
+            print(ux)
+            ux += noise_ux
+            print(ux)
+
         self.r += [r_ux, r_uy]
         self.f += [np.array(ux), np.array(uy)]
 
@@ -405,8 +425,12 @@ class Sinusoidal(StokesDataGenerator):
             return self.r_test, self.f_test
 
         if use_fem_result:
-            with open('/work/jh210017a/q24012/template_data/test_from_fenics/0303_interpolation_50.pickle', 'rb') as file:
-                save_dict = pickle.load(file)
+            try:
+                with open('/work/jh210017a/q24012/template_data/test_from_fenics/0303_interpolation_50.pickle', 'rb') as file:
+                    save_dict = pickle.load(file)
+            except:
+                with open(f'{os.environ["HOME"]}/template_data/test_from_fenics/0303_interpolation_50.pickle', 'rb') as file:
+                    save_dict = pickle.load(file)
             r = save_dict['r']
             self.r_test = [r, r]
             self.f_test = [save_dict['ux'], save_dict['uy']]

@@ -44,7 +44,7 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
         print(
             f'step{t:4} loss: {value:.4f} max_grad: {jnp.max(abs(grads)):.5f}, arg={jnp.argmax(abs(grads))}')
         print(f'norm_of_grads: {norm_of_grads:.5f}')
-        for thet in jnp.split(theta, 6):
+        for thet in jnp.split(theta[:18], 6):
             print(f'{jnp.round(thet, 4)}')
         print(f'theta_max: {jnp.max(theta):.5f}')
         print(f'theta_min: {jnp.min(theta):.5f}\n')
