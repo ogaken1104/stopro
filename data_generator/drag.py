@@ -93,7 +93,7 @@ class Drag(StokesDataGenerator):
                              y_end, num_per_side, num_per_side)
 
         index_out_of_dr = self.get_index_in_domain(
-            r, radius_min=self.particle_radius+dr)
+            r, radius_min=self.particle_radius+dr*1.1)
         # index_in_dr = (r[:, 0] != r[index_out_of_dr][:, 0]) | (r[:, 1] != r[index_out_of_dr][:, 1])
         index_in_dr = np.arange(0, len(r), 1, dtype=int)
         index_in_dr = np.delete(index_in_dr, index_out_of_dr)
@@ -169,8 +169,8 @@ class Drag(StokesDataGenerator):
     def generate_difu(self, difu_num):
         r_difux_x, r_difux_y, difux_x, difux_y = self.generate_dif(difu_num)
         r_difuy_x, r_difuy_y, difuy_x, difuy_y = self.generate_dif(difu_num)
-        self.r += [r_difux_x, r_difux_y, r_difux_x, r_difux_y]
-        self.f += [difuy_x, difuy_y, difuy_x, difuy_y]
+        self.r += [r_difux_x, r_difux_y, r_difuy_x, r_difuy_y]
+        self.f += [difux_x, difux_y, difuy_x, difuy_y]
 
     def generate_dif(self, dif_num):
         r_dif_x = self.make_r_mesh(
@@ -194,29 +194,32 @@ class Drag(StokesDataGenerator):
         ms2 = 2
         fig, axs = plt.subplots(
             figsize=(3*3, 3*2), nrows=2, ncols=3, sharex=True, sharey=True)
-        clrs = [self.COLOR['dark_highlight'], self.COLOR['superfine'], self.COLOR['superfine'], self.COLOR['dark_highlight'],
-                self.COLOR['superfine'], self.COLOR['superfine'], 'darkblue', 'darkblue', 'darkblue', self.COLOR['superfine'], self.COLOR['superfine']]
+        clrs = [self.COLOR['dark_highlight'], self.COLOR['dark_highlight'], self.COLOR['superfine'], self.COLOR['superfine'],
+                self.COLOR['superfine'], self.COLOR['superfine'], 'darkblue', 'darkblue', 'darkblue', self.COLOR['superfine'], self.COLOR['light_highlight']]
         lbls = ['ux', 'uy', 'p', 'fx', 'fy', 'div']
         axes = axs.reshape(-1)
         for i, ax in enumerate(axes):
             if i == 0 or i == 1:
                 ax.set_title(lbls[i])
                 ax.plot(self.r[i][:, 0], self.r[i][:, 1],
-                        ls='None', marker='o', color=clrs[i], ms=3)
+                        ls='None', marker='o', color=clrs[i], ms=3, label='b.c.')
                 index = i*2 + 2
                 ax.plot(self.r[index][:, 0], self.r[index][:, 1], ls='None',
-                        marker='o', color=self.COLOR['superfine'], ms=ms)
+                        marker='o', color=self.COLOR['superfine'], ms=ms, label='$x$ p.b.c.')
                 index = i*2 + 3
                 ax.plot(self.r[index][:, 0], self.r[index][:, 1], ls='None',
-                        marker='o', color=self.COLOR['superfine'], ms=ms)
+                        marker='o', color=self.COLOR['light_highlight'], ms=ms, label='$y$ p.b.c.')
+                # if i == 1:
+                #     ax.legend(loc="upper right",
+                #               bbox_to_anchor=(0., 1.02,), fontsize='small')
             elif i == 2:
                 ax.set_title(lbls[i])
                 index = 9
                 ax.plot(self.r[index][:, 0], self.r[index][:, 1],
-                        ls='None', marker='o', color=clrs[index], ms=ms)
+                        ls='None', marker='o', color=clrs[index], ms=ms, label='$x$ p.b.c.')
                 index = 10
                 ax.plot(self.r[index][:, 0], self.r[index][:, 1],
-                        ls='None', marker='o', color=clrs[index], ms=ms)
+                        ls='None', marker='o', color=clrs[index], ms=ms, label='$y$ p.b.c.')
             else:
                 index = i+3
                 ax.set_title(lbls[i])
@@ -224,6 +227,7 @@ class Drag(StokesDataGenerator):
                         ls='None', marker='o', color=clrs[index], ms=ms2)
             ax.set_aspect('equal', adjustable='box')
             ax.plot(r_surface[:, 0], r_surface[:, 1], color='k')
+        plt.tight_layout()
         if save:
             dir_path = f'{path}/fig'
             if not os.path.exists(dir_path):

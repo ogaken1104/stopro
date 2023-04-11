@@ -343,9 +343,6 @@ class GPPeriodic(GPmodel):
             def Kuxux(r, rp): return K(r, rp, θuxux)
             def Kuxuy(r, rp): return K(r, rp, θuxuy)
             def Kuyuy(r, rp): return K(r, rp, θuyuy)
-            def Kuxp(r, rp): return K(r, rp, θuxp)
-            def Kuyp(r, rp): return K(r, rp, θuyp)
-            def Kpp(r, rp): return K(r, rp, θpp)
 
             Ks = [
                 [Kuxux, Kuxuy],
@@ -414,5 +411,5 @@ class GPPeriodic(GPmodel):
                 μpost[i] += μ_test[i]
             return μpost, Σpost
 
-        return trainingFunction_all, predictingFunction_all
+        return jit(trainingFunction_all), jit(predictingFunction_all)
         # return jit(trainingFunction_all), jit(predictingFunction_all)
