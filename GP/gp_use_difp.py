@@ -394,5 +394,5 @@ class GPUseDifP(GPmodel):
                 μpost[i] += μ_test[i]
             return μpost, Σpost
 
-        return trainingFunction_all, predictingFunction_all
+        return jit(trainingFunction_all), jit(predictingFunction_all)
         # return jit(trainingFunction_all), jit(predictingFunction_all)

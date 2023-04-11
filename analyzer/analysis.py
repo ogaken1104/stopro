@@ -49,10 +49,12 @@ def analyze_result(f_test, f_infer, std, theta, loss, norm_of_grads_list, lbls_k
         rel_err = rel_error(f_te, f_inf)
         absolute_error.append(np.abs(f_te-f_inf))  # plot用については、領域外の値も削除せず保存する
         relative_error.append(rel_err)
-        max_abs_error.append(np.max(abs_err))
-        max_rel_error.append(np.max(rel_err))
-        mean_abs_error.append(np.mean(abs_err))
-        mean_rel_error.append(np.mean(rel_err))
+        if np.any(abs_err):
+            max_abs_error.append(np.max(abs_err))
+            mean_abs_error.append(np.mean(abs_err))
+        if np.any(rel_err):
+            max_rel_error.append(np.max(rel_err))
+            mean_rel_error.append(np.mean(rel_err))
 
     # textファイルに保存
     with open(analysis_text_path, 'w') as f:

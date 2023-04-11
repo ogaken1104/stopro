@@ -14,7 +14,7 @@ from stopro.data_handler.data_handle_module import HdfOperator
 
 
 class Sinusoidal(StokesDataGenerator):
-    def __init__(self, oscillation_amplitude=None, channel_length=None, channel_width=None, slide=0.03, random_arrange=False, use_gradp_training=False, infer_gradp=False, infer_ux_wall=False, use_only_bottom_u=False, use_only_inlet_gradp=False, cut_last_x=False, use_difp=False, use_difu=False, use_inlet_outlet_u=False, x_start=0., use_random_u=False, delta_p=-30, use_force_as_constant_pressure=False, use_1d_u=False):
+    def __init__(self, oscillation_amplitude=None, channel_length=None, channel_width=None, slide=0.03, random_arrange=False, use_gradp_training=False, infer_gradp=False, infer_ux_wall=False, use_only_bottom_u=False, use_only_inlet_gradp=False, cut_last_x=False, use_difp=False, use_difu=False, use_inlet_outlet_u=False, x_start=0., use_random_u=False, delta_p=-30, use_force_as_constant_pressure=False, use_1d_u=False, seed=43):
         super().__init__(random_arrange)
         self.a = oscillation_amplitude
         self.L = channel_length
@@ -43,6 +43,7 @@ class Sinusoidal(StokesDataGenerator):
         self.use_random_u = use_random_u
         self.use_force_as_constant_pressure = use_force_as_constant_pressure
         self.use_1d_u = use_1d_u
+        self.seed = seed
 
     def calc_y_top(self, xs):
         return self.a*jnp.sin(2*jnp.pi*xs/self.L)+self.w/2
@@ -272,7 +273,7 @@ class Sinusoidal(StokesDataGenerator):
             f_train = save_dict['u']
 
             index_for_train = np.arange(0, len(r_train[0]), 1)
-            rng = np.random.default_rng(seed=43)
+            rng = np.random.default_rng(seed=self.seed)
             rng.shuffle(index_for_train)
             index_for_train = index_for_train[:u_num]
             r_u = r_train[0][index_for_train]
@@ -367,7 +368,33 @@ class Sinusoidal(StokesDataGenerator):
         self.r += [r_ux, r_uy]
         self.f += [np.array(ux), np.array(uy)]
 
-    def generate_test(self, test_num=0, ux_test=False, infer_p=False, use_spm_result=False, use_fem_result=False):
+    def generate_test(self, test_num=0, ux_test=False, infer_p=False, use_spm_result=False, use_fem_result=False, infer_governing_eqs=False, infer_wall=False):
+        self.test_num = test_num
+        if infer_governing_eqs:
+            # lattice alignment version
+            maximum_height = self.w/2 + self.a
+            num_y = self.test_num
+            num_x = int(test_num * self.L / (maximum_height*2))
+            r = self.make_r_mesh(self.x_start, self.x_end, -maximum_height,
+                                 maximum_height, num_x, num_y)
+            force_test = np.zeros(len(r))
+            div_test = np.zeros(len(r))
+            self.r_test = [r, r, r]
+            self.f_test = [force_test, force_test, div_test]
+            return self.r_test, self.f_test
+
+        if infer_wall:
+            y_start = 0.2
+            y_end = 0.8
+            num_y = self.test_num
+            num_x = int(test_num * self.L / (y_end - y_start))
+            r = self.make_r_mesh(self.x_start, self.x_end,
+                                 y_start, y_end, num_x, num_y)
+            ux_test, uy_test = self.calc_u_v_4(r)
+            self.r_test = [r, r]
+            self.f_test = [ux_test, uy_test]
+            return self.r_test, self.f_test
+
         if use_spm_result:
             hdf_operator = HdfOperator(
                 '/work/jh210017a/q24012/template_data/test_sinusoidal_from_spm_adimentionalized')
@@ -393,7 +420,6 @@ class Sinusoidal(StokesDataGenerator):
             # self.f_test = [ux, uy]
             # return self.r_test, self.f_test
 
-        self.test_num = test_num
         if not ux_test:
             # num_x, num_y = self.num_to_num_x_y(test_num)
             # r = self.make_r_mesh_sinusoidal(
