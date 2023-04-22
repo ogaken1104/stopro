@@ -256,7 +256,7 @@ class Sinusoidal(StokesDataGenerator):
             # # hdf_operatorでhdfに保存した計算結果を読み込み
             # # 点をランダムで抽出して使う
             # hdf_operator = HdfOperator(
-            #     '/work/jh210017a/q24012/template_data/test_sinusoidal_from_spm_adimentionalized')
+            #     '/work/jh210017a/q24015/template_data/test_sinusoidal_from_spm_adimentionalized')
             # r_train, f_train = hdf_operator.load_train_data(
             #     ['r', 'f'], ['ux', 'uy'])
             # index_for_train = np.arange(0, len(r_train[0]), 1)
@@ -269,7 +269,7 @@ class Sinusoidal(StokesDataGenerator):
             # ux, uy = f_train[0][index_for_train], f_train[1][index_for_train]
 
             ########## when using fem as reference solution #################
-            with open('/work/jh210017a/q24012/template_data/test_from_fenics/0303_random_training_50.pickle', 'rb') as file:
+            with open('/work/jh210017a/q24015/template_data/test_from_fenics/0303_random_training_50.pickle', 'rb') as file:
                 save_dict = pickle.load(file)
             r_train = save_dict['r']
             f_train = save_dict['u']
@@ -284,7 +284,7 @@ class Sinusoidal(StokesDataGenerator):
             ux, uy = f_train[0][index_for_train], f_train[1][index_for_train]
 
         elif self.use_1d_u:
-            # with open('/work/jh210017a/q24012/template_data/test_from_fenics/0303_1d_training_50.pickle', 'rb') as file:
+            # with open('/work/jh210017a/q24015/template_data/test_from_fenics/0303_1d_training_50.pickle', 'rb') as file:
             #     save_dict = pickle.load(file)
             # r_train = save_dict['r']
             # f_train = save_dict['u']
@@ -371,7 +371,7 @@ class Sinusoidal(StokesDataGenerator):
         if self.use_noisy_ux:
             # データの読み込み
             try:
-                with open('/work/jh210017a/q24012/template_data/test_from_fenics/0303_interpolation_50.pickle', 'rb') as file:
+                with open('/work/jh210017a/q24015/template_data/test_from_fenics/0303_interpolation_50.pickle', 'rb') as file:
                     save_dict = pickle.load(file)
             except:
                 with open(f'{os.environ["HOME"]}/template_data/test_from_fenics/0303_interpolation_50.pickle', 'rb') as file:
@@ -417,7 +417,7 @@ class Sinusoidal(StokesDataGenerator):
 
         if use_spm_result:
             hdf_operator = HdfOperator(
-                '/work/jh210017a/q24012/template_data/test_sinusoidal_from_spm_adimentionalized')
+                '/work/jh210017a/q24015/template_data/test_sinusoidal_from_spm_adimentionalized')
             r_test, f_test = hdf_operator.load_test_data(
                 ['r', 'f'], ['ux', 'uy'])
             self.r_test = r_test
@@ -426,7 +426,7 @@ class Sinusoidal(StokesDataGenerator):
 
         if use_fem_result:
             try:
-                with open('/work/jh210017a/q24012/template_data/test_from_fenics/0303_interpolation_50.pickle', 'rb') as file:
+                with open('/work/jh210017a/q24015/template_data/test_from_fenics/0303_interpolation_50.pickle', 'rb') as file:
                     save_dict = pickle.load(file)
             except:
                 with open(f'{os.environ["HOME"]}/template_data/test_from_fenics/0303_interpolation_50.pickle', 'rb') as file:
@@ -436,7 +436,7 @@ class Sinusoidal(StokesDataGenerator):
             self.f_test = [save_dict['ux'], save_dict['uy']]
             return self.r_test, self.f_test
             # ##### checking values at x from FEniCS in 1D
-            # with open('/work/jh210017a/q24012/template_data/test_from_fenics/0306_1d_test_velocity.pickle', 'rb') as file:
+            # with open('/work/jh210017a/q24015/template_data/test_from_fenics/0306_1d_test_velocity.pickle', 'rb') as file:
             #     save_dict = pickle.load(file)
             # r_ux, r_uy = save_dict['r']
             # ux, uy = save_dict['u']

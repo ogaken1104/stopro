@@ -126,7 +126,7 @@ class Drag(StokesDataGenerator):
 
     def generate_test(self, test_num=None):
         try:
-            with open('/work/jh210017a/q24012/template_data/0308_drag_test_484.pickle', 'rb') as file:
+            with open('/work/jh210017a/q24015/template_data/0308_drag_test_484.pickle', 'rb') as file:
                 save_dict = pickle.load(file)
         except:
             with open('/home/ogawa_kenta/template_data/0308_drag_test_676.pickle', 'rb') as file:
