@@ -477,13 +477,34 @@ class Sinusoidal(StokesDataGenerator):
     ):
         self.test_num = test_num
         if infer_governing_eqs:
-            # lattice alignment version
+            ## lattice alignment version
             maximum_height = self.w / 2 + self.a
             num_y = self.test_num
             num_x = int(test_num * self.L / (maximum_height * 2))
             r = self.make_r_mesh(
                 self.x_start, self.x_end, -maximum_height, maximum_height, num_x, num_y
             )
+
+            # ## 1d alignment version
+            # x_widest = 0.59933333
+            # x_narrowest = 1.8193333333333335
+            # num_y = 100
+
+            # y_start_widest, y_start_narrowest = self.calc_y_bottom(
+            #     np.array([x_widest, x_narrowest])
+            # )
+            # y_end_widest, y_end_narrowest = self.calc_y_top(
+            #     np.array([x_widest, x_narrowest])
+            # )
+            # r_widest = self.make_r_mesh(
+            #     x_widest, x_widest, y_start_widest, y_end_widest, 1, num_y
+            # )
+            # r_narrowest = self.make_r_mesh(
+            #     x_narrowest, x_narrowest, y_start_narrowest, y_end_narrowest, 1, num_y
+            # )
+            # r = np.concatenate([r_widest, r_narrowest])
+
+            ## common part
             force_test = np.zeros(len(r))
             div_test = np.zeros(len(r))
             self.r_test = [r, r, r]
