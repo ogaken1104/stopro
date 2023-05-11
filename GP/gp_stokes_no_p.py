@@ -210,10 +210,10 @@ class GPUseNoP(GPmodel):
             """
 
             ##### we need fix to be compatible with RQ kernel #########
-            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ[:18], 6)
-            std_noise_list = [None] * 8
-            if len(θ) > 18:
-                std_noise_list[: len(θ) - 18] = θ[18 : len(θ)]
+            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+            # std_noise_list = [None] * 8
+            # if len(θ) > 18:
+            #     std_noise_list[: len(θ) - 18] = θ[18 : len(θ)]
 
             def Kuxux(r, rp):
                 return K(r, rp, θuxux)
@@ -375,11 +375,11 @@ class GPUseNoP(GPmodel):
                     [Kdivdiv],
                 ]
 
-            print(std_noise_list)
-            return self.calculate_K_symmetric(train_pts, Ks, std_noise_list)
+            # print(std_noise_list)
+            return self.calculate_K_symmetric(train_pts, Ks)
 
         def mixedK_all(θ, test_pts, train_pts):
-            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ[:18], 6)
+            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
 
             def Kuxux(r, rp):
                 return K(r, rp, θuxux)
@@ -593,7 +593,7 @@ class GPUseNoP(GPmodel):
             return self.calculate_K_asymmetric(train_pts, test_pts, Ks)
 
         def testK_all(θ, test_pts):
-            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ[:18], 6)
+            θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
 
             if self.infer_governing_eqs:
 

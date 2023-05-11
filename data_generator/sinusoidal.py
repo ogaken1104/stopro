@@ -485,24 +485,26 @@ class Sinusoidal(StokesDataGenerator):
                 self.x_start, self.x_end, -maximum_height, maximum_height, num_x, num_y
             )
 
-            # ## 1d alignment version
-            # x_widest = 0.59933333
-            # x_narrowest = 1.8193333333333335
-            # num_y = 100
+            ## 1d alignment version
+            x_widest = 0.59933333
+            x_narrowest = 1.8193333333333335
+            # x_widest = 0.625
+            # x_narrowest = 1.875
+            num_y = 100
 
-            # y_start_widest, y_start_narrowest = self.calc_y_bottom(
-            #     np.array([x_widest, x_narrowest])
-            # )
-            # y_end_widest, y_end_narrowest = self.calc_y_top(
-            #     np.array([x_widest, x_narrowest])
-            # )
-            # r_widest = self.make_r_mesh(
-            #     x_widest, x_widest, y_start_widest, y_end_widest, 1, num_y
-            # )
-            # r_narrowest = self.make_r_mesh(
-            #     x_narrowest, x_narrowest, y_start_narrowest, y_end_narrowest, 1, num_y
-            # )
-            # r = np.concatenate([r_widest, r_narrowest])
+            y_start_widest, y_start_narrowest = self.calc_y_bottom(
+                np.array([x_widest, x_narrowest])
+            )
+            y_end_widest, y_end_narrowest = self.calc_y_top(
+                np.array([x_widest, x_narrowest])
+            )
+            r_widest = self.make_r_mesh(
+                x_widest, x_widest, y_start_widest, y_end_widest, 1, num_y
+            )
+            r_narrowest = self.make_r_mesh(
+                x_narrowest, x_narrowest, y_start_narrowest, y_end_narrowest, 1, num_y
+            )
+            r = np.concatenate([r_widest, r_narrowest])
 
             ## common part
             force_test = np.zeros(len(r))
@@ -533,8 +535,14 @@ class Sinusoidal(StokesDataGenerator):
 
         if use_fem_result:
             try:
+                if test_num == 18:
+                    file_name = "0303_interpolation_50.pickle"
+                elif test_num == 36:
+                    file_name = "0508_interpolation_num_36.pickle"
+                elif test_num == 54:
+                    file_name = "0508_interpolation_num_54.pickle"
                 with open(
-                    "/work/jh210017a/q24015/template_data/test_from_fenics/0303_interpolation_50.pickle",
+                    f'{os.environ["HOME"]}/template_data/test_from_fenics/{file_name}',
                     "rb",
                 ) as file:
                     save_dict = pickle.load(file)
@@ -883,7 +891,11 @@ class Sinusoidal(StokesDataGenerator):
         return r_div
 
     def plot_test(
-        self, val_limits=[[0.0, 1.0], [0.0, 1.0], [0.0, 1]], save=False, path=None
+        self,
+        val_limits=[[0.0, 1.0], [0.0, 1.0], [0.0, 1]],
+        save=False,
+        path=None,
+        show=False,
     ):
         fig, axs = plt.subplots(figsize=(5 * 2, 3), ncols=2, sharex=True, sharey=True)
         clrs = [self.COLOR["mid"], self.COLOR["mid"], self.COLOR["superfine"]]
@@ -933,6 +945,8 @@ class Sinusoidal(StokesDataGenerator):
             ax.set_title(lbls[i])
             # ax.set_aspect('equal', adjustable='box')
         fig.tight_layout()
+        if show:
+            plt.show()
         if save:
             dir_path = f"{path}/fig"
             if not os.path.exists(dir_path):
@@ -941,7 +955,7 @@ class Sinusoidal(StokesDataGenerator):
         plt.clf()
         plt.close()
 
-    def plot_train(self, save=False, path=None):
+    def plot_train(self, save=False, path=None, show=False):
         COLORS = [
             "#DCBCBC",
             "#C79999",
@@ -1102,6 +1116,8 @@ class Sinusoidal(StokesDataGenerator):
             ax.set_title(lbls[i])
             ax.set_aspect("equal", adjustable="box")
         fig.tight_layout()
+        if show:
+            plt.show()
         if save:
             dir_path = f"{path}/fig"
             if not os.path.exists(dir_path):
