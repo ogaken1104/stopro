@@ -363,43 +363,69 @@ class Sinusoidal(StokesDataGenerator):
             r_ux_all, r_uy_all = r_train
             ux_all, uy_all = f_train
             split = 4
-            # points for ux
-            xs = r_ux_all[:, 0]
-            xs_unique = np.sort(np.unique(xs))
-            index_x = 15
-            index2_x = 21
-            xs_for_ux = np.array([xs_unique[index_x], xs_unique[-index_x]])
+            num_lines = 4
+            if num_lines == 4:
+                # points for ux
+                xs = r_ux_all[:, 0]
+                xs_unique = np.sort(np.unique(xs))
+                ## 4line case ##
+                index_x = 15
+                index2_x = 21
+                xs_for_ux = np.array([xs_unique[index_x], xs_unique[-index_x]])
 
-            r_ux = np.empty((0, 2))
-            ux = np.empty(0)
-            for x_for_ux in xs_for_ux:
-                index_ux = np.isin(xs, x_for_ux)
-                r_ux = np.append(r_ux, r_ux_all[index_ux][::split], axis=0)
-                ux = np.append(ux, ux_all[index_ux][::split])
+                r_ux = np.empty((0, 2))
+                ux = np.empty(0)
+                for x_for_ux in xs_for_ux:
+                    index_ux = np.isin(xs, x_for_ux)
+                    r_ux = np.append(r_ux, r_ux_all[index_ux][::split], axis=0)
+                    ux = np.append(ux, ux_all[index_ux][::split])
 
-            # points for uy
-            ys = r_uy_all[:, 1]
-            ys_unique = np.sort(np.unique(ys))
-            index_y = 2
-            index2_y = 10
-            ys_for_uy = np.array(
-                [
-                    ys_unique[index_y],
-                    ys_unique[index2_y],
-                    ys_unique[-index2_y],
-                    ys_unique[-index_y],
-                ]
-            )
-            # ys_for_uy = np.array(
-            #     [ys_unique[index_y], ys_unique[15], ys_unique[-index_y]]
-            # )
+                # points for uy
+                ys = r_uy_all[:, 1]
+                ys_unique = np.sort(np.unique(ys))
+                # 4line case ##
+                index_y = 2
+                index2_y = 10
+                ys_for_uy = np.array(
+                    [
+                        ys_unique[index_y],
+                        ys_unique[index2_y],
+                        ys_unique[-index2_y],
+                        ys_unique[-index_y],
+                    ]
+                )
 
-            r_uy = np.empty((0, 2))
-            uy = np.empty(0)
-            for y_for_uy in ys_for_uy:
-                index_uy = np.isin(ys, y_for_uy)
-                r_uy = np.append(r_uy, r_uy_all[index_uy][::split], axis=0)
-                uy = np.append(uy, uy_all[index_uy][::split])
+                r_uy = np.empty((0, 2))
+                uy = np.empty(0)
+                for y_for_uy in ys_for_uy:
+                    index_uy = np.isin(ys, y_for_uy)
+                    r_uy = np.append(r_uy, r_uy_all[index_uy][::split], axis=0)
+                    uy = np.append(uy, uy_all[index_uy][::split])
+            elif num_lines == 2:
+                split = 2
+                # points for ux
+                index_y = 16
+                ys = r_ux_all[:, 1]
+                ys_unique = np.sort(np.unique(ys))
+                ys_for_ux = np.array([ys_unique[index_y]])
+                r_ux = np.empty((0, 2))
+                ux = np.empty(0)
+                for y_for_ux in ys_for_ux:
+                    index_ux = np.isin(ys, y_for_ux)
+                    r_ux = np.append(r_ux, r_ux_all[index_ux][::split], axis=0)
+                    ux = np.append(ux, ux_all[index_ux][::split])
+
+                # points for uy
+                index_x = 30
+                xs = r_uy_all[:, 0]
+                xs_unique = np.sort(np.unique(xs))
+                xs_for_uy = np.array([xs_unique[index_x]])
+                r_uy = np.empty((0, 2))
+                uy = np.empty(0)
+                for x_for_uy in xs_for_uy:
+                    index_uy = np.isin(xs, x_for_uy)
+                    r_uy = np.append(r_uy, r_uy_all[index_uy][::split], axis=0)
+                    uy = np.append(uy, uy_all[index_uy][::split])
 
         else:
             # velocity at wall
