@@ -3,12 +3,10 @@ import jax.numpy as jnp
 import numpy as np
 from jax import grad, jit, vmap
 
-from stopro.GP.kernels import define_kernel
-
 
 class GPmodel:
-    def __init__(self):
-        pass
+    def __init__(self, approx_non_pd: bool = False):
+        self.approx_non_pd = approx_non_pd
 
     def cholesky_decompose_non_positive_definite(self, matrix, noise, **kwargs):
         """Compute cholesky decomposition with modifying non positive semedifinite matrix to positive semidifinite matrix"""
@@ -116,8 +114,72 @@ class GPmodel:
                 )
         return Σ
 
-    def trainingFunction_all(self):
-        return NotImplementedError
+    def trainingFunction_all(self, θ, *args):
+        """Returns minus log-likelihood given Kernel hyperparamters θ and training data args
+        args = velocity position, velocity average, velocity values,
+            force position, force average, force values,
+            jiggle parameter
+        """
+        # r,μ,f,ϵ=args
+        r, μ, f, ϵ = args
+        r_num = len(r)
+        for i in range(r_num):
+            if i == 0:
+                δy = jnp.array(f[i] - μ[i])
+            else:
+                δy = jnp.concatenate([δy, f[i] - μ[i]], 0)
+        Σ = self.trainingK_all(θ, r)
+        return self.logpGP(δy, Σ, ϵ, approx_non_pd=self.approx_non_pd)
 
-    def predictingFunction_all(self):
-        return NotImplementedError
+    def predictingFunction_all(self, θ, *args):
+        """Returns conditional posterior average and covariance matrix given Kernel hyperparamters θ  and test and training data
+        args = test velocity position, test velocity average,
+            training velocity position, training velocity average, training velocity values
+            training force position, training force average, training force values
+            jiggle parameter
+
+        Returns
+        -----------------
+        μpost=[μux,μuy,μp]
+        Σpost=[Σux,Σuy,Σp]
+        """
+        r_test, μ_test, r_train, μ, f_train, ϵ = args
+        nb = 0
+        for r in r_train:
+            nb += len(r)
+        Σbb = self.trainingK_all(θ, r_train)
+        Σab = self.mixedK_all(θ, r_test, r_train)
+        Σaa = self.testK_all(θ, r_test)
+        for i in range(len(r_train)):
+            if i == 0:
+                δfb = jnp.array(f_train[i] - μ[i])
+            else:
+                δfb = jnp.concatenate([δfb, f_train[i] - μ[i]])
+                # create single training array, with velocities and forces (second derivatives)
+        #         print(f'δy={δy}')
+        #         print(f'Σ={Σ}')
+        μposts, Σposts = self.postGP(
+            δfb, Σaa, Σab, Σbb, ϵ, approx_non_pd=self.approx_non_pd
+        )
+        # seperate μpost,Σpost to 3 section (ux,uy,p)
+        sec0 = 0
+        sec1 = 0
+        μpost = []
+        Σpost = []
+        for i in range(len(r_test)):
+            sec1 += len(r_test[i])
+            μpost.append(μposts[sec0:sec1])
+            Σpost.append(Σposts[sec0:sec1, sec0:sec1])
+            sec0 += len(r_test[i])
+            # 一応解決ちょっと疑問残る
+            μpost[i] += μ_test[i]
+        return μpost, Σpost
+
+    def trainingK_all(self):
+        raise NotImplementedError
+
+    def mixedK_all(self):
+        raise NotImplementedError
+
+    def testK_all(self):
+        raise NotImplementedError

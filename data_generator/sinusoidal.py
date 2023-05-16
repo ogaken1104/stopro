@@ -279,6 +279,17 @@ class Sinusoidal(StokesDataGenerator):
         f[is_outside_the_domain] = 0.0
         return f
 
+    def generate_wall_points(self, num_x):
+        # velocity at wall
+        x_wall_half = np.linspace(self.x_start, self.x_end, num_x)
+        x_wall = np.concatenate([x_wall_half, x_wall_half])
+        y_wall = np.concatenate(
+            [self.calc_y_top(x_wall_half), self.calc_y_bottom(x_wall_half)]
+        )
+        r_wall = np.stack([x_wall, y_wall], axis=1)
+        f_wall = np.zeros(len(r_wall))
+        return r_wall, f_wall
+
     # generation of training data
     def generate_u(self, u_num, u_b=0.0):
         """
@@ -363,7 +374,7 @@ class Sinusoidal(StokesDataGenerator):
             r_ux_all, r_uy_all = r_train
             ux_all, uy_all = f_train
             split = 4
-            num_lines = 4
+            num_lines = 2
             if num_lines == 4:
                 # points for ux
                 xs = r_ux_all[:, 0]
@@ -427,15 +438,34 @@ class Sinusoidal(StokesDataGenerator):
                     r_uy = np.append(r_uy, r_uy_all[index_uy][::split], axis=0)
                     uy = np.append(uy, uy_all[index_uy][::split])
 
+                ## if using same 2 lines for ux and uy
+                index_x = np.isin(xs, xs_for_uy[0])
+                index_y = np.isin(ys, ys_for_ux[0])
+                index = index_x | index_y
+                # print(index, len(r_ux_all), len(index))
+                r_ux = r_ux_all[index][::split]
+                r_uy = r_uy_all[index][::split]
+                ux = ux_all[index][::split]
+                uy = uy_all[index][::split]
+
+                # if also using wall points
+                r_u_wall, u_wall = self.generate_wall_points(u_num_x)
+                r_ux = np.concatenate([r_ux, r_u_wall])
+                r_uy = np.concatenate([r_uy, r_u_wall])
+                print(r_ux, r_ux.shape)
+                ux = np.concatenate([ux, u_wall])
+                uy = np.concatenate([uy, u_wall])
+
         else:
             # velocity at wall
-            x_u_wall_half = np.linspace(self.x_start, self.x_end, u_num_x)
-            x_u_wall = np.concatenate([x_u_wall_half, x_u_wall_half])
-            y_u_wall = np.concatenate(
-                [self.calc_y_top(x_u_wall_half), self.calc_y_bottom(x_u_wall_half)]
-            )
-            r_u_wall = np.stack([x_u_wall, y_u_wall], axis=1)
-            u_wall = np.zeros(len(r_u_wall))
+            # x_u_wall_half = np.linspace(self.x_start, self.x_end, u_num_x)
+            # x_u_wall = np.concatenate([x_u_wall_half, x_u_wall_half])
+            # y_u_wall = np.concatenate(
+            #     [self.calc_y_top(x_u_wall_half), self.calc_y_bottom(x_u_wall_half)]
+            # )
+            # r_u_wall = np.stack([x_u_wall, y_u_wall], axis=1)
+            # u_wall = np.zeros(len(r_u_wall))
+            r_u_wall, u_wall = self.generate_wall_points(u_num_x)
 
             # velocity at inlet and outlet
             if self.use_inlet_outlet_u:
@@ -511,26 +541,26 @@ class Sinusoidal(StokesDataGenerator):
                 self.x_start, self.x_end, -maximum_height, maximum_height, num_x, num_y
             )
 
-            ## 1d alignment version
-            x_widest = 0.59933333
-            x_narrowest = 1.8193333333333335
-            # x_widest = 0.625
-            # x_narrowest = 1.875
-            num_y = 100
+            # ## 1d alignment version
+            # x_widest = 0.59933333
+            # x_narrowest = 1.8193333333333335
+            # # x_widest = 0.625
+            # # x_narrowest = 1.875
+            # num_y = 100
 
-            y_start_widest, y_start_narrowest = self.calc_y_bottom(
-                np.array([x_widest, x_narrowest])
-            )
-            y_end_widest, y_end_narrowest = self.calc_y_top(
-                np.array([x_widest, x_narrowest])
-            )
-            r_widest = self.make_r_mesh(
-                x_widest, x_widest, y_start_widest, y_end_widest, 1, num_y
-            )
-            r_narrowest = self.make_r_mesh(
-                x_narrowest, x_narrowest, y_start_narrowest, y_end_narrowest, 1, num_y
-            )
-            r = np.concatenate([r_widest, r_narrowest])
+            # y_start_widest, y_start_narrowest = self.calc_y_bottom(
+            #     np.array([x_widest, x_narrowest])
+            # )
+            # y_end_widest, y_end_narrowest = self.calc_y_top(
+            #     np.array([x_widest, x_narrowest])
+            # )
+            # r_widest = self.make_r_mesh(
+            #     x_widest, x_widest, y_start_widest, y_end_widest, 1, num_y
+            # )
+            # r_narrowest = self.make_r_mesh(
+            #     x_narrowest, x_narrowest, y_start_narrowest, y_end_narrowest, 1, num_y
+            # )
+            # r = np.concatenate([r_widest, r_narrowest])
 
             ## common part
             force_test = np.zeros(len(r))
@@ -726,6 +756,9 @@ class Sinusoidal(StokesDataGenerator):
         x_end = self.x_end - f_pad
         y_start = -self.w / 2 + f_pad
         y_end = self.w / 2 - f_pad
+        # ## use broad along x
+        # x_start -= 0.2
+        # x_end += 0.2
 
         ratio = 0.3
         f_num_x, f_num_y = self.num_to_num_x_y(
