@@ -10,10 +10,34 @@ from stopro.data_generator.data_generator import DataGenerator
 class StokesDataGenerator(DataGenerator):
     def __init__(self, random_arrange=True):
         self.random_arrange = random_arrange
-        COLORS = ["#DCBCBC", "#C79999", "#B97C7C", "#A25050", "#8F2727",
-                  "#7C0000",     "#DCBCBC20", "#8F272720", "#00000060"]
-        self.COLOR = {i[0]: i[1] for i in zip(['light', 'light_highlight', 'mid',  'mid_highlight',
-                                               'dark', 'dark_highlight', 'light_trans', 'dark_trans', 'superfine'], COLORS)}
+        COLORS = [
+            "#DCBCBC",
+            "#C79999",
+            "#B97C7C",
+            "#A25050",
+            "#8F2727",
+            "#7C0000",
+            "#DCBCBC20",
+            "#8F272720",
+            "#00000060",
+        ]
+        self.COLOR = {
+            i[0]: i[1]
+            for i in zip(
+                [
+                    "light",
+                    "light_highlight",
+                    "mid",
+                    "mid_highlight",
+                    "dark",
+                    "dark_highlight",
+                    "light_trans",
+                    "dark_trans",
+                    "superfine",
+                ],
+                COLORS,
+            )
+        }
         pass
 
     def make_r_mesh(self, x_start, x_end, y_start, y_end, numx, numy):
@@ -23,24 +47,37 @@ class StokesDataGenerator(DataGenerator):
         r = np.stack([xx.reshape(-1), yy.reshape(-1)], axis=1)
         return r
 
-    def make_r_mesh_random(self, x_start, x_end, y_start, y_end, numx, numy, slide, shuf='all'):
+    def make_r_mesh_random(
+        self, x_start, x_end, y_start, y_end, numx, numy, slide, shuf="all"
+    ):
         r = self.make_r_mesh(x_start, x_end, y_start, y_end, numx, numy)
-        if shuf == 'all':
-            r = r+(np.random.random_sample(r.shape)-0.5)*slide
-        elif shuf == 'x':
-            r[:, 0] = r[:, 0] + \
-                (np.random.random_sample(r[:, 0].shape)-0.5)*slide
-        elif shuf == 'y':
-            r[:, 1] = r[:, 1] + \
-                (np.random.random_sample(r[:, 1].shape)-0.5)*slide
+        if shuf == "all":
+            r = r + (np.random.random_sample(r.shape) - 0.5) * slide
+        elif shuf == "x":
+            r[:, 0] = r[:, 0] + (np.random.random_sample(r[:, 0].shape) - 0.5) * slide
+        elif shuf == "y":
+            r[:, 1] = r[:, 1] + (np.random.random_sample(r[:, 1].shape) - 0.5) * slide
         return self.delete_out(r)
 
     def delete_out(self, r):
-        a = r[np.all(r <= 1., axis=1)]
-        b = a[np.all(0. <= a, axis=1)]
+        a = r[np.all(r <= 1.0, axis=1)]
+        b = a[np.all(0.0 <= a, axis=1)]
         return b
 
-    def generate_training_data(self, u_num=None, p_num=None, f_num=None, f_pad=None, div_num=None, div_pad=None, difp_num=None, difp_pad=None, difp_loc=None, difu_num=None):
+    def generate_training_data(
+        self,
+        u_num=None,
+        p_num=None,
+        f_num=None,
+        f_pad=None,
+        div_num=None,
+        div_pad=None,
+        difp_num=None,
+        difp_pad=None,
+        difp_loc=None,
+        difu_num=None,
+        diff_num=None,
+    ):
         """
         Args
         u_num  :number of u training poitns at each boundary
@@ -60,6 +97,8 @@ class StokesDataGenerator(DataGenerator):
         elif p_num:
             self.generate_p(p_num)
         self.generate_f(f_num, f_pad)
+        if self.use_diff:
+            self.generate_diff(diff_num)
         self.generate_div(div_num, div_pad)
         if self.use_difp:
             self.generate_difp(difp_num, difp_pad, difp_loc)
@@ -83,27 +122,34 @@ class StokesDataGenerator(DataGenerator):
     #     plt.show()
 
     def plot_train(self, save=False, path=None):
-
         fig, axs = plt.subplots(
-            figsize=(3*3, 3*2), nrows=2, ncols=3, sharex=True, sharey=True)
-        clrs = [self.COLOR['mid'], self.COLOR['mid'], self.COLOR['superfine'],
-                'green', 'green', self.COLOR['light']]
-        lbls = ['ux', 'uy', 'p', 'fx', 'fy', 'div']
+            figsize=(3 * 3, 3 * 2), nrows=2, ncols=3, sharex=True, sharey=True
+        )
+        clrs = [
+            self.COLOR["mid"],
+            self.COLOR["mid"],
+            self.COLOR["superfine"],
+            "green",
+            "green",
+            self.COLOR["light"],
+        ]
+        lbls = ["ux", "uy", "p", "fx", "fy", "div"]
         x = [0, 0, self.L, self.L, 0]
-        y = [0., 1., 1., 0., 0.]
+        y = [0.0, 1.0, 1.0, 0.0, 0.0]
         axes = axs.reshape(-1)
         for i, ax in enumerate(axes):
-            ax.plot(x, y, color='black')
-            ax.plot(self.r[i][:, 0], self.r[i][:, 1],
-                    ls='None', marker='o', color=clrs[i])
+            ax.plot(x, y, color="black")
+            ax.plot(
+                self.r[i][:, 0], self.r[i][:, 1], ls="None", marker="o", color=clrs[i]
+            )
             ax.set_title(lbls[i])
-            ax.set_aspect('equal', adjustable='box')
+            ax.set_aspect("equal", adjustable="box")
         fig.tight_layout()
         if save:
-            dir_path = f'{path}/fig'
+            dir_path = f"{path}/fig"
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
-            fig.savefig(f'{dir_path}/train.png')
+            fig.savefig(f"{dir_path}/train.png")
         plt.clf()
         plt.close()
 
@@ -113,14 +159,18 @@ class StokesDataGenerator(DataGenerator):
     def plot_result(self):
         pass
 
-    def plot_heatmap(self, fig, ax, X, Y, C, shading=None, norm=None, cmap=None, vmin=None, vmax=None):
+    def plot_heatmap(
+        self, fig, ax, X, Y, C, shading=None, norm=None, cmap=None, vmin=None, vmax=None
+    ):
         if norm:
-            mappable = ax.pcolormesh(X, Y, C, shading=shading, norm=norm(
-                vmin=vmin, vmax=vmax), cmap=cmap)
+            mappable = ax.pcolormesh(
+                X, Y, C, shading=shading, norm=norm(vmin=vmin, vmax=vmax), cmap=cmap
+            )
         else:
             mappable = ax.pcolormesh(
-                X, Y, C, shading=shading, cmap=cmap, vmin=vmin, vmax=vmax)
+                X, Y, C, shading=shading, cmap=cmap, vmin=vmin, vmax=vmax
+            )
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
         fig.colorbar(mappable, cax=cax)
-        ax.set_aspect('equal', adjustable='box')
+        ax.set_aspect("equal", adjustable="box")

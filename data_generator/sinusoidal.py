@@ -39,6 +39,7 @@ class Sinusoidal(StokesDataGenerator):
         use_noisy_ux=False,
         noise_fraction=0.01,
         use_broad_governing_eqs=False,
+        use_diff=False,
     ):
         super().__init__(random_arrange)
         self.a = oscillation_amplitude
@@ -72,6 +73,7 @@ class Sinusoidal(StokesDataGenerator):
         self.use_noisy_ux = use_noisy_ux
         self.noise_fraction = noise_fraction
         self.use_broad_governing_eqs = use_broad_governing_eqs
+        self.use_diff = use_diff
 
     def calc_y_top(self, xs):
         return self.a * jnp.sin(2 * jnp.pi * xs / self.L) + self.w / 2
@@ -906,21 +908,31 @@ class Sinusoidal(StokesDataGenerator):
         difp_pad=None,
         difp_loc="all_inside",
         difu_num=None,
+        diff_num=None,
+        without_f=False,
     ):
-        self.r, self.f = super().generate_training_data(
-            u_num,
-            p_num,
-            f_num,
-            f_pad,
-            div_num,
-            div_pad,
-            difp_num,
-            difp_pad,
-            difp_loc,
-            difu_num,
-        )
-        # if self.use_difp:
-        #     self.generate_difp(difp_num, difp_pad, difp_loc)
+        self.without_f = without_f
+        if without_f:
+            self.generate_u(u_num)
+            self.generate_difu(difu_num)
+            self.generate_div(div_num, div_pad)
+            self.generate_difp(difp_num, difp_pad, difp_loc)
+        else:
+            self.r, self.f = super().generate_training_data(
+                u_num,
+                p_num,
+                f_num,
+                f_pad,
+                div_num,
+                div_pad,
+                difp_num,
+                difp_pad,
+                difp_loc,
+                difu_num,
+                diff_num,
+            )
+            # if self.use_difp:
+            #     self.generate_difp(difp_num, difp_pad, difp_loc)
         return self.r, self.f
 
     def make_r_mesh_sinusoidal(
@@ -1095,6 +1107,58 @@ class Sinusoidal(StokesDataGenerator):
             fig.delaxes(axs.reshape(-1)[-1])
             fig.delaxes(axs.reshape(-1)[-2])
             axes = axs.reshape(-1)[:-2]
+        elif self.use_difu and self.use_diff:
+            fig, axs = plt.subplots(
+                figsize=(3 * 3, 3 * 4), nrows=4, ncols=3, sharex=True, sharey=True
+            )
+            clrs = [
+                self.COLOR["mid"],
+                self.COLOR["mid"],
+                self.COLOR["dark_highlight"],
+                self.COLOR["dark_highlight"],
+                "green",
+                "green",
+                self.COLOR["dark_highlight"],
+                self.COLOR["dark_highlight"],
+                self.COLOR["light"],
+                self.COLOR["dark"],
+            ]
+            lbls = [
+                "$u_x$",
+                "$u_y$",
+                "$u_x^{out}-u_x^{in}$",
+                "$u_y^{out}-u_y^{in}$",
+                "$f_x$",
+                "$f_y$",
+                "$f_x^{out}-f_x^{in}$",
+                "$f_y^{out}-f_y^{in}$",
+                r"$\nabla \cdot u$",
+                "$p^{out}-p^{in}$",
+            ]
+            fig.delaxes(axs.reshape(-1)[-1])
+            fig.delaxes(axs.reshape(-1)[-2])
+            axes = axs.reshape(-1)[:-2]
+        elif self.use_difu and self.without_f:
+            fig, axs = plt.subplots(
+                figsize=(3 * 3, 3 * 2), nrows=2, ncols=3, sharex=True, sharey=True
+            )
+            clrs = [
+                self.COLOR["mid"],
+                self.COLOR["mid"],
+                self.COLOR["dark_highlight"],
+                self.COLOR["dark_highlight"],
+                self.COLOR["light"],
+                self.COLOR["dark"],
+            ]
+            lbls = [
+                "$u_x$",
+                "$u_y$",
+                "$u_x^{out}-u_x^{in}$",
+                "$u_y^{out}-u_y^{in}$",
+                r"$\nabla \cdot u$",
+                "$p^{out}-p^{in}$",
+            ]
+            axes = axs.reshape(-1)
         elif self.use_difu:
             fig, axs = plt.subplots(
                 figsize=(3 * 3, 3 * 3), nrows=3, ncols=3, sharex=True, sharey=True
@@ -1230,3 +1294,18 @@ class Sinusoidal(StokesDataGenerator):
         # for difux and difuy, use same points
         self.r += [r_difu, r_difu]
         self.f += [difu, difu]
+
+    def generate_diff(self, diff_num):
+        r_diff = self.make_r_mesh_sinusoidal(
+            self.x_start,
+            self.x_end,
+            -self.w / 2 + self.slide,
+            self.w / 2 - self.slide,
+            1,
+            diff_num,
+            self.slide,
+        )
+        diff = np.full(len(r_diff), 0.0)
+        # for difux and difuy, use same points
+        self.r += [r_diff, r_diff]
+        self.f += [diff, diff]
