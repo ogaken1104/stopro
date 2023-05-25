@@ -2,11 +2,30 @@ calc:
   epsilon: 1.0e-06
 model:
   init_kernel_hyperparameter:
-    alpha: 0.8
-    eta1: 0.0
-    eta2: 0.0
-    l1: 0.0
-    l2: 0.0
+    pp:
+    - 0.0
+    - 0.
+    - 0.
+    uxp:
+    - 0.
+    - 0.
+    - 0.
+    uxux:
+    - 0.
+    - 0.
+    - 0.
+    uxuy:
+    - 0.
+    - 0.
+    - 0.
+    uyp:
+    - 0.
+    - 0.
+    - 0.
+    uyuy:
+    - 0.
+    - 0.
+    - 0.
   kernel_form: additive
   kernel_type: se
   distance_func: False

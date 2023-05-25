@@ -26,7 +26,7 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
         # def Kernel_rev(r1, r2, θ):
         #     return Kernel(r2, r1, θ)
         self.Kernel_rev = lambda r1, r2, θ: Kernel(r2, r1, θ)
-        self.K_rev = self.Kernel_rev  # really needed?
+        self.K_rev = self.outermap(self.Kernel_rev)  # really needed?
         self.setup_differential_oprators()
 
     def trainingK_all(self, θ, train_pts):

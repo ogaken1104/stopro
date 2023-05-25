@@ -85,6 +85,38 @@ class GPmodel2DStokes(GPmodel2D):
 
         return Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv
 
+    def setup_nondifop_difop_kernel(self, θ):
+        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+
+        def Kuxfx(r, rp):
+            return self.d10(r, rp, θuxp) - self.L1(r, rp, θuxux)
+
+        def Kuyfx(r, rp):
+            return self.d10(r, rp, θuyp) - self.L1_rev(r, rp, θuxuy)
+
+        def Kpfx(r, rp):
+            return self.d10(r, rp, θpp) - self.L1_rev(r, rp, θuxp)
+
+        def Kuxfy(r, rp):
+            return self.d11(r, rp, θuxp) - self.L1(r, rp, θuxuy)
+
+        def Kuyfy(r, rp):
+            return self.d11(r, rp, θuyp) - self.L1(r, rp, θuyuy)
+
+        def Kpfy(r, rp):
+            return self.d11(r, rp, θpp) - self.L1_rev(r, rp, θuyp)
+
+        def Kuxdiv(r, rp):
+            return self.d10(r, rp, θuxux) + self.d11(r, rp, θuxuy)
+
+        def Kuydiv(r, rp):
+            return self.d10_rev(r, rp, θuxuy) + self.d11(r, rp, θuyuy)
+
+        def Kpdiv(r, rp):
+            return self.d10_rev(r, rp, θuxp) + self.d11_rev(r, rp, θuyp)
+
+        return {Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv}
+
     def setup_latter_difop_kerenl(self, θ):
         θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
         Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)

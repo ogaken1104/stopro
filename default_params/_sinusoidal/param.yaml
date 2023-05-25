@@ -29,7 +29,7 @@ lbls:
   - r
   - f
 model:
-  add_noise: true
+  add_noise: False
   init_kernel_hyperparameter:
     pp:
     - 0.8
