@@ -115,7 +115,7 @@ class GPmodel2DStokes(GPmodel2D):
         def Kpdiv(r, rp):
             return self.d10_rev(r, rp, θuxp) + self.d11_rev(r, rp, θuyp)
 
-        return {Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv}
+        return Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv
 
     def setup_latter_difop_kerenl(self, θ):
         θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
