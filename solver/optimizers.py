@@ -9,11 +9,7 @@ NO_GRAD_OPTIMIZE_LIST = [
     "Powell",
 ]
 
-FIRST_GRAD_OPTIMIZE_LIST = [
-    "TNC",
-    "BFGS",
-    "L-BFGS-B",  # ?
-]
+FIRST_GRAD_OPTIMIZE_LIST = ["TNC", "BFGS", "L-BFGS-B", "CG"]  # ?
 SECOND_GRAD_OPTIMIZE_LIST = [
     "CG",
 ]
