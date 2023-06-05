@@ -39,6 +39,7 @@ class Sinusoidal(StokesDataGenerator):
         use_noisy_ux=False,
         noise_fraction=0.01,
         use_broad_governing_eqs=False,
+        use_diff=False,
     ):
         super().__init__(random_arrange)
         self.a = oscillation_amplitude
@@ -72,6 +73,7 @@ class Sinusoidal(StokesDataGenerator):
         self.use_noisy_ux = use_noisy_ux
         self.noise_fraction = noise_fraction
         self.use_broad_governing_eqs = use_broad_governing_eqs
+        self.use_diff = use_diff
 
     def calc_y_top(self, xs):
         return self.a * jnp.sin(2 * jnp.pi * xs / self.L) + self.w / 2
@@ -279,6 +281,17 @@ class Sinusoidal(StokesDataGenerator):
         f[is_outside_the_domain] = 0.0
         return f
 
+    def generate_wall_points(self, num_x):
+        # velocity at wall
+        x_wall_half = np.linspace(self.x_start, self.x_end, num_x)
+        x_wall = np.concatenate([x_wall_half, x_wall_half])
+        y_wall = np.concatenate(
+            [self.calc_y_top(x_wall_half), self.calc_y_bottom(x_wall_half)]
+        )
+        r_wall = np.stack([x_wall, y_wall], axis=1)
+        f_wall = np.zeros(len(r_wall))
+        return r_wall, f_wall
+
     # generation of training data
     def generate_u(self, u_num, u_b=0.0):
         """
@@ -363,53 +376,98 @@ class Sinusoidal(StokesDataGenerator):
             r_ux_all, r_uy_all = r_train
             ux_all, uy_all = f_train
             split = 4
-            # points for ux
-            xs = r_ux_all[:, 0]
-            xs_unique = np.sort(np.unique(xs))
-            index_x = 15
-            index2_x = 21
-            xs_for_ux = np.array([xs_unique[index_x], xs_unique[-index_x]])
+            num_lines = 2
+            if num_lines == 4:
+                # points for ux
+                xs = r_ux_all[:, 0]
+                xs_unique = np.sort(np.unique(xs))
+                ## 4line case ##
+                index_x = 15
+                index2_x = 21
+                xs_for_ux = np.array([xs_unique[index_x], xs_unique[-index_x]])
 
-            r_ux = np.empty((0, 2))
-            ux = np.empty(0)
-            for x_for_ux in xs_for_ux:
-                index_ux = np.isin(xs, x_for_ux)
-                r_ux = np.append(r_ux, r_ux_all[index_ux][::split], axis=0)
-                ux = np.append(ux, ux_all[index_ux][::split])
+                r_ux = np.empty((0, 2))
+                ux = np.empty(0)
+                for x_for_ux in xs_for_ux:
+                    index_ux = np.isin(xs, x_for_ux)
+                    r_ux = np.append(r_ux, r_ux_all[index_ux][::split], axis=0)
+                    ux = np.append(ux, ux_all[index_ux][::split])
 
-            # points for uy
-            ys = r_uy_all[:, 1]
-            ys_unique = np.sort(np.unique(ys))
-            index_y = 2
-            index2_y = 10
-            ys_for_uy = np.array(
-                [
-                    ys_unique[index_y],
-                    ys_unique[index2_y],
-                    ys_unique[-index2_y],
-                    ys_unique[-index_y],
-                ]
-            )
-            # ys_for_uy = np.array(
-            #     [ys_unique[index_y], ys_unique[15], ys_unique[-index_y]]
-            # )
+                # points for uy
+                ys = r_uy_all[:, 1]
+                ys_unique = np.sort(np.unique(ys))
+                # 4line case ##
+                index_y = 2
+                index2_y = 10
+                ys_for_uy = np.array(
+                    [
+                        ys_unique[index_y],
+                        ys_unique[index2_y],
+                        ys_unique[-index2_y],
+                        ys_unique[-index_y],
+                    ]
+                )
 
-            r_uy = np.empty((0, 2))
-            uy = np.empty(0)
-            for y_for_uy in ys_for_uy:
-                index_uy = np.isin(ys, y_for_uy)
-                r_uy = np.append(r_uy, r_uy_all[index_uy][::split], axis=0)
-                uy = np.append(uy, uy_all[index_uy][::split])
+                r_uy = np.empty((0, 2))
+                uy = np.empty(0)
+                for y_for_uy in ys_for_uy:
+                    index_uy = np.isin(ys, y_for_uy)
+                    r_uy = np.append(r_uy, r_uy_all[index_uy][::split], axis=0)
+                    uy = np.append(uy, uy_all[index_uy][::split])
+            elif num_lines == 2:
+                split = 2
+                # points for ux
+                index_y = 16
+                ys = r_ux_all[:, 1]
+                ys_unique = np.sort(np.unique(ys))
+                ys_for_ux = np.array([ys_unique[index_y]])
+                r_ux = np.empty((0, 2))
+                ux = np.empty(0)
+                for y_for_ux in ys_for_ux:
+                    index_ux = np.isin(ys, y_for_ux)
+                    r_ux = np.append(r_ux, r_ux_all[index_ux][::split], axis=0)
+                    ux = np.append(ux, ux_all[index_ux][::split])
+
+                # points for uy
+                index_x = 30
+                xs = r_uy_all[:, 0]
+                xs_unique = np.sort(np.unique(xs))
+                xs_for_uy = np.array([xs_unique[index_x]])
+                r_uy = np.empty((0, 2))
+                uy = np.empty(0)
+                for x_for_uy in xs_for_uy:
+                    index_uy = np.isin(xs, x_for_uy)
+                    r_uy = np.append(r_uy, r_uy_all[index_uy][::split], axis=0)
+                    uy = np.append(uy, uy_all[index_uy][::split])
+
+                ## if using same 2 lines for ux and uy
+                index_x = np.isin(xs, xs_for_uy[0])
+                index_y = np.isin(ys, ys_for_ux[0])
+                index = index_x | index_y
+                # print(index, len(r_ux_all), len(index))
+                r_ux = r_ux_all[index][::split]
+                r_uy = r_uy_all[index][::split]
+                ux = ux_all[index][::split]
+                uy = uy_all[index][::split]
+
+                # if also using wall points
+                r_u_wall, u_wall = self.generate_wall_points(u_num_x)
+                r_ux = np.concatenate([r_ux, r_u_wall])
+                r_uy = np.concatenate([r_uy, r_u_wall])
+                print(r_ux, r_ux.shape)
+                ux = np.concatenate([ux, u_wall])
+                uy = np.concatenate([uy, u_wall])
 
         else:
             # velocity at wall
-            x_u_wall_half = np.linspace(self.x_start, self.x_end, u_num_x)
-            x_u_wall = np.concatenate([x_u_wall_half, x_u_wall_half])
-            y_u_wall = np.concatenate(
-                [self.calc_y_top(x_u_wall_half), self.calc_y_bottom(x_u_wall_half)]
-            )
-            r_u_wall = np.stack([x_u_wall, y_u_wall], axis=1)
-            u_wall = np.zeros(len(r_u_wall))
+            # x_u_wall_half = np.linspace(self.x_start, self.x_end, u_num_x)
+            # x_u_wall = np.concatenate([x_u_wall_half, x_u_wall_half])
+            # y_u_wall = np.concatenate(
+            #     [self.calc_y_top(x_u_wall_half), self.calc_y_bottom(x_u_wall_half)]
+            # )
+            # r_u_wall = np.stack([x_u_wall, y_u_wall], axis=1)
+            # u_wall = np.zeros(len(r_u_wall))
+            r_u_wall, u_wall = self.generate_wall_points(u_num_x)
 
             # velocity at inlet and outlet
             if self.use_inlet_outlet_u:
@@ -488,6 +546,8 @@ class Sinusoidal(StokesDataGenerator):
             # ## 1d alignment version
             # x_widest = 0.59933333
             # x_narrowest = 1.8193333333333335
+            # # x_widest = 0.625
+            # # x_narrowest = 1.875
             # num_y = 100
 
             # y_start_widest, y_start_narrowest = self.calc_y_bottom(
@@ -533,8 +593,14 @@ class Sinusoidal(StokesDataGenerator):
 
         if use_fem_result:
             try:
+                if test_num == 18:
+                    file_name = "0303_interpolation_50.pickle"
+                elif test_num == 36:
+                    file_name = "0508_interpolation_num_36.pickle"
+                elif test_num == 54:
+                    file_name = "0508_interpolation_num_54.pickle"
                 with open(
-                    "/work/jh210017a/q24015/template_data/test_from_fenics/0303_interpolation_50.pickle",
+                    f'{os.environ["HOME"]}/template_data/test_from_fenics/{file_name}',
                     "rb",
                 ) as file:
                     save_dict = pickle.load(file)
@@ -692,6 +758,9 @@ class Sinusoidal(StokesDataGenerator):
         x_end = self.x_end - f_pad
         y_start = -self.w / 2 + f_pad
         y_end = self.w / 2 - f_pad
+        # ## use broad along x
+        # x_start -= 0.2
+        # x_end += 0.2
 
         ratio = 0.3
         f_num_x, f_num_y = self.num_to_num_x_y(
@@ -839,21 +908,31 @@ class Sinusoidal(StokesDataGenerator):
         difp_pad=None,
         difp_loc="all_inside",
         difu_num=None,
+        diff_num=None,
+        without_f=False,
     ):
-        self.r, self.f = super().generate_training_data(
-            u_num,
-            p_num,
-            f_num,
-            f_pad,
-            div_num,
-            div_pad,
-            difp_num,
-            difp_pad,
-            difp_loc,
-            difu_num,
-        )
-        # if self.use_difp:
-        #     self.generate_difp(difp_num, difp_pad, difp_loc)
+        self.without_f = without_f
+        if without_f:
+            self.generate_u(u_num)
+            self.generate_difu(difu_num)
+            self.generate_div(div_num, div_pad)
+            self.generate_difp(difp_num, difp_pad, difp_loc)
+        else:
+            self.r, self.f = super().generate_training_data(
+                u_num,
+                p_num,
+                f_num,
+                f_pad,
+                div_num,
+                div_pad,
+                difp_num,
+                difp_pad,
+                difp_loc,
+                difu_num,
+                diff_num,
+            )
+            # if self.use_difp:
+            #     self.generate_difp(difp_num, difp_pad, difp_loc)
         return self.r, self.f
 
     def make_r_mesh_sinusoidal(
@@ -883,7 +962,11 @@ class Sinusoidal(StokesDataGenerator):
         return r_div
 
     def plot_test(
-        self, val_limits=[[0.0, 1.0], [0.0, 1.0], [0.0, 1]], save=False, path=None
+        self,
+        val_limits=[[0.0, 1.0], [0.0, 1.0], [0.0, 1]],
+        save=False,
+        path=None,
+        show=False,
     ):
         fig, axs = plt.subplots(figsize=(5 * 2, 3), ncols=2, sharex=True, sharey=True)
         clrs = [self.COLOR["mid"], self.COLOR["mid"], self.COLOR["superfine"]]
@@ -933,6 +1016,8 @@ class Sinusoidal(StokesDataGenerator):
             ax.set_title(lbls[i])
             # ax.set_aspect('equal', adjustable='box')
         fig.tight_layout()
+        if show:
+            plt.show()
         if save:
             dir_path = f"{path}/fig"
             if not os.path.exists(dir_path):
@@ -941,7 +1026,7 @@ class Sinusoidal(StokesDataGenerator):
         plt.clf()
         plt.close()
 
-    def plot_train(self, save=False, path=None):
+    def plot_train(self, save=False, path=None, show=False):
         COLORS = [
             "#DCBCBC",
             "#C79999",
@@ -1022,6 +1107,58 @@ class Sinusoidal(StokesDataGenerator):
             fig.delaxes(axs.reshape(-1)[-1])
             fig.delaxes(axs.reshape(-1)[-2])
             axes = axs.reshape(-1)[:-2]
+        elif self.use_difu and self.use_diff:
+            fig, axs = plt.subplots(
+                figsize=(3 * 3, 3 * 4), nrows=4, ncols=3, sharex=True, sharey=True
+            )
+            clrs = [
+                self.COLOR["mid"],
+                self.COLOR["mid"],
+                self.COLOR["dark_highlight"],
+                self.COLOR["dark_highlight"],
+                "green",
+                "green",
+                self.COLOR["dark_highlight"],
+                self.COLOR["dark_highlight"],
+                self.COLOR["light"],
+                self.COLOR["dark"],
+            ]
+            lbls = [
+                "$u_x$",
+                "$u_y$",
+                "$u_x^{out}-u_x^{in}$",
+                "$u_y^{out}-u_y^{in}$",
+                "$f_x$",
+                "$f_y$",
+                "$f_x^{out}-f_x^{in}$",
+                "$f_y^{out}-f_y^{in}$",
+                r"$\nabla \cdot u$",
+                "$p^{out}-p^{in}$",
+            ]
+            fig.delaxes(axs.reshape(-1)[-1])
+            fig.delaxes(axs.reshape(-1)[-2])
+            axes = axs.reshape(-1)[:-2]
+        elif self.use_difu and self.without_f:
+            fig, axs = plt.subplots(
+                figsize=(3 * 3, 3 * 2), nrows=2, ncols=3, sharex=True, sharey=True
+            )
+            clrs = [
+                self.COLOR["mid"],
+                self.COLOR["mid"],
+                self.COLOR["dark_highlight"],
+                self.COLOR["dark_highlight"],
+                self.COLOR["light"],
+                self.COLOR["dark"],
+            ]
+            lbls = [
+                "$u_x$",
+                "$u_y$",
+                "$u_x^{out}-u_x^{in}$",
+                "$u_y^{out}-u_y^{in}$",
+                r"$\nabla \cdot u$",
+                "$p^{out}-p^{in}$",
+            ]
+            axes = axs.reshape(-1)
         elif self.use_difu:
             fig, axs = plt.subplots(
                 figsize=(3 * 3, 3 * 3), nrows=3, ncols=3, sharex=True, sharey=True
@@ -1102,6 +1239,8 @@ class Sinusoidal(StokesDataGenerator):
             ax.set_title(lbls[i])
             ax.set_aspect("equal", adjustable="box")
         fig.tight_layout()
+        if show:
+            plt.show()
         if save:
             dir_path = f"{path}/fig"
             if not os.path.exists(dir_path):
@@ -1155,3 +1294,18 @@ class Sinusoidal(StokesDataGenerator):
         # for difux and difuy, use same points
         self.r += [r_difu, r_difu]
         self.f += [difu, difu]
+
+    def generate_diff(self, diff_num):
+        r_diff = self.make_r_mesh_sinusoidal(
+            self.x_start,
+            self.x_end,
+            -self.w / 2 + self.slide,
+            self.w / 2 - self.slide,
+            1,
+            diff_num,
+            self.slide,
+        )
+        diff = np.full(len(r_diff), 0.0)
+        # for difux and difuy, use same points
+        self.r += [r_diff, r_diff]
+        self.f += [diff, diff]
