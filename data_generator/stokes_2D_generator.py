@@ -38,7 +38,7 @@ class StokesDataGenerator(DataGenerator):
                 COLORS,
             )
         }
-        pass
+        self.use_diff = False
 
     def make_r_mesh(self, x_start, x_end, y_start, y_end, numx, numy):
         x = np.linspace(x_start, x_end, numx)

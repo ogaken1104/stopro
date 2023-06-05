@@ -1,0 +1,108 @@
+calc:
+  epsilon: 1.0e-06
+model:
+  init_kernel_hyperparameter:
+    alpha: 0.8
+    eta1: 0.5
+    eta2: 0.0
+    l1: -1.5
+    l2: -1.5
+  kernel_form: product
+  kernel_type: se
+optimization:
+  eps: 1.0e-05
+  lr: 1.0e-05
+  maxiter_GD: 40
+  maxiter_first: 10
+  method_GD: adam
+  method_first: Nelder-Mead
+  loss_ridge_regression: False
+  ridge_alpha: 1
+plot:
+  error_limit:
+  - 0.0001
+  - 0.01
+  std_limit:
+  - 0.0001
+  - 0.01
+  val_limits:
+  - - 0.0
+    - 0.022
+  - - -0.0068
+    - 0.0068
+  - - 0.0
+    - 1.0
+  x_for_ux: 0.5
+test_data:
+  test_num: 11
+training_data:
+  condition:
+    L: 1.
+    H: 1.
+    particle_radius: 0.0390625
+    particle_center: 0.5
+    slide: 0.03
+  generate_params:
+    div_num: 10
+    div_pad: 0.03
+    f_num: 10
+    f_pad: 0.03
+    u_num_surface: 20
+    u_num_wall: 10
+    difp_num: 10
+    difu_num: 10
+    num_inner: 3
+  num_training_points:
+    divu: 356
+    fx: 356
+    fy: 356
+    ux: 94
+    uy: 94
+lbls:
+  train:
+  - 'r' 
+  - 'f'
+  test:
+  - 'r'
+  - 'f'
+  infer:
+  - 'f'
+  - 'std'
+  record:
+  - 'x'
+  - 'fun'
+  - 'norm_of_grads'
+  analysis:
+  - 'abs_error'
+  - 'rel_error'
+  - 'max_abs_error'
+  - 'max_rel_error'
+  - 'mean_abs_error'
+  - 'mean_rel_error'
+  kernel_arg:
+  - 'uxux'
+  - 'uyuy'
+  - 'pp'
+  - 'uxuy'
+  - 'uxp'
+  - 'uyp'
+vnames:
+  train:
+  - 'ux'
+  - 'uy'
+  - 'difux'
+  - 'difuy'
+  - 'fx'
+  - 'fy'
+  - 'divu'
+  - 'difp'
+  test:
+  - 'ux'
+  - 'uy'
+  infer:
+  - 'ux'
+  - 'uy'
+  analysis:
+  - 'ux'
+  - 'uy'
+system_type: 'Stokes_2D'

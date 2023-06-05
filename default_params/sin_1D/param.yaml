@@ -1,0 +1,77 @@
+calc:
+  epsilon: 1.0e-06
+model:
+  init_kernel_hyperparameter:
+    alpha: 0.8
+    eta1: 0.0
+    eta2: 0.0
+    l1: 0.0
+    l2: 0.0
+  kernel_form: product
+  kernel_type: se
+  distance_func: False
+optimization:
+  eps: 1.0e-05
+  lr: 1.0e-05
+  maxiter_GD: 400
+  maxiter_first: 1
+  method_GD: adam
+  method_first: Nelder-Mead
+plot:
+  error_limit:
+  - 0.0001
+  - 0.1
+  std_limit:
+  - 0
+  - 0.002
+  val_limits:
+  - - -1.0
+    - 1.0
+  x_for_ux: 0.5
+test_data:
+  p_infer: 1
+  test_num: 50
+  ux_test: 0
+training_data:
+  condition:
+    channel_length: 2.5
+    channel_width: 1
+    epsilon: 0.4
+    oscillation_amplitude: 0.2
+    use_pbc_points: False
+  generate_params:
+    ly_num: 10
+    loc_y: 'both'
+lbls:
+  train:
+  - 'r' 
+  - 'f'
+  test:
+  - 'r'
+  - 'f'
+  infer:
+  - 'f'
+  - 'std'
+  record:
+  - 'x'
+  - 'fun'
+  analysis:
+  - 'abs_error'
+  - 'rel_error'
+  - 'max_abs_error'
+  - 'max_rel_error'
+  - 'mean_abs_error'
+  - 'mean_rel_error'
+  kernel_arg:
+  - 'yy'
+vnames:
+  train:
+   - "y"
+   - "ly"
+  test:
+   - "y"
+  infer:
+   - "y"
+  analysis:
+   - "y"
+system_type: '1D'

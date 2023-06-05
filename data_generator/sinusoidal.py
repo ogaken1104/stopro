@@ -335,7 +335,7 @@ class Sinusoidal(StokesDataGenerator):
 
             ########## when using fem as reference solution #################
             with open(
-                "/work/jh210017a/q24015/template_data/test_from_fenics/0303_random_training_50.pickle",
+                f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_random_training_50.pickle',
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -367,7 +367,7 @@ class Sinusoidal(StokesDataGenerator):
             #     ux = uy[::split]
             ########## when using fem as reference solution #################
             with open(
-                f'{os.environ["HOME"]}/template_data/test_from_fenics/0303_random_training_50.pickle',
+                f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_random_training_50.pickle',
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -499,7 +499,7 @@ class Sinusoidal(StokesDataGenerator):
             # データの読み込み
             try:
                 with open(
-                    "/work/jh210017a/q24015/template_data/test_from_fenics/0303_interpolation_50.pickle",
+                    f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_interpolation_50.pickle',
                     "rb",
                 ) as file:
                     save_dict = pickle.load(file)
@@ -584,7 +584,7 @@ class Sinusoidal(StokesDataGenerator):
 
         if use_spm_result:
             hdf_operator = HdfOperator(
-                "/work/jh210017a/q24015/template_data/test_sinusoidal_from_spm_adimentionalized"
+                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidal_from_spm_adimentionalized'
             )
             r_test, f_test = hdf_operator.load_test_data(["r", "f"], ["ux", "uy"])
             self.r_test = r_test
@@ -600,7 +600,7 @@ class Sinusoidal(StokesDataGenerator):
                 elif test_num == 54:
                     file_name = "0508_interpolation_num_54.pickle"
                 with open(
-                    f'{os.environ["HOME"]}/template_data/test_from_fenics/{file_name}',
+                    f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/{file_name}',
                     "rb",
                 ) as file:
                     save_dict = pickle.load(file)
