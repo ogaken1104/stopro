@@ -15,7 +15,11 @@ SECOND_GRAD_OPTIMIZE_LIST = [
 ]
 
 
-def optimize_with_scipy(func, dfunc, hess, res, theta, optimize_param, args):
+def optimize_with_scipy(func, dfunc, hess, res, theta, loss, optimize_param, args):
+    def save_theta_loss(xk):
+        theta.append(xk)
+        loss.append(func(xk, *args))
+
     method_first = optimize_param["method_first"]
     maxiter_first = optimize_param["maxiter_first"]
 
@@ -39,13 +43,11 @@ def optimize_with_scipy(func, dfunc, hess, res, theta, optimize_param, args):
             jac=dfunc,
             hess=hess,
             options=opt,
+            callback=save_theta_loss,
         )
     )
-    print(
-        f"loss after first optimize: {res[-1]['fun']}, \n result of first optimize{res}"
-    )
-    theta.append(res[-1]["x"])
-    return res, theta
+    print(f"loss after first optimize: {loss[-1]}, \n result of first optimize{res}")
+    return res, theta, loss
 
 
 def optimize_by_adam(f, df, hf, init, optimize_param, *args):
@@ -55,7 +57,6 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
     maxiter_first = optimize_param["maxiter_first"]
     method_GD = optimize_param["method_GD"]
     method_first = optimize_param["method_first"]
-    print(method_first)
     loss = []
     theta = [init]
     norm_of_grads_list = []
@@ -124,12 +125,13 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
     loss_before_optimize = func(init, *args)
     print(f"loss before optimize: {loss_before_optimize}")
     loss.append(loss_before_optimize)
+    print(method_first)
     if jnp.isnan(loss_before_optimize):
         raise Exception("初期条件でlossがnanになりました")
     # optimize by scipy
     if maxiter_first:
-        res, theta = optimize_with_scipy(
-            func, dfunc, hess, res, theta, optimize_param, args
+        res, theta, loss = optimize_with_scipy(
+            func, dfunc, hess, res, theta, loss, optimize_param, args
         )
     # optimize by sgd
     if method_GD == "adam":
