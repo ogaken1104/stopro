@@ -94,7 +94,10 @@ def analyze_result(
             f.write(f"{lbls_kernel_arg[i]: <5}")
             np.savetxt(f, [thet], fmt="%.7f")
         f.write(f"\n- final norm of grads\n")
-        f.write(f"{norm_of_grads_list[-1]}")
+        try:
+            f.write(f"{norm_of_grads_list[-1]}")
+        except:
+            pass
     # hdf5ファイルに保存
     vals_list = [
         absolute_error,

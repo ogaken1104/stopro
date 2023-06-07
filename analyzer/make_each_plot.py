@@ -93,7 +93,12 @@ def plot_std_lattice(p, vname, ax, limit, grid):
     # ax.set_xlabel("x")
     # ax.set_ylabel("y")
     mappable = ax.pcolormesh(
-        grid, grid, p, cmap=mpl.cm.cool, vmin=limit[0], vmax=limit[1], shading="nearest"
+        grid,
+        grid,
+        p,
+        cmap=mpl.cm.cool,
+        shading="nearest",
+        norm=mpl.colors.LogNorm(vmin=limit[0], vmax=limit[1]),
     )
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.1)
