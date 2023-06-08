@@ -67,6 +67,7 @@ optimization:
   maxiter_first: 10
   method_GD: adam
   method_first: Nelder-Mead
+  print_process: True
 plot:
   error_limit:
   - 0.0001
