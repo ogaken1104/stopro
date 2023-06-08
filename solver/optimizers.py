@@ -57,6 +57,7 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
     maxiter_first = optimize_param["maxiter_first"]
     method_GD = optimize_param["method_GD"]
     method_first = optimize_param["method_first"]
+    print_process = optimize_param["print_process"]
     loss = []
     theta = [init]
     norm_of_grads_list = []
@@ -84,17 +85,18 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
         updates, opt_state = optimizer.update(grads, opt_state, theta)
         theta = optax.apply_updates(theta, updates)
         norm_of_grads = jnp.sqrt(jnp.sum(jnp.square(grads)))
-        print(
-            f"step{t:4} loss: {value:.4f} max_grad: {jnp.max(abs(grads)):.5f}, arg={jnp.argmax(abs(grads))}"
-        )
-        print(f"norm_of_grads: {norm_of_grads:.5f}")
-        if len(theta) >= 18:
-            for thet in jnp.split(theta[:18], 6):
-                print(f"{jnp.round(thet, 4)}")
-        else:
-            print(jnp.round(theta, 4))
-        print(f"theta_max: {jnp.max(theta):.5f}")
-        print(f"theta_min: {jnp.min(theta):.5f}\n")
+        if print_process:
+            print(
+                f"step{t:4} loss: {value:.4f} max_grad: {jnp.max(abs(grads)):.5f}, arg={jnp.argmax(abs(grads))}"
+            )
+            print(f"norm_of_grads: {norm_of_grads:.5f}")
+            if len(theta) >= 18:
+                for thet in jnp.split(theta[:18], 6):
+                    print(f"{jnp.round(thet, 4)}")
+            else:
+                print(jnp.round(theta, 4))
+            print(f"theta_max: {jnp.max(theta):.5f}")
+            print(f"theta_min: {jnp.min(theta):.5f}\n")
         return value, opt_state, theta, norm_of_grads
 
     def doopt(init, optimizer, maxiter_GD, loss, theta, norm_of_grads_list):

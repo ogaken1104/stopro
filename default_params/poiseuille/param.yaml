@@ -38,6 +38,7 @@ optimization:
   method_first: Nelder-Mead
   loss_ridge_regression: False
   ridge_alpha: 1
+  print_process: True 
 plot:
   error_limit:
   - 0.00001

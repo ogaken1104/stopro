@@ -7,6 +7,7 @@ from jax import grad, jit, vmap
 class GPmodel:
     def __init__(self, approx_non_pd: bool = False):
         self.approx_non_pd = approx_non_pd
+        self.normalize_covariance_matrix = False
 
     def cholesky_decompose_non_positive_definite(self, matrix, noise, **kwargs):
         """Compute cholesky decomposition with modifying non positive semedifinite matrix to positive semidifinite matrix"""
@@ -114,6 +115,20 @@ class GPmodel:
                 )
         return Σ
 
+    def normalize_all(self, covar_matrix, get_diag_covar=False):
+        diag_covar = jnp.diag(covar_matrix).copy()
+        normalize_const_mat = jnp.sqrt(jnp.outer(diag_covar, diag_covar))
+        covar_matrix = jnp.divide(covar_matrix, normalize_const_mat)
+        if get_diag_covar:
+            return covar_matrix, diag_covar
+        else:
+            return covar_matrix
+
+    def normalize_mixed(self, covar_matrix, diag_covar_train, diag_covar_test):
+        normalize_const_mat = jnp.sqrt(jnp.outer(diag_covar_test, diag_covar_train))
+        covar_matrix = jnp.divide(covar_matrix, normalize_const_mat)
+        return covar_matrix
+
     def trainingFunction_all(self, θ, *args):
         """Returns minus log-likelihood given Kernel hyperparamters θ and training data args
         args = velocity position, velocity average, velocity values,
@@ -129,6 +144,8 @@ class GPmodel:
             else:
                 δy = jnp.concatenate([δy, f[i] - μ[i]], 0)
         Σ = self.trainingK_all(θ, r)
+        if self.normalize_covariance_matrix:
+            Σ = self.normalize_all(Σ)
         return self.logpGP(δy, Σ, ϵ, approx_non_pd=self.approx_non_pd)
 
     def predictingFunction_all(self, θ, *args):
@@ -150,6 +167,11 @@ class GPmodel:
         Σbb = self.trainingK_all(θ, r_train)
         Σab = self.mixedK_all(θ, r_test, r_train)
         Σaa = self.testK_all(θ, r_test)
+        ## normalize
+        if self.normalize_covariance_matrix:
+            Σbb, diag_covar_train = self.normalize_all(Σbb, get_diag_covar=True)
+            Σaa, diag_covar_test = self.normalize_all(Σaa, get_diag_covar=True)
+            Σab = self.normalize_mixed(Σab, diag_covar_train, diag_covar_test)
         for i in range(len(r_train)):
             if i == 0:
                 δfb = jnp.array(f_train[i] - μ[i])
@@ -161,6 +183,7 @@ class GPmodel:
         μposts, Σposts = self.postGP(
             δfb, Σaa, Σab, Σbb, ϵ, approx_non_pd=self.approx_non_pd
         )
+        # Σpost = self.normalize_all(Σpost)
         # seperate μpost,Σpost to 3 section (ux,uy,p)
         sec0 = 0
         sec1 = 0
