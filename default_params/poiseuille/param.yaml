@@ -33,9 +33,11 @@ optimization:
   eps: 1.0e-05
   lr: 1.0e-05
   maxiter_GD: 200
-  maxiter_first: 1
+  maxiter_scipy: 
+  - 1
   method_GD: adam
-  method_first: Nelder-Mead
+  method_scipy: 
+  - Nelder-Mead
   loss_ridge_regression: False
   ridge_alpha: 1
   print_process: True 

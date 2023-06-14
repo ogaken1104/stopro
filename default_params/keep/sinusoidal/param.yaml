@@ -13,9 +13,9 @@ optimization:
   eps: 1.0e-05
   lr: 1.0e-05
   maxiter_GD: 400
-  maxiter_first: 1
+  maxiter_scipy: 1
   method_GD: adam
-  method_first: Nelder-Mead
+  method_scipy: Nelder-Mead
 plot:
   error_limit:
   - 0.0001

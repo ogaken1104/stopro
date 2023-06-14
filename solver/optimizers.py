@@ -4,10 +4,8 @@ from jax import jit, value_and_grad
 from jax.example_libraries import optimizers
 from scipy import optimize
 
-NO_GRAD_OPTIMIZE_LIST = [
-    "Nelder-Mead",
-    "Powell",
-]
+NO_GRAD_OPTIMIZE_LIST = ["Nelder-Mead", "Powell", "TNC", "BFGS", "L-BFGS-B"]
+## if not use autograd
 
 FIRST_GRAD_OPTIMIZE_LIST = ["TNC", "BFGS", "L-BFGS-B", "CG"]  # ?
 SECOND_GRAD_OPTIMIZE_LIST = [
@@ -20,33 +18,37 @@ def optimize_with_scipy(func, dfunc, hess, res, theta, loss, optimize_param, arg
         theta.append(xk)
         loss.append(func(xk, *args))
 
-    method_first = optimize_param["method_first"]
-    maxiter_first = optimize_param["maxiter_first"]
+    method_scipy = optimize_param["method_scipy"]
+    maxiter_scipy = optimize_param["maxiter_scipy"]
 
-    opt = {"maxiter": maxiter_first, "disp": 0}
+    for method, maxiter in zip(method_scipy, maxiter_scipy):
+        print(method, maxiter)
+        opt = {"maxiter": maxiter, "disp": 0}
 
-    if method_first in NO_GRAD_OPTIMIZE_LIST:
-        dfunc = None
-        hess = None
-    elif method_first in FIRST_GRAD_OPTIMIZE_LIST:
-        hess = None
-    elif method_first in SECOND_GRAD_OPTIMIZE_LIST:
-        pass
-    else:
-        raise Exception("scipy optimize method is not in list")
-    res.append(
-        optimize.minimize(
-            func,
-            res[-1]["x"],
-            args=args,
-            method=method_first,
-            jac=dfunc,
-            hess=hess,
-            options=opt,
-            callback=save_theta_loss,
+        if method in NO_GRAD_OPTIMIZE_LIST:
+            dfunc = None
+            hess = None
+        elif method in FIRST_GRAD_OPTIMIZE_LIST:
+            hess = None
+        elif method in SECOND_GRAD_OPTIMIZE_LIST:
+            pass
+        else:
+            raise Exception("scipy optimize method is not in list")
+        res.append(
+            optimize.minimize(
+                func,
+                res[-1]["x"],
+                args=args,
+                method=method,
+                jac=dfunc,
+                hess=hess,
+                options=opt,
+                callback=save_theta_loss,
+            )
         )
-    )
-    print(f"loss after first optimize: {loss[-1]}, \n result of first optimize{res}")
+        print(
+            f"loss after optimize by {method}: {loss[-1]}, \n result of first optimize{res[-1]}"
+        )
     return res, theta, loss
 
 
@@ -54,9 +56,9 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
     maxiter_GD = optimize_param["maxiter_GD"]
     lr = optimize_param["lr"]
     eps = optimize_param["eps"]
-    maxiter_first = optimize_param["maxiter_first"]
+    maxiter_scipy = optimize_param["maxiter_scipy"]
     method_GD = optimize_param["method_GD"]
-    method_first = optimize_param["method_first"]
+    method_scipy = optimize_param["method_scipy"]
     print_process = optimize_param["print_process"]
     loss = []
     theta = [init]
@@ -71,7 +73,7 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
     # _:ignore returns
     r_train, *_ = args
     ntraining = 0
-    # opt = {"maxiter": maxiter_first, "disp": 0}
+    # opt = {"maxiter": maxiter_scipy, "disp": 0}
     res = [{"x": init}]
     for r in r_train:
         ntraining += r.shape[0]
@@ -127,11 +129,11 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
     loss_before_optimize = func(init, *args)
     print(f"loss before optimize: {loss_before_optimize}")
     loss.append(loss_before_optimize)
-    print(method_first)
+    print(method_scipy)
     if jnp.isnan(loss_before_optimize):
         raise Exception("初期条件でlossがnanになりました")
     # optimize by scipy
-    if maxiter_first:
+    if maxiter_scipy:
         res, theta, loss = optimize_with_scipy(
             func, dfunc, hess, res, theta, loss, optimize_param, args
         )
@@ -153,10 +155,10 @@ def optimize_by_adam_avoid_divergence(f, df, hf, init, optimize_param, *args):
     maxiter_GD = optimize_param["maxiter_GD"]
     lr = optimize_param["lr"]
     eps = optimize_param["eps"]
-    maxiter_first = optimize_param["maxiter_first"]
+    maxiter_scipy = optimize_param["maxiter_scipy"]
     method_GD = optimize_param["method_GD"]
-    method_first = optimize_param["method_first"]
-    print(method_first)
+    method_scipy = optimize_param["method_scipy"]
+    print(method_scipy)
     loss = []
     theta = [init]
     norm_of_grads_list = []
@@ -170,7 +172,7 @@ def optimize_by_adam_avoid_divergence(f, df, hf, init, optimize_param, *args):
     # _:ignore returns
     r_train, *_ = args
     ntraining = 0
-    opt = {"maxiter": maxiter_first, "disp": 0}
+    opt = {"maxiter": maxiter_scipy, "disp": 0}
     res = [{"x": init}]
     for r in r_train:
         ntraining += r.shape[0]
@@ -246,23 +248,23 @@ def optimize_by_adam_avoid_divergence(f, df, hf, init, optimize_param, *args):
     loss.append(loss_before_optimize)
     if jnp.isnan(loss_before_optimize):
         raise Exception("初期条件でlossがnanになりました")
-    if maxiter_first:
-        if method_first == "Nelder-Mead" or method_first == "L-BFGS-B":
+    if maxiter_scipy:
+        if method_scipy == "Nelder-Mead" or method_scipy == "L-BFGS-B":
             res.append(
                 optimize.minimize(
-                    func, res[-1]["x"], args=args, method=method_first, options=opt
+                    func, res[-1]["x"], args=args, method=method_scipy, options=opt
                 )
             )
             print(
                 f"loss after first optimize: {res[-1]['fun']}, \n result of first optimize{res}"
             )
-        elif method_first == "TNC" or method_first == "BFGS":
+        elif method_scipy == "TNC" or method_scipy == "BFGS":
             res.append(
                 optimize.minimize(
                     func,
                     res[-1]["x"],
                     args=args,
-                    method=method_first,
+                    method=method_scipy,
                     jac=dfunc,
                     options=opt,
                 )

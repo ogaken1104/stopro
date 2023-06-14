@@ -64,9 +64,9 @@ optimization:
   loss_ridge_regression: false
   lr: 1.0e-05
   maxiter_GD: 40
-  maxiter_first: 10
+  maxiter_scipy: 10
   method_GD: adam
-  method_first: Nelder-Mead
+  method_scipy: Nelder-Mead
 plot:
   error_limit:
   - 0.0001
