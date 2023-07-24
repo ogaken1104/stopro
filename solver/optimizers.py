@@ -4,6 +4,8 @@ from jax import jit, value_and_grad
 from jax.example_libraries import optimizers
 from scipy import optimize
 
+# from evosax import EvoParams, SimAnneal
+
 NO_GRAD_OPTIMIZE_LIST = ["Nelder-Mead", "Powell", "TNC", "BFGS", "L-BFGS-B"]
 ## if not use autograd
 
@@ -50,6 +52,17 @@ def optimize_with_scipy(func, dfunc, hess, res, theta, loss, optimize_param, arg
             f"loss after optimize by {method}: {loss[-1]}, \n result of first optimize{res[-1]}"
         )
     return res, theta, loss
+
+
+# def optimize_with_evosax(func, dfunc, hess, res, theta, loss, optimize_param, args):
+#     strategy = SimAnneal()
+#     es_params = strategy.default_params
+#     state = strategy.initialize(res[-1]["x"], es_params)
+
+#     # for t in range(num_generations):
+#     #     x, state = strategy.ask(res, state, es_params)
+#     #     fitness = ...  # Your population evaluation fct
+#     #     state = strategy.tell(x, fitness, state, es_params)
 
 
 def optimize_by_adam(f, df, hf, init, optimize_param, *args):
