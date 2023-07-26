@@ -2,20 +2,42 @@ calc:
   epsilon: 1.0e-06
 model:
   init_kernel_hyperparameter:
-    alpha: 0.8
-    eta1: 0.5
-    eta2: 0.0
-    l1: -1.5
-    l2: -1.5
+    pp:
+    - 0.5
+    - -1.5
+    - -1.5
+    uxp:
+    - 0.
+    - -1.5
+    - -1.5
+    uxux:
+    - 0.5
+    - -1.5
+    - -1.5
+    uxuy:
+    - 0.
+    - -1.5
+    - -1.5
+    uyp:
+    - 0.
+    - -1.5
+    - -1.5
+    uyuy:
+    - 0.5
+    - -1.5
+    - -1.5
   kernel_form: product
   kernel_type: se
+  distance_func: False
 optimization:
   eps: 1.0e-05
   lr: 1.0e-05
   maxiter_GD: 40
-  maxiter_scipy: 10
+  maxiter_scipy: 
+  - 10
   method_GD: adam
-  method_scipy: Nelder-Mead
+  method_scipy: 
+  - Nelder-Mead
   loss_ridge_regression: False
   ridge_alpha: 1
   print_process: True
@@ -36,6 +58,7 @@ plot:
   x_for_ux: 0.5
 test_data:
   test_num: 11
+  infer_governing_eqs: false
 training_data:
   condition:
     L: 1.
@@ -43,6 +66,9 @@ training_data:
     particle_radius: 0.0390625
     particle_center: 0.5
     slide: 0.03
+    use_gradp_training: false
+    use_difp: True
+    use_difu: True
   generate_params:
     div_num: 10
     div_pad: 0.03

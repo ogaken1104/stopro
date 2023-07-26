@@ -27,6 +27,9 @@ class Cylinder(Drag):
         delta_p=-1.0,
         use_force_as_constant_pressure=True,
         use_u_inlet=False,
+        use_difu=True,
+        use_difp=True,
+        use_gradp_training=False,
     ):
         super().__init__(
             L,
@@ -69,7 +72,7 @@ class Cylinder(Drag):
         self.generate_difp(difp_num)
         return self.r, self.f
 
-    def generate_test(self, test_num=None):
+    def generate_test(self, test_num=None, infer_governing_eqs=False):
         try:
             with open(
                 # "/work/jh210017a/q24015/template_data/0314_cylinder_test_484.pickle",
