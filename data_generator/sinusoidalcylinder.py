@@ -21,7 +21,6 @@ class SinusoidalCylinder(Sinusoidal):
         del kwargs["particle_radius"]
         del kwargs["particle_center"]
         ## need to modify
-        self.without_f = False
         super().__init__(**kwargs)
 
     def make_r_surface(self, num, use_inner=False):
@@ -169,7 +168,9 @@ class SinusoidalCylinder(Sinusoidal):
         difp_pad=None,
         num_inner=5,
         dr=0.2,
+        without_f=False,
     ):
+        self.without_f = without_f
         self.r = []
         self.f = []
         self.generate_u(u_num_surface, u_num_wall)
@@ -192,10 +193,18 @@ class SinusoidalCylinder(Sinusoidal):
         print(test_num)
         self.test_num = test_num
         if use_spm_result:
-            if test_num == 36:
-                filename = "0801_sinusoidalcylinder_test_64x36.pickle"
-            elif test_num == 72:
-                filename = "0801_sinusoidalcylinder_test_128x72.pickle"
+            if self.particle_center[0] == 0.625:
+                if test_num == 36:
+                    filename = "0801_sinusoidalcylinder_test_64x36.pickle"
+                elif test_num == 48:
+                    filename = "0801_sinusoidalcylinder_test_86x48.pickle"
+                elif test_num == 72:
+                    filename = "0801_sinusoidalcylinder_test_128x72.pickle"
+            elif self.particle_center[0] == 1.875:
+                if test_num == 48:
+                    filename = "0801_sinusoidalcylinder_narrow_test_86x48.pickle"
+                elif test_num == 72:
+                    filename = "0801_sinusoidalcylinder_narrow_test_128x72.pickle"
             print(filename)
             with open(
                 # "/work/jh210017a/q24015/template_data/0314_cylinder_test_484.pickle",

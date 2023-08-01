@@ -245,7 +245,12 @@ def plot_each_sinusoidal(contents, params, lbls, vnames, infer_p):
             cax = divider.append_axes("right", size="5%", pad=0.1)
             fig.colorbar(mappable, cax=cax)
             axs[ax_index].set_aspect("equal", adjustable="box")
-
+        # if sinusoidal.__class__.__name__ == "SinusoidalCylinder":
+        #     for i, ax in enumerate(axes.reshape(-1)):
+        #         if i == 0:
+        #             num_surface = 100
+        #             r_surface = sinusoidal.make_r_surface(num_surface)
+        #         ax.plot(r_surface[:, 0], r_surface[:, 1], color="k")
         fig.tight_layout()
         fig.savefig(
             f"../fig/output_all.png",
