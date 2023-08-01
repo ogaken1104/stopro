@@ -47,7 +47,7 @@ plot:
   - 0.01
   std_limit:
   - 0.0001
-  - 0.01
+  - 0.1
   val_limits:
   - - 0.0
     - 0.022
@@ -57,7 +57,7 @@ plot:
     - 1.0
   x_for_ux: 0.5
 test_data:
-  test_num: 11
+  test_num: 22
   infer_governing_eqs: false
 training_data:
   condition:

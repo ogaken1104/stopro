@@ -30,6 +30,7 @@ class Cylinder(Drag):
         use_difu=True,
         use_difp=True,
         use_gradp_training=False,
+        use_u_outlet=False,
     ):
         super().__init__(
             L,
@@ -43,6 +44,7 @@ class Cylinder(Drag):
         self.delta_p = delta_p
         self.use_force_as_constant_pressure = use_force_as_constant_pressure
         self.use_u_inlet = use_u_inlet
+        self.use_u_outlet = use_u_outlet
 
     def change_outside_values_to_zero(self, r, f):
         is_inside_the_domain = self.get_index_in_domain(r)
@@ -74,9 +76,18 @@ class Cylinder(Drag):
 
     def generate_test(self, test_num=None, infer_governing_eqs=False):
         try:
+            print(test_num)
+            if test_num == 32:
+                filename = "0731_cylinder_test_32x32.pickle"
+            elif test_num == 64:
+                filename = "0731_cylinder_test_64x64.pickle"
+            elif test_num == 22:
+                filename = "0501_cylinder_25_test_484.pickle"
+            print(filename)
             with open(
                 # "/work/jh210017a/q24015/template_data/0314_cylinder_test_484.pickle",
-                "/work/jh210017a/q24015/template_data/0501_cylinder_25_test_484.pickle",
+                # "/work/jh210017a/q24015/template_data/0501_cylinder_25_test_484.pickle",
+                f'{os.environ["HOME"]}/opt/stopro/template_data/test_cylinder_spm/{filename}',
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -123,11 +134,22 @@ class Cylinder(Drag):
             r_inlet = r[index_inlet][1:-1]
             ux_inlet = ux[index_inlet][1:-1]
             uy_inlet = uy[index_inlet][1:-1]
-            # concatenate
-            r_ux = np.concatenate([r_ux_surface, r_ux_wall, r_inlet])
-            r_uy = np.concatenate([r_uy_surface, r_uy_wall, r_inlet])
-            ux = np.concatenate([ux_surface, ux_wall, ux_inlet])
-            uy = np.concatenate([uy_surface, uy_wall, uy_inlet])
+            if self.use_u_outlet:
+                index_outlet = r[:, 0] == np.max(r[:, 0])
+                print(np.max(r[:, 0]))
+                r_outlet = r[index_outlet][1:-1]
+                ux_outlet = ux[index_outlet][1:-1]
+                uy_outlet = uy[index_outlet][1:-1]
+                r_ux = np.concatenate([r_ux_surface, r_ux_wall, r_inlet, r_outlet])
+                r_uy = np.concatenate([r_uy_surface, r_uy_wall, r_inlet, r_outlet])
+                ux = np.concatenate([ux_surface, ux_wall, ux_inlet, ux_outlet])
+                uy = np.concatenate([uy_surface, uy_wall, uy_inlet, uy_outlet])
+            else:
+                # concatenate
+                r_ux = np.concatenate([r_ux_surface, r_ux_wall, r_inlet])
+                r_uy = np.concatenate([r_uy_surface, r_uy_wall, r_inlet])
+                ux = np.concatenate([ux_surface, ux_wall, ux_inlet])
+                uy = np.concatenate([uy_surface, uy_wall, uy_inlet])
         else:
             # concatenate
             r_ux = np.concatenate([r_ux_surface, r_ux_wall])
@@ -269,9 +291,20 @@ class Cylinder(Drag):
         y_grid = np.linspace(0.0, np.max(r_ux[:, 1]), num_per_side)
         cmaps = [cmo.cm.dense, cmo.cm.balance]
         for i, ax in enumerate(axs):
+            # index_inside = self.get_index_in_domain(r_ux)
+            # f_plot = self.f_test[i]
+            # f_plot[index_inside] = 0.0
             f_mesh = self.f_test[i].reshape(num_per_side, num_per_side)
             self.plot_heatmap(
-                fig, ax, x_grid, y_grid, f_mesh, shading="gouraud", cmap=cmaps[i]
+                fig,
+                ax,
+                x_grid,
+                y_grid,
+                f_mesh,
+                shading="nearest",
+                cmap=cmaps[i],
+                vmin=val_limits[i][0],
+                vmax=val_limits[i][1],
             )
         fig.tight_layout()
         if save:
