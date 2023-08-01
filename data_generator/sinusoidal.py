@@ -1236,6 +1236,11 @@ class Sinusoidal(StokesDataGenerator):
                 markersize=ms,
                 color=clrs[i],
             )
+            if self.__class__.__name__ == "SinusoidalCylinder":
+                if i == 0:
+                    num_surface = 100
+                    r_surface = self.make_r_surface(num_surface)
+                ax.plot(r_surface[:, 0], r_surface[:, 1], color="k")
             ax.set_title(lbls[i])
             ax.set_aspect("equal", adjustable="box")
         fig.tight_layout()
