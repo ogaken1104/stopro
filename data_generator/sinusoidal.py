@@ -532,8 +532,21 @@ class Sinusoidal(StokesDataGenerator):
         use_fem_result=False,
         infer_governing_eqs=False,
         infer_wall=False,
+        infer_du_boundary=False,
     ):
         self.test_num = test_num
+        if infer_du_boundary:
+            num_x = 2000
+            pad_boundary = 0.01
+            x = np.linspace(0.0, self.L, num_x)
+            y_top, y_bottom = self.calc_y_top(x), self.calc_y_bottom(x)
+            y = np.concatenate([y_top, y_bottom])
+            r = np.stack([np.concatenate([x, x]), y], axis=1)
+            duidui = np.zeros(len(r))
+            self.r_test = [r] * 4
+            self.f_test = [duidui] * 4
+            return self.r_test, self.f_test
+
         if infer_governing_eqs:
             ## lattice alignment version
             maximum_height = self.w / 2 + self.a
