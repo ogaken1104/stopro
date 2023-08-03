@@ -23,15 +23,16 @@ class SinusoidalCylinder(Sinusoidal):
         ## need to modify
         super().__init__(**kwargs)
 
-    def make_r_surface(self, num, use_inner=False):
+    def make_r_surface(self, num, u_num_inner=0):
         θ_start = 0
         θ_end = 2 * np.pi
         θ = np.linspace(θ_start, θ_end, num)
-        if not use_inner:
-            r_mesh, θ_mesh = np.meshgrid(self.particle_radius, θ)
-        else:
-            radius_range = np.linspace(0.013, self.particle_radius, 3)
-            r_mesh, θ_mesh = np.meshgrid(radius_range, θ)
+        r_mesh, θ_mesh = np.meshgrid(self.particle_radius, θ)
+        # if not use_inner:
+        #     r_mesh, θ_mesh = np.meshgrid(self.particle_radius, θ)
+        # else:
+        #     radius_range = np.linspace(0.013, self.particle_radius, 3)
+        #     r_mesh, θ_mesh = np.meshgrid(radius_range, θ)
         if not self.random_arrange:
             pass
         else:
@@ -42,12 +43,31 @@ class SinusoidalCylinder(Sinusoidal):
         xx, yy = r_mesh * np.cos(θ_mesh), r_mesh * np.sin(θ_mesh)
         r = np.stack([xx.reshape(-1), yy.reshape(-1)], axis=1)
         r += self.particle_center
+        if u_num_inner:
+            inner_pad = 0.05
+            radius_generate = self.particle_radius - inner_pad
+            r_inner = self.make_r_mesh(
+                -radius_generate,
+                radius_generate,
+                -radius_generate,
+                radius_generate,
+                u_num_inner,
+                u_num_inner,
+            )
+            r_inner += self.particle_center
+            index_out_cylinder = self.get_index_out_cylinder(r_inner)
+            r_inner = np.delete(r_inner, index_out_cylinder, axis=0)
+            print(index_out_cylinder, r_inner)
+            r = np.concatenate([r, r_inner])
         return r
 
     def get_index_out_cylinder(self, r, radius_min=None):
         rx = r[:, 0] - self.particle_center[0]
         ry = r[:, 1] - self.particle_center[1]
         if not radius_min:
+            # index_out_cylinder = np.where(
+            #     rx**2 + ry**2 > self.particle_radius**2
+            # )[0]
             index_out_cylinder = np.where(
                 rx**2 + ry**2 > self.particle_radius**2
             )[0]
@@ -63,7 +83,13 @@ class SinusoidalCylinder(Sinusoidal):
 
         # generation of training data
 
-    def generate_u(self, u_num_surface, u_num_wall, u_b=0.0):
+    def generate_u(
+        self,
+        u_num_surface,
+        u_num_wall,
+        u_num_inner=0,
+        u_b=0.0,
+    ):
         """
         premise: ux,uy values are taken at same points
         """
@@ -108,7 +134,7 @@ class SinusoidalCylinder(Sinusoidal):
         else:
             r_u_wall, u_wall = self.generate_wall_points(u_num_x)
             # make surface ux at the cylinder
-            r_u_surface = self.make_r_surface(u_num_surface)
+            r_u_surface = self.make_r_surface(u_num_surface, u_num_inner=u_num_inner)
             u_surface = np.zeros(len(r_u_surface))
 
             # velocity at inlet and outlet
@@ -166,14 +192,14 @@ class SinusoidalCylinder(Sinusoidal):
         difp_num=None,
         difp_loc="inlet_outlet",
         difp_pad=None,
-        num_inner=5,
+        u_num_inner=5,
         dr=0.2,
         without_f=False,
     ):
         self.without_f = without_f
         self.r = []
         self.f = []
-        self.generate_u(u_num_surface, u_num_wall)
+        self.generate_u(u_num_surface, u_num_wall, u_num_inner=u_num_inner)
         self.generate_difu(difu_num)
         self.generate_f(f_num=f_num, f_pad=f_pad)
         self.generate_div(div_num=div_num, div_pad=div_pad)
@@ -201,10 +227,13 @@ class SinusoidalCylinder(Sinusoidal):
                 elif test_num == 72:
                     filename = "0801_sinusoidalcylinder_test_128x72.pickle"
             elif self.particle_center[0] == 1.875:
-                if test_num == 48:
-                    filename = "0801_sinusoidalcylinder_narrow_test_86x48.pickle"
-                elif test_num == 72:
-                    filename = "0801_sinusoidalcylinder_narrow_test_128x72.pickle"
+                if self.particle_radius == 0.078125:
+                    filename = "0802_sinusoidalcylinder_narrow_fixed_test_128x72.pickle"
+                else:
+                    if test_num == 48:
+                        filename = "0801_sinusoidalcylinder_narrow_test_86x48.pickle"
+                    elif test_num == 72:
+                        filename = "0801_sinusoidalcylinder_narrow_test_128x72.pickle"
             print(filename)
             with open(
                 # "/work/jh210017a/q24015/template_data/0314_cylinder_test_484.pickle",

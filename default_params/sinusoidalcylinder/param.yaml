@@ -129,6 +129,7 @@ training_data:
     p_num: 0
     u_num_wall: 44
     u_num_surface: 50
+    u_num_inner: 8
   num_training_points:
     difp: 15
     difux: 15
