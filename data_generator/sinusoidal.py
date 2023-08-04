@@ -548,6 +548,18 @@ class Sinusoidal(StokesDataGenerator):
             self.f_test = [duidui] * 4
             return self.r_test, self.f_test
 
+        if infer_du_grid:
+            maximum_height = self.w / 2 + self.a
+            num_y = test_num
+            num_x = int(test_num * self.L / (maximum_height * 2))
+            r = self.make_r_mesh(
+                self.x_start, self.x_end, -maximum_height, maximum_height, num_x, num_y
+            )
+            f = np.ones(len(r))
+            self.r_test = [r]
+            self.f_test = [f]
+            return self.r_test, self.f_test
+
         if infer_governing_eqs:
             ## lattice alignment version
             maximum_height = self.w / 2 + self.a
