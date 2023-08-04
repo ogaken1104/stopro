@@ -533,14 +533,15 @@ class Sinusoidal(StokesDataGenerator):
         infer_governing_eqs=False,
         infer_wall=False,
         infer_du_boundary=False,
+        infer_du_grid=False,
     ):
         self.test_num = test_num
         if infer_du_boundary:
             num_x = 2000
-            pad_boundary = 0.01
+            pad_boundary = 0.0  # 0.00001
             x = np.linspace(0.0, self.L, num_x)
             y_top, y_bottom = self.calc_y_top(x), self.calc_y_bottom(x)
-            y = np.concatenate([y_top, y_bottom])
+            y = np.concatenate([y_top - pad_boundary, y_bottom + pad_boundary])
             r = np.stack([np.concatenate([x, x]), y], axis=1)
             duidui = np.zeros(len(r))
             self.r_test = [r] * 4
