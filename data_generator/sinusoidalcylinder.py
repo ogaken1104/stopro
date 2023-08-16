@@ -116,21 +116,22 @@ class SinusoidalCylinder(Sinusoidal):
 
             ########## when using fem as reference solution #################
             with open(
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_random_training_50.pickle',
+                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0801_sinusoidalcylinder_train_24968.pickle',
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
             r_train = save_dict["r"]
-            f_train = save_dict["u"]
+            ux_train = save_dict["ux"]
+            uy_train = save_dict["uy"]
 
-            index_for_train = np.arange(0, len(r_train[0]), 1)
+            index_for_train = np.arange(0, len(r_train), 1)
             rng = np.random.default_rng(seed=self.seed)
             rng.shuffle(index_for_train)
             index_for_train = index_for_train[:u_num_wall]
-            r_u = r_train[0][index_for_train]
+            r_u = r_train[index_for_train]
             r_ux = r_u
             r_uy = r_u
-            ux, uy = f_train[0][index_for_train], f_train[1][index_for_train]
+            ux, uy = ux_train[index_for_train] * 12, uy_train[index_for_train] * 12
         else:
             r_u_wall, u_wall = self.generate_wall_points(u_num_x)
             # make surface ux at the cylinder
@@ -203,7 +204,8 @@ class SinusoidalCylinder(Sinusoidal):
         self.generate_difu(difu_num)
         self.generate_f(f_num=f_num, f_pad=f_pad)
         self.generate_div(div_num=div_num, div_pad=div_pad)
-        self.generate_difp(difp_num, difp_pad, difp_loc)
+        if self.use_difp:
+            self.generate_difp(difp_num, difp_pad, difp_loc)
         return self.r, self.f
 
     def generate_test(
@@ -215,9 +217,32 @@ class SinusoidalCylinder(Sinusoidal):
         use_fem_result=False,
         use_spm_result=True,
         infer_wall=False,
+        infer_du_boundary=False,
     ):
         print(test_num)
         self.test_num = test_num
+
+        if self.infer_difp:
+            difp_pad = 0.03
+            y_start = -self.w / 2 + difp_pad
+            y_end = self.w / 2 - difp_pad
+
+            r_difp = self.make_r_mesh_sinusoidal(
+                0.0,
+                0.0,
+                -self.w / 2 + self.slide,
+                self.w / 2 - self.slide,
+                1,
+                test_num,
+                self.slide,
+            )
+
+            difp = np.full(len(r_difp), self.delta_p)
+
+            self.r_test = [r_difp]
+            self.f_test = [difp]
+            return self.r_test, self.f_test
+
         if use_spm_result:
             if self.particle_center[0] == 0.625:
                 if test_num == 36:

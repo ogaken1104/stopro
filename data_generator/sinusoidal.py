@@ -40,6 +40,7 @@ class Sinusoidal(StokesDataGenerator):
         noise_fraction=0.01,
         use_broad_governing_eqs=False,
         use_diff=False,
+        infer_difp=False,
     ):
         super().__init__(random_arrange)
         self.a = oscillation_amplitude
@@ -74,6 +75,7 @@ class Sinusoidal(StokesDataGenerator):
         self.noise_fraction = noise_fraction
         self.use_broad_governing_eqs = use_broad_governing_eqs
         self.use_diff = use_diff
+        self.infer_difp = infer_difp
 
     def calc_y_top(self, xs):
         return self.a * jnp.sin(2 * jnp.pi * xs / self.L) + self.w / 2
@@ -534,8 +536,44 @@ class Sinusoidal(StokesDataGenerator):
         infer_wall=False,
         infer_du_boundary=False,
         infer_du_grid=False,
+        infer_u_inlet_outlet=False,
     ):
         self.test_num = test_num
+
+        if infer_u_inlet_outlet:
+            r_u_inlet_outlet = self.make_r_mesh(
+                self.x_start,
+                self.x_end,
+                -self.w / 2 + self.slide,
+                self.w / 2 - self.slide,
+                2,
+                self.test_num,
+            )
+            # eta_u_inlet_outlet = self.x_to_eta(r_u_inlet_outlet[:, 0])
+            # xi_u_inlet_outlet = self.y_to_xi(
+            #     eta_u_inlet_outlet, r_u_inlet_outlet[:, 1])
+            ux_inlet_outlet, uy_inlet_outlet = self.calc_u_v_4(r_u_inlet_outlet)
+            self.r_test = [r_u_inlet_outlet] * 2
+            self.f_test = [ux_inlet_outlet, uy_inlet_outlet]
+            return self.r_test, self.f_test
+
+        if self.infer_difp:
+            r_difp = self.make_r_mesh_sinusoidal(
+                0.0,
+                0.0,
+                -self.w / 2 + self.slide,
+                self.w / 2 - self.slide,
+                1,
+                test_num,
+                self.slide,
+            )
+
+            difp = np.full(len(r_difp), self.delta_p)
+
+            self.r_test = [r_difp]
+            self.f_test = [difp]
+            return self.r_test, self.f_test
+
         if infer_du_boundary:
             num_x = 2000
             pad_boundary = 0.0  # 0.00001
