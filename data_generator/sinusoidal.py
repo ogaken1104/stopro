@@ -41,6 +41,7 @@ class Sinusoidal(StokesDataGenerator):
         use_broad_governing_eqs=False,
         use_diff=False,
         infer_difp=False,
+        use_random_and_boundary_u=None,
     ):
         super().__init__(random_arrange)
         self.a = oscillation_amplitude
@@ -76,6 +77,7 @@ class Sinusoidal(StokesDataGenerator):
         self.use_broad_governing_eqs = use_broad_governing_eqs
         self.use_diff = use_diff
         self.infer_difp = infer_difp
+        self.use_random_and_boundary_u = use_random_and_boundary_u
 
     def calc_y_top(self, xs):
         return self.a * jnp.sin(2 * jnp.pi * xs / self.L) + self.w / 2

@@ -89,6 +89,7 @@ class SinusoidalCylinder(Sinusoidal):
         u_num_wall,
         u_num_inner=0,
         u_b=0.0,
+        u_num_random=None,
     ):
         """
         premise: ux,uy values are taken at same points
@@ -97,7 +98,7 @@ class SinusoidalCylinder(Sinusoidal):
         u_num_x, u_num_y = self.num_to_num_x_y(u_num_wall)
         u_pad = self.slide
 
-        if self.use_random_u:
+        if self.use_random_u or self.use_random_and_boundary_u:
             # ########## when using spm as reference solution #################
             # # hdf_operatorでhdfに保存した計算結果を読み込み
             # # 点をランダムで抽出して使う
@@ -116,7 +117,9 @@ class SinusoidalCylinder(Sinusoidal):
 
             ########## when using fem as reference solution #################
             with open(
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0801_sinusoidalcylinder_train_24968.pickle',
+                # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0801_sinusoidalcylinder_train_24968.pickle',
+                # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0817_sinusoidalcylinder_train_2802.pickle',
+                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0817_sinusoidalcylinder_train_1524.pickle',
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -127,11 +130,28 @@ class SinusoidalCylinder(Sinusoidal):
             index_for_train = np.arange(0, len(r_train), 1)
             rng = np.random.default_rng(seed=self.seed)
             rng.shuffle(index_for_train)
-            index_for_train = index_for_train[:u_num_wall]
-            r_u = r_train[index_for_train]
-            r_ux = r_u
-            r_uy = r_u
-            ux, uy = ux_train[index_for_train] * 12, uy_train[index_for_train] * 12
+            index_for_train = index_for_train[:u_num_random]
+            if self.use_random_and_boundary_u:
+                r_u_random = r_train[index_for_train]
+                ux_random, uy_random = (
+                    ux_train[index_for_train] * 12,
+                    uy_train[index_for_train] * 12,
+                )
+                r_u_wall, u_wall = self.generate_wall_points(u_num_x)
+                r_u_surface = self.make_r_surface(
+                    u_num_surface, u_num_inner=u_num_inner
+                )
+                u_surface = np.zeros(len(r_u_surface))
+                r_u = np.concatenate([r_u_wall, r_u_surface, r_u_random])
+                r_ux = r_u
+                r_uy = r_u
+                ux = np.concatenate([u_wall, u_surface, ux_random])
+                uy = np.concatenate([u_wall, u_surface, uy_random])
+            else:
+                r_u = r_train[index_for_train]
+                r_ux = r_u
+                r_uy = r_u
+                ux, uy = ux_train[index_for_train] * 12, uy_train[index_for_train] * 12
         else:
             r_u_wall, u_wall = self.generate_wall_points(u_num_x)
             # make surface ux at the cylinder
@@ -196,11 +216,17 @@ class SinusoidalCylinder(Sinusoidal):
         u_num_inner=5,
         dr=0.2,
         without_f=False,
+        u_num_random=None,
     ):
         self.without_f = without_f
         self.r = []
         self.f = []
-        self.generate_u(u_num_surface, u_num_wall, u_num_inner=u_num_inner)
+        self.generate_u(
+            u_num_surface,
+            u_num_wall,
+            u_num_inner=u_num_inner,
+            u_num_random=u_num_random,
+        )
         self.generate_difu(difu_num)
         self.generate_f(f_num=f_num, f_pad=f_pad)
         self.generate_div(div_num=div_num, div_pad=div_pad)
@@ -272,6 +298,25 @@ class SinusoidalCylinder(Sinusoidal):
                 save_dict["ux"] * 12,
                 save_dict["uy"] * 12,
             )  # standarize
+
+        if use_fem_result:
+            if self.particle_center[0] == 0.625:
+                if test_num == 72:
+                    filename = "fem_test_128x72.pickle"
+                elif test_num == 36:
+                    filename = "fem_test_64x36.pickle"
+                elif test_num == 50:
+                    filename = "fem_test_89x50.pickle"
+            with open(
+                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_fem/{filename}',
+                "rb",
+            ) as file:
+                save_dict = pickle.load(file)
+            r, ux, uy = (
+                save_dict["r"],
+                save_dict["ux"],
+                save_dict["uy"],
+            )
 
         self.r_test += [r, r]
         self.f_test += [ux, uy]
