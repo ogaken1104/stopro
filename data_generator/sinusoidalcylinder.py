@@ -9,6 +9,7 @@ from jax import grad, vmap
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from scipy import integrate
 
+from stopro.data_generator.cylinder import Cylinder
 from stopro.data_generator.sinusoidal import Sinusoidal
 from stopro.data_generator.stokes_2D_generator import StokesDataGenerator
 from stopro.data_handler.data_handle_module import HdfOperator
@@ -119,7 +120,8 @@ class SinusoidalCylinder(Sinusoidal):
             with open(
                 # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0801_sinusoidalcylinder_train_24968.pickle',
                 # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0817_sinusoidalcylinder_train_2802.pickle',
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0817_sinusoidalcylinder_train_1524.pickle',
+                # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_fem/fem_train_1524.pickle',
+                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_fem/fem_train_2962.pickle',
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -132,26 +134,47 @@ class SinusoidalCylinder(Sinusoidal):
             rng.shuffle(index_for_train)
             index_for_train = index_for_train[:u_num_random]
             if self.use_random_and_boundary_u:
-                r_u_random = r_train[index_for_train]
-                ux_random, uy_random = (
-                    ux_train[index_for_train] * 12,
-                    uy_train[index_for_train] * 12,
-                )
                 r_u_wall, u_wall = self.generate_wall_points(u_num_x)
                 r_u_surface = self.make_r_surface(
                     u_num_surface, u_num_inner=u_num_inner
                 )
                 u_surface = np.zeros(len(r_u_surface))
-                r_u = np.concatenate([r_u_wall, r_u_surface, r_u_random])
+                if self.use_inlet_u:
+                    index_inlet = r_train[:, 0] == 0.0
+                    index_for_random = np.intersect1d(
+                        index_for_train,
+                        np.arange(0, len(index_inlet), dtype=int)[~index_inlet],
+                    )
+                    # index_for_random = np.ones(len(index_for_random))[index_for_random]
+                    r_u_random_all = r_train[index_for_random]
+                    r_u_random = r_u_random_all
+                    ux_random, uy_random = (
+                        ux_train[index_for_random],
+                        uy_train[index_for_random],
+                    )
+                    split = 2
+                    r_u_inlet = r_train[index_inlet][::split]
+                    ux_inlet = ux_train[index_inlet][::split]
+                    uy_inlet = uy_train[index_inlet][::split]
+                    ux = np.concatenate([u_wall, u_surface, ux_random, ux_inlet])
+                    uy = np.concatenate([u_wall, u_surface, uy_random, uy_inlet])
+                    r_u = np.concatenate([r_u_wall, r_u_surface, r_u_random, r_u_inlet])
+                else:
+                    r_u_random = r_train[index_for_train]
+                    ux_random, uy_random = (
+                        ux_train[index_for_train],
+                        uy_train[index_for_train],
+                    )
+                    ux = np.concatenate([u_wall, u_surface, ux_random])
+                    uy = np.concatenate([u_wall, u_surface, uy_random])
+                    r_u = np.concatenate([r_u_wall, r_u_surface, r_u_random])
                 r_ux = r_u
                 r_uy = r_u
-                ux = np.concatenate([u_wall, u_surface, ux_random])
-                uy = np.concatenate([u_wall, u_surface, uy_random])
             else:
                 r_u = r_train[index_for_train]
                 r_ux = r_u
                 r_uy = r_u
-                ux, uy = ux_train[index_for_train] * 12, uy_train[index_for_train] * 12
+                ux, uy = ux_train[index_for_train], uy_train[index_for_train]
         else:
             r_u_wall, u_wall = self.generate_wall_points(u_num_x)
             # make surface ux at the cylinder
@@ -187,18 +210,80 @@ class SinusoidalCylinder(Sinusoidal):
         self.r += [r_ux, r_uy]
         self.f += [np.array(ux), np.array(uy)]
 
-    def generate_f(self, **kwargs):
-        super().generate_f(**kwargs)
-        for i in range(1, 3):
-            index_out_cylinder = self.get_index_out_cylinder(self.r[-i])
-            self.r[-i] = self.r[-i][index_out_cylinder]
-            self.f[-i] = self.f[-i][index_out_cylinder]
+    def make_r_mesh_mixed(self, num_inner, num_outer, dr, pad):
+        ratio = 0.3
+        x_start = self.x_start + pad
+        x_end = self.x_end - pad
+        y_start = -self.w / 2 + pad
+        y_end = self.w / 2 - pad
+        num_x, num_y = self.num_to_num_x_y(
+            num_outer, use_broad=self.use_broad_governing_eqs, ratio=ratio
+        )
+        r_f = self.make_r_mesh_sinusoidal(
+            x_start, x_end, y_start, y_end, num_x, num_y, pad
+        )
+        r_circular = self.make_r_mesh_circular(num_inner, dr)
 
-    def generate_div(self, **kwargs):
-        super().generate_div(**kwargs)
-        index_out_cylinder = self.get_index_out_cylinder(self.r[-1])
-        self.r[-1] = self.r[-1][index_out_cylinder]
-        self.f[-1] = self.f[-1][index_out_cylinder]
+        index_out_dr = self.get_index_out_cylinder(r_f, self.particle_radius + dr)
+        r_f = r_f[index_out_dr]
+        r_f = np.concatenate([r_f, r_circular])
+        return r_f
+
+    def generate_f(self, f_num, f_pad, force=0.0, f_num_inner=0, dr=None):
+        if f_num_inner:
+            r_fx = self.make_r_mesh_mixed(f_num_inner, f_num, dr, f_pad)
+            r_fy = r_fx
+            # forceの値を設定
+            if self.use_force_as_constant_pressure:
+                force_x = -self.delta_p / self.L
+            else:
+                force_x = force
+            force_y = force
+            fx = np.full(len(r_fx), force_x)
+            fy = np.full(len(r_fy), force_y)
+            self.r += [r_fx, r_fy]
+            self.f += [fx, fy]
+        else:
+            super().generate_f(f_num, f_pad, force=0.0)
+            for i in range(1, 3):
+                index_out_cylinder = self.get_index_out_cylinder(self.r[-i])
+                self.r[-i] = self.r[-i][index_out_cylinder]
+                self.f[-i] = self.f[-i][index_out_cylinder]
+
+    def make_r_mesh_circular(self, num_per_side, dr=0.1):
+        x_start = self.particle_center - (self.particle_radius + dr)
+        x_end = self.particle_center + (self.particle_radius + dr)
+        y_start = x_start
+        y_end = x_end
+
+        r = self.make_r_mesh(x_start, x_end, y_start, y_end, num_per_side, num_per_side)
+
+        index_out_of_dr = self.get_index_out_cylinder(
+            r, radius_min=self.particle_radius + dr * 1.1
+        )
+        # index_in_dr = (r[:, 0] != r[index_out_of_dr][:, 0]) | (r[:, 1] != r[index_out_of_dr][:, 1])
+        index_in_dr = np.arange(0, len(r), 1, dtype=int)
+        index_in_dr = np.delete(index_in_dr, index_out_of_dr)
+        bool_in_dr = np.zeros(len(r), dtype=bool)
+        bool_in_dr[index_in_dr] = True
+        index_out_of_radius = self.get_index_out_cylinder(r)
+        bool_out_of_radius = np.zeros(len(r), dtype=bool)
+        bool_out_of_radius[index_out_of_radius] = index_out_of_radius
+        index_in_domain = bool_in_dr & bool_out_of_radius
+
+        return r[index_in_domain]
+
+    def generate_div(self, div_num, div_pad, divu=0.0, div_num_inner=0, dr=None):
+        if div_num_inner:
+            r_div = self.make_r_mesh_mixed(div_num_inner, div_num, dr, div_pad)
+            div = np.full(len(r_div), divu)
+            self.r += [r_div]
+            self.f += [div]
+        else:
+            super().generate_div(div_num, div_pad, divu)
+            index_out_cylinder = self.get_index_out_cylinder(self.r[-1])
+            self.r[-1] = self.r[-1][index_out_cylinder]
+            self.f[-1] = self.f[-1][index_out_cylinder]
 
     def generate_training_data(
         self,
@@ -217,6 +302,8 @@ class SinusoidalCylinder(Sinusoidal):
         dr=0.2,
         without_f=False,
         u_num_random=None,
+        f_num_inner=0,
+        div_num_inner=0,
     ):
         self.without_f = without_f
         self.r = []
@@ -228,8 +315,10 @@ class SinusoidalCylinder(Sinusoidal):
             u_num_random=u_num_random,
         )
         self.generate_difu(difu_num)
-        self.generate_f(f_num=f_num, f_pad=f_pad)
-        self.generate_div(div_num=div_num, div_pad=div_pad)
+        self.generate_f(f_num=f_num, f_pad=f_pad, f_num_inner=f_num_inner, dr=dr)
+        self.generate_div(
+            div_num=div_num, div_pad=div_pad, div_num_inner=div_num_inner, dr=dr
+        )
         if self.use_difp:
             self.generate_difp(difp_num, difp_pad, difp_loc)
         return self.r, self.f
@@ -247,6 +336,17 @@ class SinusoidalCylinder(Sinusoidal):
     ):
         print(test_num)
         self.test_num = test_num
+
+        if infer_wall:
+            y_start = -(self.w / 2 + self.a) - 0.1
+            y_end = -y_start
+            num_y = self.test_num
+            num_x = int(test_num * self.L / (y_end - y_start))
+            r = self.make_r_mesh(self.x_start, self.x_end, y_start, y_end, num_x, num_y)
+            ux_test, uy_test = self.calc_u_v_4(r)
+            self.r_test = [r, r]
+            self.f_test = [ux_test, uy_test]
+            return self.r_test, self.f_test
 
         if self.infer_difp:
             difp_pad = 0.03

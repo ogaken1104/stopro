@@ -42,6 +42,8 @@ class Sinusoidal(StokesDataGenerator):
         use_diff=False,
         infer_difp=False,
         use_random_and_boundary_u=None,
+        use_inlet_u=False,
+        use_broad_div=False,
     ):
         super().__init__(random_arrange)
         self.a = oscillation_amplitude
@@ -78,6 +80,8 @@ class Sinusoidal(StokesDataGenerator):
         self.use_diff = use_diff
         self.infer_difp = infer_difp
         self.use_random_and_boundary_u = use_random_and_boundary_u
+        self.use_inlet_u = use_inlet_u
+        self.use_broad_div = use_broad_div
 
     def calc_y_top(self, xs):
         return self.a * jnp.sin(2 * jnp.pi * xs / self.L) + self.w / 2
@@ -264,12 +268,12 @@ class Sinusoidal(StokesDataGenerator):
 
     def num_to_num_x_y(self, num, use_broad=False, ratio=None):
         if use_broad:
-            height = (self.w + self.a * 2) * (1 + ratio)
-            length = self.L * (1 + ratio)
+            # height = (self.w + self.a * 2) * (1 + ratio)
+            # length = self.L * (1 + ratio)
             # adjust = height / self.w  # use_broadがFalseの場合と点の間隔が（大体）同じになるように
-            adjust = 1
-            num_x = int(num * self.L / (height + self.L) * adjust * (1 + ratio))
-            num_y = int(num * height / (height + self.L) * adjust * (1 + ratio))
+            # adjust = 1
+            num_x = int(num * self.L / (self.w + self.L))
+            num_y = int(num * (self.w + self.a * 2) / (self.w + self.L))
         else:
             num_x = int(num * self.L / (self.w + self.L))
             num_y = int(num * self.w / (self.w + self.L))
@@ -380,7 +384,7 @@ class Sinusoidal(StokesDataGenerator):
             r_ux_all, r_uy_all = r_train
             ux_all, uy_all = f_train
             split = 4
-            num_lines = 2
+            num_lines = 4
             if num_lines == 4:
                 # points for ux
                 xs = r_ux_all[:, 0]
@@ -539,6 +543,7 @@ class Sinusoidal(StokesDataGenerator):
         infer_du_boundary=False,
         infer_du_grid=False,
         infer_u_inlet_outlet=False,
+        infer_1d_u=False,
     ):
         self.test_num = test_num
 
@@ -689,6 +694,37 @@ class Sinusoidal(StokesDataGenerator):
             # self.f_test = [ux, uy]
             # return self.r_test, self.f_test
 
+        if infer_1d_u:
+            # checking values at x = 0.625, 1.875
+            maximum_height = self.w / 2 + self.a
+            num_y = 500
+            # x1 = 0.625
+            x1 = 0.9375
+            x2 = 1.875
+            x3 = 0.9375
+            x4 = 1.5625
+            r_ux = self.make_r_mesh(x1, x2, -maximum_height, maximum_height, 2, num_y)
+            r_uy = self.make_r_mesh(x3, x4, -maximum_height, maximum_height, 2, num_y)
+
+            is_outside_the_domain_ux = np.where(
+                (r_ux[:, 1] > self.calc_y_top(r_ux[:, 0]))
+                | (r_ux[:, 1] < self.calc_y_bottom(r_ux[:, 0]))
+            )
+            r_ux = r_ux[np.setdiff1d(np.arange(0, len(r_ux)), is_outside_the_domain_ux)]
+            is_outside_the_domain_uy = np.where(
+                (r_uy[:, 1] > self.calc_y_top(r_uy[:, 0]))
+                | (r_uy[:, 1] < self.calc_y_bottom(r_uy[:, 0]))
+            )
+            r_uy = r_uy[np.setdiff1d(np.arange(0, len(r_uy)), is_outside_the_domain_uy)]
+
+            ux = np.zeros(len(r_ux))
+            uy = np.zeros(len(r_uy))
+
+            self.r_test += [r_ux, r_uy]
+            self.f_test += [ux, uy]
+            return self.r_test, self.f_test
+            # ########################
+
         if not ux_test:
             # num_x, num_y = self.num_to_num_x_y(test_num)
             # r = self.make_r_mesh_sinusoidal(
@@ -718,19 +754,6 @@ class Sinusoidal(StokesDataGenerator):
                 self.x_start, self.x_end, -maximum_height, maximum_height, num_x, num_y
             )
             #######################
-
-            # # checking values at x = 0.625, 1.875
-            # num_y = 100
-            # x1 = 0.625
-            # x2 = 1.875
-            # x3 = 0.9375
-            # x4 = 1.5625
-            # r1 = self.make_r_mesh(x1, x2, -maximum_height,
-            #                       maximum_height, 2, num_y)
-            # r2 = self.make_r_mesh(x3, x4, -maximum_height,
-            #                       maximum_height, 2, num_y)
-            # r = np.concatenate([r1, r2])
-            # # ########################
 
             r_ux = r
             r_uy = r
@@ -828,19 +851,17 @@ class Sinusoidal(StokesDataGenerator):
         # x_start -= 0.2
         # x_end += 0.2
 
-        ratio = 0.3
+        ratio = 1.0
         f_num_x, f_num_y = self.num_to_num_x_y(
             f_num, use_broad=self.use_broad_governing_eqs, ratio=ratio
         )
         if self.use_broad_governing_eqs:
-            x_start -= self.L * ratio / 2
-            x_end += self.L * ratio / 2
-            y_start -= (self.w + self.a * 2) * ratio / 2
-            y_end += (self.w + self.a * 2) * ratio / 2
+            # x_start -= self.L
+            # x_end += self.L
+            y_start -= self.a * ratio
+            y_end += self.a * ratio
 
-            r_fx = self.make_r_mesh(
-                x_start, x_end, y_start - self.a, y_end + self.a, f_num_x, f_num_y
-            )
+            r_fx = self.make_r_mesh(x_start, x_end, y_start, y_end, f_num_x, f_num_y)
             r_fy = r_fx
             # forceの値を設定
             if self.use_force_as_constant_pressure:
@@ -880,9 +901,20 @@ class Sinusoidal(StokesDataGenerator):
         y_start = -self.w / 2 + div_pad
         y_end = self.w / 2 - div_pad
 
-        div_num_x, div_num_y = self.num_to_num_x_y(div_num)
+        div_num_x, div_num_y = self.num_to_num_x_y(
+            div_num, use_broad=self.use_broad_div
+        )
         if self.random_arrange:
             pass
+        elif self.use_broad_div:
+            r_div = self.make_r_mesh(
+                x_start,
+                x_end,
+                y_start - self.a,
+                y_end + self.a,
+                div_num_x,
+                div_num_y,
+            )
         else:
             r_div = self.make_r_mesh_sinusoidal(
                 x_start, x_end, y_start, y_end, div_num_x, div_num_y, div_pad
