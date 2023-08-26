@@ -117,11 +117,15 @@ class SinusoidalCylinder(Sinusoidal):
             # ux, uy = f_train[0][index_for_train], f_train[1][index_for_train]
 
             ########## when using fem as reference solution #################
+            if self.__class__.__name__ == "SinusoidalCylinder":
+                fname = "test_sinusoidalcylinder_fem/fem_train_2962.pickle"
+            elif self.__class__.__name__ == "SinusoidalRectangular":
+                fname = "test_sinusoidalrectangular_fem/fem_train_2930.pickle"
             with open(
                 # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0801_sinusoidalcylinder_train_24968.pickle',
                 # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0817_sinusoidalcylinder_train_2802.pickle',
                 # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_fem/fem_train_1524.pickle',
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_fem/fem_train_2962.pickle',
+                f'{os.environ["HOME"]}/opt/stopro/template_data/{fname}',
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -399,6 +403,11 @@ class SinusoidalCylinder(Sinusoidal):
                 save_dict["uy"] * 12,
             )  # standarize
 
+        if self.__class__.__name__ == "SinusoidalCylinder":
+            class_name = "sinusoidalcylinder"
+        elif self.__class__.__name__ == "SinusoidalRectangular":
+            class_name = "sinusoidalrectangular"
+
         if use_fem_result:
             if self.particle_center[0] == 0.625:
                 if test_num == 72:
@@ -407,8 +416,10 @@ class SinusoidalCylinder(Sinusoidal):
                     filename = "fem_test_64x36.pickle"
                 elif test_num == 50:
                     filename = "fem_test_89x50.pickle"
+                elif test_num == 54:
+                    filename = "fem_test_96x54.pickle"
             with open(
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_fem/{filename}',
+                f'{os.environ["HOME"]}/opt/stopro/template_data/test_{class_name}_fem/{filename}',
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
