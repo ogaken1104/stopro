@@ -43,5 +43,5 @@ class SinusoidalRectangular(SinusoidalCylinder):
                 (rx > self.particle_radius) | (ry > self.particle_radius)
             )[0]
         else:
-            index_out_cylinder = np.where(rx**2 + ry**2 > radius_min**2)[0]
+            index_out_cylinder = np.where((rx > radius_min) | (ry > radius_min))[0]
         return index_out_cylinder

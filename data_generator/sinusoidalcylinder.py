@@ -255,16 +255,20 @@ class SinusoidalCylinder(Sinusoidal):
                 self.f[-i] = self.f[-i][index_out_cylinder]
 
     def make_r_mesh_circular(self, num_per_side, dr=0.1):
-        x_start = self.particle_center - (self.particle_radius + dr)
-        x_end = self.particle_center + (self.particle_radius + dr)
-        y_start = x_start
-        y_end = x_end
+        x_start = self.particle_center[0] - (self.particle_radius + dr)
+        x_end = self.particle_center[0] + (self.particle_radius + dr)
+        y_start = self.particle_center[1] - (self.particle_radius + dr)
+        y_end = self.particle_center[1] + (self.particle_radius + dr)
 
         r = self.make_r_mesh(x_start, x_end, y_start, y_end, num_per_side, num_per_side)
-
-        index_out_of_dr = self.get_index_out_cylinder(
-            r, radius_min=self.particle_radius + dr * 1.1
-        )
+        if self.__class__.__name__ == "SinusoidalCylinder":
+            index_out_of_dr = self.get_index_out_cylinder(
+                r, radius_min=self.particle_radius + dr * 1.1
+            )
+        elif self.__class__.__name__ == "SinusoidalRectangular":
+            index_out_of_dr = self.get_index_out_cylinder(
+                r, radius_min=self.particle_radius + dr
+            )
         # index_in_dr = (r[:, 0] != r[index_out_of_dr][:, 0]) | (r[:, 1] != r[index_out_of_dr][:, 1])
         index_in_dr = np.arange(0, len(r), 1, dtype=int)
         index_in_dr = np.delete(index_in_dr, index_out_of_dr)
