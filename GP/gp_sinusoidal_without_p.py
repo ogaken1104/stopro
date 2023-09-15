@@ -7,6 +7,10 @@ from stopro.GP.gp_2D_stokes import GPmodel2DStokes
 
 
 class GPSinusoidalWithoutP(GPmodel2DStokes):
+    """
+    Class for the inference using difference of pressure in 2D Stokes system.
+    """
+
     def __init__(
         self,
         lbox: np.ndarray = None,
@@ -16,6 +20,14 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
         Kernel: callable = None,
         # approx_non_pd: bool = False,
     ):
+        """
+        Args:
+            lbox (np.ndarray): periodic length
+            use_difp (bool): if using difference of pressure at inlet and outlet as training points
+            use_difu (bool): if using difference of velocity at inlet and outlet as training points
+            infer_governing_eqs (bool): if infer governing equation instead of velocity (and pressure)
+            Kernel (callable): kernel function to use
+        """
         super().__init__()
         self.lbox = lbox
         self.use_difp = use_difp
@@ -32,8 +44,8 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
     def trainingK_all(self, θ, train_pts):
         """
         Args :
-        θ  : kernel hyperparameters
-        args: training points r_ux,r_uy,r_p,r_fx,r_fy,r_div
+            θ (jnp.array) : kernel hyperparameters
+            training points (List(jnp.array)): r_ux,r_uy,r_p,r_fx,r_fy,r_div
         """
 
         Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
@@ -93,6 +105,12 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
         return self.calculate_K_symmetric(train_pts, Ks)
 
     def mixedK_all(self, θ, test_pts, train_pts):
+        """
+        Args :
+            θ (jnp.array) : kernel hyperparameters
+            test points (List(jnp.array)): r_test
+            training points (List(jnp.array)): r_ux,r_uy,r_p,r_fx,r_fy,r_div
+        """
         θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
 
         Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
@@ -205,6 +223,12 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
         return self.calculate_K_asymmetric(train_pts, test_pts, Ks)
 
     def testK_all(self, θ, test_pts):
+        """
+        Args :
+            θ (jnp.array) : kernel hyperparameters
+            test points (List(jnp.array)): r_test
+        """
+
         θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
 
         if self.infer_governing_eqs:

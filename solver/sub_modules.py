@@ -10,29 +10,25 @@ def get_init(
     use_gradp_training=False,
     system_type="Stokes_2D",
 ):
-    # eta1 = hyperparams['eta1']
-    # eta2 = hyperparams['eta2']
-    # l1 = hyperparams['l1']
-    # l2 = hyperparams['l2']
-    # alpha = hyperparams['alpha']
     if system_type == "Stokes_2D":
         if use_gradp_training:
-            θ_same = jnp.array([eta1, l1, l1])
-            θ_diff = jnp.array([eta2, l2, l2])
-            init = jnp.concatenate(
-                [
-                    θ_same,
-                    θ_diff,
-                    θ_diff,
-                    θ_diff,
-                    θ_same,
-                    θ_diff,
-                    θ_diff,
-                    θ_same,
-                    θ_diff,
-                    θ_same,
-                ]
-            )
+            pass
+            # θ_same = jnp.array([eta1, l1, l1])
+            # θ_diff = jnp.array([eta2, l2, l2])
+            # init = jnp.concatenate(
+            #     [
+            #         θ_same,
+            #         θ_diff,
+            #         θ_diff,
+            #         θ_diff,
+            #         θ_same,
+            #         θ_diff,
+            #         θ_diff,
+            #         θ_same,
+            #         θ_diff,
+            #         θ_same,
+            #     ]
+            # )
         elif len(hyperparams) == 6:
             θuxux = jnp.array(hyperparams["uxux"])
             θuyuy = jnp.array(hyperparams["uyuy"])
@@ -41,6 +37,7 @@ def get_init(
             θuxp = jnp.array(hyperparams["uxp"])
             θuyp = jnp.array(hyperparams["uyp"])
             init = jnp.concatenate([θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp])
+        ## when using std of noise included in training data as hyperparams
         elif len(hyperparams) == 7:
             θuxux = jnp.array(hyperparams["uxux"])
             θuyuy = jnp.array(hyperparams["uyuy"])
@@ -52,6 +49,8 @@ def get_init(
             init = jnp.concatenate([θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp, θstdnoise])
 
     elif system_type == "1D":
+        eta1 = 0.0
+        l1 = 0.0
         init = jnp.array([eta1, l1])
     return init
 

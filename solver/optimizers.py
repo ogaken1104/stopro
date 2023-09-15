@@ -16,6 +16,25 @@ SECOND_GRAD_OPTIMIZE_LIST = [
 
 
 def optimize_with_scipy(func, dfunc, hess, res, theta, loss, optimize_param, args):
+    """
+    Optimize hyper-parameter using scipy.optimize.minimize
+
+    Args:
+        func (callable): loss function
+        dfunc (callable): first derivative of loss function
+        hess (callable): second derivative of loss function
+        res (callable): list for load result
+        theta (jnp.array): array of hyper-parameter
+        loss (list): list of loss values
+        optimize_param (dict)
+        args: arguments of the loss function
+
+        jnp.array: optimized hyper-parameter
+    Returns:
+        list: result of optimization
+        list: loss values
+    """
+
     def save_theta_loss(xk):
         theta.append(xk)
         loss.append(func(xk, *args))
@@ -66,6 +85,23 @@ def optimize_with_scipy(func, dfunc, hess, res, theta, loss, optimize_param, arg
 
 
 def optimize_by_adam(f, df, hf, init, optimize_param, *args):
+    """
+    Optimize hyper-parameter using scipy.opimize.minimize and/or gradient dcsnet using optax
+
+    Args:
+        f (callable): loss function
+        df (callable): first derivative of loss function
+        hf (callable): second derivative of loss function
+        init (jnp.array): array of hyper-parameter
+        optimize_param (dict)
+        args: arguments of the loss function
+
+    Returns:
+        jnp.array: optimized hyper-parameter
+        list: loss values
+        list: hyper-parameter at each iteration
+        list: norm of the gradients
+    """
     maxiter_GD = optimize_param["maxiter_GD"]
     lr = optimize_param["lr"]
     eps = optimize_param["eps"]
@@ -86,11 +122,10 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
     # _:ignore returns
     r_train, *_ = args
     ntraining = 0
-    # opt = {"maxiter": maxiter_scipy, "disp": 0}
     res = [{"x": init}]
     for r in r_train:
         ntraining += r.shape[0]
-    # training pointsのかず
+    # the number of training points
     func = lambda p, *args: f(p, *args) / ntraining
     dfunc = lambda p, *args: df(p, *args) / ntraining
     hess = lambda p, *args: hf(p, *args) / ntraining
@@ -126,10 +161,6 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
             loss.append(value)
             if t < 1:
                 continue
-            # elif jnp.abs(loss[-1]-loss[-2]) < eps:
-            #     print("converged")
-            #     break
-            # judge convergence by norm of gradient
             elif norm_of_grads < eps:
                 print("converged")
                 break
@@ -162,148 +193,6 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
         )
 
     return theta[-1], loss, theta, norm_of_grads_list
-
-
-def optimize_by_adam_avoid_divergence(f, df, hf, init, optimize_param, *args):
-    maxiter_GD = optimize_param["maxiter_GD"]
-    lr = optimize_param["lr"]
-    eps = optimize_param["eps"]
-    maxiter_scipy = optimize_param["maxiter_scipy"]
-    method_GD = optimize_param["method_GD"]
-    method_scipy = optimize_param["method_scipy"]
-    print(method_scipy)
-    loss = []
-    theta = [init]
-    norm_of_grads_list = []
-
-    def printer(loss, opt_result, init):
-        print(f"\t loss = {loss[-1]:12.6e}, niter = {maxiter_GD:5d}")
-        print(f"\t\t     θ0 = {jnp.exp(init)}")
-        print(f"\t\t      θ = {jnp.exp(opt_result)}")
-        print(f"\t\t log(θ) = {opt_result}")
-
-    # _:ignore returns
-    r_train, *_ = args
-    ntraining = 0
-    opt = {"maxiter": maxiter_scipy, "disp": 0}
-    res = [{"x": init}]
-    for r in r_train:
-        ntraining += r.shape[0]
-    # training pointsのかず
-    func = lambda p, *args: f(p, *args) / ntraining
-    dfunc = lambda p, *args: df(p, *args) / ntraining
-    hess = lambda p, *args: hf(p, *args) / ntraining
-
-    def step(t, opt_state, diverged, term_for_regularize_grads, theta_before):
-        value, grads = value_and_grad(func)(get_params(opt_state), *args)
-        norm_of_grads = jnp.sqrt(jnp.sum(jnp.square(grads)))
-        print(
-            f"step{t:4} loss: {value:.3e} max_grad: {jnp.max(abs(grads)):.3e}, arg={jnp.argmax(abs(grads))}"
-        )
-        # 更新したthetaの値でlossが計算不可だった場合は、gradsに倍率(term~)をかけて小さくして更新したthetaを用いる。この倍率は、場合によっては最大1まで戻され、発散する場合はどんどん小さくなる
-        grads *= term_for_regularize_grads  # gradsを補正
-        # 学習が遅くなりすぎないように、もし前回発散していない、かつtermが0.1以下であれば10倍する
-        if not diverged and term_for_regularize_grads <= 0.1:
-            term_for_regularize_grads *= 10.0
-        diverged = False
-        for _ in range(11):
-            opt_state = opt_init(theta_before)
-            opt_state = opt_update(t, grads, opt_state)
-            theta = get_params(opt_state)
-            # if jnp.any(jnp.isnan(theta)):
-            # もし更新したthetaにおけるlossが計算できなければ、gradsを小さくしてthetaの更新をやり直す
-            if jnp.isnan(func(theta, *args)):
-                print("isnan")
-                term_for_regularize_grads *= 0.01
-                grads *= 0.01
-                diverged = True
-            else:
-                # 次回のlossが収束していれば、ループを抜ける
-                break
-        print(
-            f"norm_of_grads: {norm_of_grads:.3e}, term_for_regularize_grads:{term_for_regularize_grads:.2e}\n"
-        )
-        # for thet in jnp.split(theta, 6):
-        #     print(f'{thet}')
-        # print(f'theta_max: {jnp.max(theta):.5f}')
-        # print(f'theta_min: {jnp.min(theta):.5f}\n')
-        return value, opt_state, norm_of_grads, diverged, term_for_regularize_grads
-
-    def doopt(init, opt_init, get_params, maxiter_GD, loss, theta, norm_of_grads_list):
-        opt_state = opt_init(init)
-        diverged = False
-        term_for_regularize_grads = 1.0
-        for t in range(maxiter_GD):
-            value, opt_state, norm_of_grads, diverged, term_for_regularize_grads = step(
-                t, opt_state, diverged, term_for_regularize_grads, theta[-1]
-            )
-            # keep norm of gradient, theta and loss in lists
-            norm_of_grads_list.append(norm_of_grads)
-            theta.append(get_params(opt_state))
-            loss.append(value)
-            if t < 1:
-                continue
-            # elif jnp.abs(loss[-1]-loss[-2]) < eps:
-            #     print("converged")
-            #     break
-            # judge convergence by norm of gradient
-            elif norm_of_grads < eps:
-                print("converged")
-                break
-            elif jnp.any(jnp.isnan(theta[-1])):
-                print("diverged")
-                raise Exception("発散しました、やりなおしましょう")
-        return theta, loss
-
-    # optimize by scipy method
-    loss_before_optimize = func(init, *args)
-    print(f"loss before optimize: {loss_before_optimize}")
-    loss.append(loss_before_optimize)
-    if jnp.isnan(loss_before_optimize):
-        raise Exception("初期条件でlossがnanになりました")
-    if maxiter_scipy:
-        if method_scipy == "Nelder-Mead" or method_scipy == "L-BFGS-B":
-            res.append(
-                optimize.minimize(
-                    func, res[-1]["x"], args=args, method=method_scipy, options=opt
-                )
-            )
-            print(
-                f"loss after first optimize: {res[-1]['fun']}, \n result of first optimize{res}"
-            )
-        elif method_scipy == "TNC" or method_scipy == "BFGS":
-            res.append(
-                optimize.minimize(
-                    func,
-                    res[-1]["x"],
-                    args=args,
-                    method=method_scipy,
-                    jac=dfunc,
-                    options=opt,
-                )
-            )
-        theta.append(res[-1]["x"])
-    # optimize by sgd
-    if method_GD == "adam":
-        opt_init, opt_update, get_params = optimizers.adam(lr)
-    elif method_GD == "sgd":
-        opt_init, opt_update, get_params = optimizers.sgd(lr)
-
-    if maxiter_GD:
-        theta, loss = doopt(
-            res[-1]["x"],
-            opt_init,
-            get_params,
-            maxiter_GD,
-            loss,
-            theta,
-            norm_of_grads_list,
-        )
-
-    return theta[-1], loss, theta, norm_of_grads_list
-
-
-# fを初期条件initで各最適化方法で最適化する
 
 
 def optimizeParameters(f, df, hf, init, *args):

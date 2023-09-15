@@ -6,10 +6,23 @@ from stopro.GP.gp_2D import GPmodel2D
 
 
 class GPmodel2DStokes(GPmodel2D):
+    """
+    The base class for 2D stokes gaussian process
+    """
+
     def __init__(self):
         super().__init__()
 
     def setup_no_diffop_kernel(self, θ):
+        """
+        Construct kernel of (uxux, uxuy, uyuy, uxp, uyp, pp)
+
+        Args:
+            \theta (jnp.array): array of hyper-parameter
+
+        Returns:
+            Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp
+        """
         θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
 
         def Kuxux(r, rp):
@@ -33,6 +46,15 @@ class GPmodel2DStokes(GPmodel2D):
         return Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp
 
     def setup_gov_gov_kernel(self, θ):
+        """
+        Construct kernels of (Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv)
+
+        Args:
+            \theta (jnp.array): array of hyper-parameter
+
+        Returns:
+            Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv
+        """
         θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
 
         def Kfxfx(r, rp):
@@ -86,6 +108,15 @@ class GPmodel2DStokes(GPmodel2D):
         return Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv
 
     def setup_nondifop_difop_kernel(self, θ):
+        """
+        Construct kernels of (Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv)
+
+        Args:
+            \theta (jnp.array): array of hyper-parameter
+
+        Returns:
+            Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv
+        """
         θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
 
         def Kuxfx(r, rp):
@@ -118,6 +149,15 @@ class GPmodel2DStokes(GPmodel2D):
         return Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv
 
     def setup_latter_difop_kerenl(self, θ):
+        """
+        Construct kernels only the latter of arguments is shifted difference
+
+        Args:
+            \theta (jnp.array): array of hyper-parameter
+
+        Returns:
+            Kernels,
+        """
         θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
         Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
 
@@ -172,6 +212,15 @@ class GPmodel2DStokes(GPmodel2D):
         )
 
     def setup_latter_difp_kernel(self, θ):
+        """
+        Construct kernels of (Kfxdifp, Kfydifp, Kdivdifp)
+
+        Args:
+            \theta (jnp.array): array of hyper-parameter
+
+        Returns:
+            Kfxdifp, Kfydifp, Kdivdifp
+        """
         θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
 
         def Kfxp(r, rp):

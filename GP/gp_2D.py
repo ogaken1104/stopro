@@ -6,6 +6,10 @@ from stopro.GP.gp import GPmodel
 
 
 class GPmodel2D(GPmodel):
+    """
+    The base class for any 2D gaussian process model.
+    """
+
     def __init__(self):
         super().__init__()
 
@@ -14,18 +18,33 @@ class GPmodel2D(GPmodel):
         return vmap(vmap(f, in_axes=(None, 0, None)), in_axes=(0, None, None))
 
     def setup_kernel_include_difference_prime(self, K_func):
+        """
+        Function that construct a kernel that calculates shifted difference of variable at first argument.
+        S_{L\boldsymbol{e}^{alpha}}(kernel)
+        """
+
         def K_difprime(r, rp):
             return K_func(r, rp + self.lbox) - K_func(r, rp)
 
         return K_difprime
 
     def setup_kernel_include_difference(self, K_func):
+        """
+        Function that construct a kernel that calculates shifted difference of variable at second argument.
+        S^{prime}_{L\boldsymbol{e}^{alpha}}(kernel)
+        """
+
         def K_dif(r, rp):
             return K_func(r + self.lbox, rp) - K_func(r, rp)
 
         return K_dif
 
     def setup_kernel_difdif(self, K_func):
+        """
+        Function that construct a kernel that calculates shifted difference of variable both at first and second argument.
+        S_{L\boldsymbol{e}^{alpha}}S^{prime}_{L\boldsymbol{e}^{alpha}}(kernel)
+        """
+
         def K_difdif(r, rp):
             return (
                 K_func(r + self.lbox, rp + self.lbox)

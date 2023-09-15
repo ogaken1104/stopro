@@ -1,7 +1,5 @@
 import numpy as np
 
-# from data_handler.data_handle_module import HdfOperator
-
 
 def max_rel_error(true, pred):
     index = np.where(true != 0.0)
@@ -16,7 +14,9 @@ def max_rel_error(true, pred):
 
 def rel_error(true, pred):
     true_max = np.max(true)
-    zero_threshold = true_max * 1e-7  # 1e-7
+    zero_threshold = (
+        true_max * 1e-7
+    )  # ignore the data that test value is smaller than 1e-7
     index = np.where(abs(true) > zero_threshold)
     if np.all(abs(true) <= zero_threshold):
         rel_error = 0.0
@@ -46,7 +46,7 @@ def analyze_result(
 ):
     analysis_text_path = f"../data_output/analysis.txt"
 
-    # 絶対誤差、相対誤差の計算（最大値、平均値も）
+    # calculate absolute and relative errors
     absolute_error = []
     relative_error = []
     max_abs_error = []

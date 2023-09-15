@@ -253,6 +253,14 @@ def K_2d_x_Periodic_y_SE_Add(r1, r2, θ, lbox):
 def define_kernel(
     kernel_type, kernel_form="product", input_dim=2, lbox=None, distance_func=False
 ):
+    """
+    Function that returns kernel.
+
+    Args:
+        kernel_type: ex) se: Squared-Exponential, mt: Matern
+        kernel_form: additive or product
+        input_dim: dimension of inputs for kenel
+    """
     if input_dim == 2:
         if kernel_form == "additive":
             if kernel_type == "se":

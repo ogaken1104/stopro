@@ -5,7 +5,15 @@ from jax import grad, jit, vmap
 
 
 class GPmodel:
+    """
+    The base class for any Gaussian Process model
+    """
+
     def __init__(self, approx_non_pd: bool = False):
+        """
+        Args:
+            approx_non_pd: if approximate non positive semi-difinite covariance matrix with a poisitive semi-difinite matix
+        """
         self.approx_non_pd = approx_non_pd
 
     def cholesky_decompose_non_positive_definite(self, matrix, noise, **kwargs):
@@ -156,8 +164,6 @@ class GPmodel:
             else:
                 δfb = jnp.concatenate([δfb, f_train[i] - μ[i]])
                 # create single training array, with velocities and forces (second derivatives)
-        #         print(f'δy={δy}')
-        #         print(f'Σ={Σ}')
         μposts, Σposts = self.postGP(
             δfb, Σaa, Σab, Σbb, ϵ, approx_non_pd=self.approx_non_pd
         )
@@ -171,7 +177,6 @@ class GPmodel:
             μpost.append(μposts[sec0:sec1])
             Σpost.append(Σposts[sec0:sec1, sec0:sec1])
             sec0 += len(r_test[i])
-            # 一応解決ちょっと疑問残る
             μpost[i] += μ_test[i]
         return μpost, Σpost
 
