@@ -117,11 +117,15 @@ class SinusoidalCylinder(Sinusoidal):
             # ux, uy = f_train[0][index_for_train], f_train[1][index_for_train]
 
             ########## when using fem as reference solution #################
+            if self.__class__.__name__ == "SinusoidalCylinder":
+                fname = "test_sinusoidalcylinder_fem/fem_train_2962.pickle"
+            elif self.__class__.__name__ == "SinusoidalRectangular":
+                fname = "test_sinusoidalrectangular_fem/fem_train_2930.pickle"
             with open(
                 # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0801_sinusoidalcylinder_train_24968.pickle',
                 # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0817_sinusoidalcylinder_train_2802.pickle',
                 # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_fem/fem_train_1524.pickle',
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_fem/fem_train_2962.pickle',
+                f'{os.environ["HOME"]}/opt/stopro/template_data/{fname}',
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -251,16 +255,20 @@ class SinusoidalCylinder(Sinusoidal):
                 self.f[-i] = self.f[-i][index_out_cylinder]
 
     def make_r_mesh_circular(self, num_per_side, dr=0.1):
-        x_start = self.particle_center - (self.particle_radius + dr)
-        x_end = self.particle_center + (self.particle_radius + dr)
-        y_start = x_start
-        y_end = x_end
+        x_start = self.particle_center[0] - (self.particle_radius + dr)
+        x_end = self.particle_center[0] + (self.particle_radius + dr)
+        y_start = self.particle_center[1] - (self.particle_radius + dr)
+        y_end = self.particle_center[1] + (self.particle_radius + dr)
 
         r = self.make_r_mesh(x_start, x_end, y_start, y_end, num_per_side, num_per_side)
-
-        index_out_of_dr = self.get_index_out_cylinder(
-            r, radius_min=self.particle_radius + dr * 1.1
-        )
+        if self.__class__.__name__ == "SinusoidalCylinder":
+            index_out_of_dr = self.get_index_out_cylinder(
+                r, radius_min=self.particle_radius + dr * 1.1
+            )
+        elif self.__class__.__name__ == "SinusoidalRectangular":
+            index_out_of_dr = self.get_index_out_cylinder(
+                r, radius_min=self.particle_radius + dr
+            )
         # index_in_dr = (r[:, 0] != r[index_out_of_dr][:, 0]) | (r[:, 1] != r[index_out_of_dr][:, 1])
         index_in_dr = np.arange(0, len(r), 1, dtype=int)
         index_in_dr = np.delete(index_in_dr, index_out_of_dr)
@@ -399,6 +407,11 @@ class SinusoidalCylinder(Sinusoidal):
                 save_dict["uy"] * 12,
             )  # standarize
 
+        if self.__class__.__name__ == "SinusoidalCylinder":
+            class_name = "sinusoidalcylinder"
+        elif self.__class__.__name__ == "SinusoidalRectangular":
+            class_name = "sinusoidalrectangular"
+
         if use_fem_result:
             if self.particle_center[0] == 0.625:
                 if test_num == 72:
@@ -407,8 +420,10 @@ class SinusoidalCylinder(Sinusoidal):
                     filename = "fem_test_64x36.pickle"
                 elif test_num == 50:
                     filename = "fem_test_89x50.pickle"
+                elif test_num == 54:
+                    filename = "fem_test_96x54.pickle"
             with open(
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_fem/{filename}',
+                f'{os.environ["HOME"]}/opt/stopro/template_data/test_{class_name}_fem/{filename}',
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
