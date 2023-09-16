@@ -35,8 +35,7 @@ training_data:
   condition:
     use_pbc_points: False
   generate_params:
-    ly_num: 10
-    y_loc: 'both'
+    y_num: 10
 lbls:
   train:
   - 'r' 
@@ -63,7 +62,6 @@ lbls:
 vnames:
   train:
    - "y"
-   - "ly"
   test:
    - "y"
   infer:

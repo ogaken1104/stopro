@@ -4,7 +4,7 @@ import numpy as np
 from stopro.data_generator.data_generator import DataGenerator
 
 
-class Sin1D(DataGenerator):
+class Sin1DNaive(DataGenerator):
     def __init__(self, use_pbc_points=False):
         self.x_min = 0.0
         self.x_max = np.pi * 2
@@ -14,26 +14,14 @@ class Sin1D(DataGenerator):
         self.f_test = []
         self.use_pbc_points = use_pbc_points
 
-    def generate_y(self, y_loc):
-        if y_loc == "both":
-            r_y = np.array([self.x_min, self.x_max])
-        elif y_loc == "origin":
-            r_y = np.array([0.0])
+    def generate_y(self, y_num):
+        r_y = np.linspace(self.x_min, self.x_max, y_num)
         y = np.sin(r_y)
         self.r += [r_y]
         self.f += [y]
 
-    def generate_ly(self, ly_num):
-        # r_ly = np.linspace(self.x_min, self.x_max, ly_num)
-        r_ly = np.linspace(self.x_min, self.x_max, ly_num + 1)[:-1]
-        # 同じ点を2点与えても発散しないかテスト（error termを加えているから発散しないはず）
-        # r_ly = np.concatenate([r_ly, np.array([0., 0.])])
-        ly = -np.sin(r_ly)
-        self.r += [r_ly]
-        self.f += [ly]
-
     def generate_test(self, test_num):
-        r = np.linspace(-np.pi, 3 * np.pi, test_num)
+        r = np.linspace(-np.pi / 2, 2.5 * np.pi, test_num)
         y = np.sin(r)
         self.r_test += [r]
         self.f_test += [y]
@@ -45,11 +33,10 @@ class Sin1D(DataGenerator):
         self.r += [r_pbc]
         self.f += [f_pbc]
 
-    def generate_training_data(self, ly_num, y_loc="both"):
-        self.generate_y(y_loc)
+    def generate_training_data(self, y_num):
+        self.generate_y(y_num)
         if self.use_pbc_points:
             self.generate_pbc_y()
-        self.generate_ly(ly_num)
         return self.r, self.f
 
     def plot_train(self, save=False, path=None):
@@ -65,17 +52,9 @@ class Sin1D(DataGenerator):
             color="k",
             facecolor="None",
         )
-        index_ly = 1
         if self.use_pbc_points:
             ax.scatter(self.r[1], self.f[1], label="pbc", marker="+", color="k", s=140)
             index_ly = 2
-        ax.scatter(
-            self.r[index_ly],
-            np.zeros(len(self.r[index_ly])),
-            label=r"$\Delta y$ training",
-            marker="x",
-            color="k",
-        )
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.legend()

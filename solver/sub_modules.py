@@ -49,9 +49,7 @@ def get_init(
             init = jnp.concatenate([θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp, θstdnoise])
 
     elif system_type == "1D":
-        eta1 = 0.0
-        l1 = 0.0
-        init = jnp.array([eta1, l1])
+        init = jnp.array(hyperparams)
     return init
 
 
