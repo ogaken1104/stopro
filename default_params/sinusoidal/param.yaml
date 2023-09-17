@@ -59,6 +59,7 @@ model:
     - -1.5
   kernel_form: product
   kernel_type: se
+  distance_func: false
 optimization:
   eps: 1.0e-05
   loss_ridge_regression: false
@@ -152,3 +153,4 @@ vnames:
   - fy
   - divu
   - difp
+input_dim: 2

@@ -12,6 +12,7 @@ class GPmodel2DStokes(GPmodel2D):
 
     def __init__(self):
         super().__init__()
+        self.split_hyperparam = lambda theta: jnp.split(theta, 6)
 
     def setup_no_diffop_kernel(self, θ):
         """
@@ -23,7 +24,7 @@ class GPmodel2DStokes(GPmodel2D):
         Returns:
             Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp
         """
-        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = self.split_hyperparam(theta=θ)
 
         def Kuxux(r, rp):
             return self.K(r, rp, θuxux)
@@ -55,7 +56,7 @@ class GPmodel2DStokes(GPmodel2D):
         Returns:
             Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv
         """
-        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = self.split_hyperparam(theta=θ)
 
         def Kfxfx(r, rp):
             return (
@@ -117,7 +118,7 @@ class GPmodel2DStokes(GPmodel2D):
         Returns:
             Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv
         """
-        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = self.split_hyperparam(theta=θ)
 
         def Kuxfx(r, rp):
             return self.d10(r, rp, θuxp) - self.L1(r, rp, θuxux)
@@ -158,7 +159,7 @@ class GPmodel2DStokes(GPmodel2D):
         Returns:
             Kernels,
         """
-        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = self.split_hyperparam(theta=θ)
         Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
 
         def Kuxfx(r, rp):
@@ -221,7 +222,7 @@ class GPmodel2DStokes(GPmodel2D):
         Returns:
             Kfxdifp, Kfydifp, Kdivdifp
         """
-        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = self.split_hyperparam(theta=θ)
 
         def Kfxp(r, rp):
             return self.d00(r, rp, θpp) - self.L0(r, rp, θuxp)

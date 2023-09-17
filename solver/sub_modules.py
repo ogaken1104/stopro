@@ -9,7 +9,13 @@ def get_init(
     l=None,
     use_gradp_training=False,
     system_type="Stokes_2D",
+    params=None,
 ):
+    if params["model"]["kernel_type"] == "sm":
+        for kernel_arg, hyp_each_kernel in hyperparams.items():
+            for name, hyp_each in hyp_each_kernel.items():
+                hyperparams[kernel_arg][name] = jnp.array(hyp_each)
+        return hyperparams
     if system_type == "Stokes_2D":
         if use_gradp_training:
             pass

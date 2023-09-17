@@ -7,6 +7,7 @@ model:
   kernel_form: product
   kernel_type: se
   distance_func: False
+  num_mixture: 1
 optimization:
   eps: 1.0e-05
   lr: 1.0e-02

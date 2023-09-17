@@ -18,6 +18,7 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
         use_difu: bool = False,
         infer_governing_eqs: bool = False,
         Kernel: callable = None,
+        kernel_type: str = None,
         # approx_non_pd: bool = False,
     ):
         """
@@ -28,7 +29,6 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
             infer_governing_eqs (bool): if infer governing equation instead of velocity (and pressure)
             Kernel (callable): kernel function to use
         """
-        super().__init__()
         self.lbox = lbox
         self.use_difp = use_difp
         self.use_difu = use_difu
@@ -40,6 +40,8 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
         self.Kernel_rev = lambda r1, r2, θ: Kernel(r2, r1, θ)
         self.K_rev = self.outermap(self.Kernel_rev)  # really needed?
         self.setup_differential_oprators()
+        self.kernel_type = kernel_type
+        super().__init__()
 
     def trainingK_all(self, θ, train_pts):
         """
@@ -111,7 +113,7 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
             test points (List(jnp.array)): r_test
             training points (List(jnp.array)): r_ux,r_uy,r_p,r_fx,r_fy,r_div
         """
-        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = self.split_hyperparam(theta=θ)
 
         Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
         (
@@ -229,7 +231,7 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
             test points (List(jnp.array)): r_test
         """
 
-        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = self.split_hyperparam(theta=θ)
 
         if self.infer_governing_eqs:
             Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv = self.setup_gov_gov_kernel(θ)

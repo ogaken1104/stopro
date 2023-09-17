@@ -18,6 +18,13 @@ class GPmodel1DNaive(GPmodel1D):
         self.Kernel = Kernel
         self.K = self.outermap(Kernel)
 
+    # def split_hyperparams(func):
+    #     def wrapper(self, *args):
+    #         theta = args[1]
+    #         func(self, theta, *args[1:])
+
+    #     return wrapper
+
     def trainingK_all(self, theta, train_pts):
         """
         Args :

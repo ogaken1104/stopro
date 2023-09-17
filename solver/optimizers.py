@@ -15,7 +15,7 @@ SECOND_GRAD_OPTIMIZE_LIST = [
 ]
 
 
-def optimize_with_scipy(func, dfunc, hess, res, theta, loss, optimize_param, args):
+def optimize_with_scipy(func, dfunc, hess, res, theta, loss, params, args):
     """
     Optimize hyper-parameter using scipy.optimize.minimize
 
@@ -34,6 +34,7 @@ def optimize_with_scipy(func, dfunc, hess, res, theta, loss, optimize_param, arg
         list: result of optimization
         list: loss values
     """
+    optimize_param = params["optimization"]
 
     def save_theta_loss(xk):
         theta.append(xk)
@@ -41,6 +42,9 @@ def optimize_with_scipy(func, dfunc, hess, res, theta, loss, optimize_param, arg
 
     method_scipy = optimize_param["method_scipy"]
     maxiter_scipy = optimize_param["maxiter_scipy"]
+
+    # if params["model"]["kernel_typ"] == "sm":
+    #     theta_array = theta.items()
 
     for method, maxiter in zip(method_scipy, maxiter_scipy):
         print(method, maxiter)
@@ -84,7 +88,7 @@ def optimize_with_scipy(func, dfunc, hess, res, theta, loss, optimize_param, arg
 #     #     state = strategy.tell(x, fitness, state, es_params)
 
 
-def optimize_by_adam(f, df, hf, init, optimize_param, *args):
+def optimize_by_adam(f, df, hf, init, params, *args):
     """
     Optimize hyper-parameter using scipy.opimize.minimize and/or gradient dcsnet using optax
 
@@ -102,6 +106,7 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
         list: hyper-parameter at each iteration
         list: norm of the gradients
     """
+    optimize_param = params["optimization"]
     maxiter_GD = optimize_param["maxiter_GD"]
     lr = optimize_param["lr"]
     eps = optimize_param["eps"]
@@ -112,6 +117,7 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
     loss = []
     theta = [init]
     norm_of_grads_list = []
+    use_sm_kernel = params["model"]["kernel_type"] == "sm"
 
     def printer(loss, opt_result, init):
         print(f"\t loss = {loss[-1]:12.6e}, niter = {maxiter_GD:5d}")
@@ -134,19 +140,25 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
         value, grads = value_and_grad(func)(theta, *args)
         updates, opt_state = optimizer.update(grads, opt_state, theta)
         theta = optax.apply_updates(theta, updates)
-        norm_of_grads = jnp.sqrt(jnp.sum(jnp.square(grads)))
+        try:
+            norm_of_grads = jnp.sqrt(jnp.sum(jnp.square(grads)))
+        except:
+            norm_of_grads = sum(jnp.sum(value) for value in grads.values())
         if print_process:
             print(
                 f"step{t:4} loss: {value:.4f} max_grad: {jnp.max(abs(grads)):.5f}, arg={jnp.argmax(abs(grads))}"
+                # f"step{t:4} loss: {value:.4f}"
             )
             print(f"norm_of_grads: {norm_of_grads:.5f}")
             if len(theta) >= 18:
                 for thet in jnp.split(theta[:18], 6):
                     print(f"{jnp.round(thet, 4)}")
             else:
+                # if use_sm_kernel:
+                #     print(theta)
                 print(jnp.round(theta, 4))
-            print(f"theta_max: {jnp.max(theta):.5f}")
-            print(f"theta_min: {jnp.min(theta):.5f}\n")
+            # print(f"theta_max: {jnp.max(theta):.5f}")
+            # print(f"theta_min: {jnp.min(theta):.5f}\n")
         return value, opt_state, theta, norm_of_grads
 
     def doopt(init, optimizer, maxiter_GD, loss, theta, norm_of_grads_list):
@@ -177,9 +189,9 @@ def optimize_by_adam(f, df, hf, init, optimize_param, *args):
     if jnp.isnan(loss_before_optimize):
         raise Exception("初期条件でlossがnanになりました")
     # optimize by scipy
-    if maxiter_scipy:
+    if maxiter_scipy[0]:
         res, theta, loss = optimize_with_scipy(
-            func, dfunc, hess, res, theta, loss, optimize_param, args
+            func, dfunc, hess, res, theta, loss, params, args
         )
     # optimize by sgd
     if method_GD == "adam":

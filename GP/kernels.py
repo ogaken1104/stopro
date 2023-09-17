@@ -1,6 +1,8 @@
 import jax.numpy as jnp
 from jax import jit
 
+from functools import partial
+
 
 #
 def distance(r1, r2, lbox=2 * jnp.pi):
@@ -250,8 +252,48 @@ def K_2d_x_Periodic_y_SE_Add(r1, r2, θ, lbox):
     )
 
 
+# def K_Spectral_Mixture(r1, r2, theta, num_mixture, input_dim):
+#     # weights, sigma, mu = theta["weights"], theta["sigma"], theta["mu"]
+#     weights, sigma, mu = coodinate_sm_hyperparams(theta, num_mixture, input_dim)
+
+#     ## 各mixtureのカーネルを計算
+#     tau = r1 - r2
+#     exp_term = jnp.exp(-2 * jnp.power((jnp.pi * jnp.einsum("i,ji->j", tau, sigma)), 2))
+#     cos_term = jnp.cos(2 * jnp.pi * jnp.einsum("i,ji->j", tau, mu))
+#     ## 重みをつけて合算
+#     res = exp_term * cos_term
+
+#     return jnp.dot(weights, res)
+
+
+def K_Spectral_Mixture(r1, r2, theta, num_mixture, input_dim):
+    # weights, sigma, mu = theta["weights"], theta["sigma"], theta["mu"]
+    weights, sigma, mu = coodinate_sm_hyperparams(theta, num_mixture, input_dim)
+
+    ## 各mixtureのカーネルを計算
+    tau = r1 - r2
+    exp_term = jnp.exp(-2 * jnp.power((jnp.pi * jnp.dot(jnp.exp(sigma), tau)), 2))
+    cos_term = jnp.cos(2 * jnp.pi * jnp.dot(jnp.exp(mu), tau))
+    ## 重みをつけて合算
+    res = exp_term * cos_term
+
+    return jnp.dot(jnp.exp(weights), res)
+
+
+def coodinate_sm_hyperparams(theta, num_mixture, input_dim):
+    weights = theta[:num_mixture]
+    sigma = theta[num_mixture : num_mixture * (input_dim + 1)].reshape(
+        num_mixture, input_dim
+    )
+    mu = theta[
+        num_mixture * (input_dim + 1) : num_mixture * (2 * input_dim + 2)
+    ].reshape(num_mixture, input_dim)
+    return weights, sigma, mu
+
+
 def define_kernel(
-    kernel_type, kernel_form="product", input_dim=2, lbox=None, distance_func=False
+    params,
+    lbox=None,
 ):
     """
     Function that returns kernel.
@@ -261,7 +303,17 @@ def define_kernel(
         kernel_form: additive or product
         input_dim: dimension of inputs for kenel
     """
+    kernel_type = params["model"]["kernel_type"]
+    kernel_form = params["model"]["kernel_form"]
+    distance_func = params["model"]["distance_func"]
+    input_dim = params["input_dim"]
     if input_dim == 2:
+        if kernel_type == "sm":
+            base_kernel = partial(
+                K_Spectral_Mixture,
+                num_mixture=params["model"]["num_mixture"],
+                input_dim=input_dim,
+            )
         if kernel_form == "additive":
             if kernel_type == "se":
                 base_kernel = K_2d_SquareExp_Add
@@ -308,6 +360,12 @@ def define_kernel(
                     return K_2d_x_Periodic_y_SE_Pro(r1, r2, θ, lbox)
 
     elif input_dim == 1:
+        if kernel_type == "sm":
+            base_kernel = partial(
+                K_Spectral_Mixture,
+                num_mixture=params["model"]["num_mixture"],
+                input_dim=input_dim,
+            )
         if kernel_type == "se":
             if distance_func:
                 base_kernel = K_1d_SquareExp_distance
