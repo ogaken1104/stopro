@@ -272,8 +272,15 @@ def K_Spectral_Mixture(r1, r2, theta, num_mixture, input_dim):
 
     ## 各mixtureのカーネルを計算
     tau = r1 - r2
-    exp_term = jnp.exp(-2 * jnp.power((jnp.pi * jnp.dot(jnp.exp(sigma), tau)), 2))
-    cos_term = jnp.cos(2 * jnp.pi * jnp.dot(jnp.exp(mu), tau))
+    exp_term_array = jnp.exp(
+        -2 * jnp.power((jnp.pi * jnp.exp(sigma) * tau), 2)
+    )  # q * p matrices
+    # cos_term = jnp.cos(2 * jnp.pi * jnp.dot(jnp.exp(mu), tau))
+    cos_term_array = jnp.cos(
+        2 * jnp.pi * jnp.multiply(jnp.exp(mu), tau)
+    )  # q * p matrices
+    exp_term = jnp.prod(exp_term_array, axis=1)  # q vector
+    cos_term = jnp.prod(cos_term_array, axis=1)  # q vector
     ## 重みをつけて合算
     res = exp_term * cos_term
 
