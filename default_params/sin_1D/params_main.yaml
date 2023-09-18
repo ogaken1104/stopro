@@ -1,0 +1,22 @@
+model:
+  add_noise: false
+  init_kernel_hyperparameter:
+    - 0.0
+    - 0.0
+  kernel_form: product
+  kernel_type: se
+  distance_func: false
+  epsilon: 1.0e-06
+  input_dim: 1
+  system_type: "1D"
+optimization:
+  eps: 1.0e-05
+  lr: 1.0e-02
+  maxiter_GD: 400
+  maxiter_scipy: 
+  - 1
+  method_GD: adam
+  method_scipy: 
+  - Nelder-Mead
+  loss_ridge_regression: false
+  print_process: true

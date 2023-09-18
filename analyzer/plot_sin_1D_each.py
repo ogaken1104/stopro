@@ -38,11 +38,11 @@ COLOR = {
 }
 
 
-def plot_each_sin1D(contents, plot_param, lbls, vnames):
+def plot_each_sin1D(contents, params_plot, params_prepare, lbls, vnames):
     hdf_operator = HdfOperator()
-    val_limits = plot_param["val_limits"]
-    std_limit = plot_param["std_limit"]
-    error_limit = plot_param["error_limit"]
+    val_limits = params_plot["val_limits"]
+    std_limit = params_plot["std_limit"]
+    error_limit = params_plot["error_limit"]
 
     abs_error, abs_error, rel_error = hdf_operator.load_analysis_data(
         ["abs_error", "abs_error", "rel_error"], vnames["analysis"]

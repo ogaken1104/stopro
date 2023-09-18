@@ -1,0 +1,28 @@
+generate_test:
+  test_num: 50
+setting:
+  use_pbc_points: False
+generate_training:
+   y_num: 10
+vnames:
+  train:
+   - "y"
+  test:
+   - "y"
+  infer:
+   - "y"
+  analysis:
+   - "y"
+plot:
+  error_limit:
+  - 0.0001
+  - 0.1
+  std_limit:
+  - 0
+  - 0.002
+  val_limits:
+  - - -1.0
+    - 1.0
+  x_for_ux: 0.5
+kernel_arg:
+  - 'yy'

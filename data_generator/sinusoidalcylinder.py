@@ -341,6 +341,7 @@ class SinusoidalCylinder(Sinusoidal):
         use_spm_result=True,
         infer_wall=False,
         infer_du_boundary=False,
+        infer_du_grid=False,
     ):
         print(test_num)
         self.test_num = test_num
