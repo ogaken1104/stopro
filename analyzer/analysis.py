@@ -90,9 +90,9 @@ def analyze_result(
             f.write(f"{vname} : {np.mean(st):.7f}\n")
         f.write(f"\n- loss\n{loss[-1]:.5f}\n")
         f.write("\n- thata\n")
-        for i, thet in enumerate(np.split(theta[-1][:18], len(lbls_kernel_arg))):
+        for i, thet in enumerate(np.split(theta[-1], len(lbls_kernel_arg))):
             f.write(f"{lbls_kernel_arg[i]: <5}")
-            np.savetxt(f, [thet], fmt="%.7f")
+            np.savetxt(f, [thet], fmt="%.3f")
         f.write(f"\n- final norm of grads\n")
         try:
             f.write(f"{norm_of_grads_list[-1]}")

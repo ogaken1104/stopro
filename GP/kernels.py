@@ -286,7 +286,7 @@ def coodinate_sm_hyperparams(theta, num_mixture, input_dim):
         num_mixture, input_dim
     )
     mu = theta[
-        num_mixture * (input_dim + 1) : num_mixture * (2 * input_dim + 2)
+        num_mixture * (input_dim + 1) : num_mixture * (2 * input_dim + 1)
     ].reshape(num_mixture, input_dim)
     return weights, sigma, mu
 
