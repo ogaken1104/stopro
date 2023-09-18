@@ -18,7 +18,7 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
         use_difu: bool = False,
         infer_governing_eqs: bool = False,
         Kernel: callable = None,
-        kernel_type: str = None,
+        # kernel_type: str = None,
         # approx_non_pd: bool = False,
     ):
         """
@@ -40,7 +40,7 @@ class GPSinusoidalWithoutP(GPmodel2DStokes):
         self.Kernel_rev = lambda r1, r2, θ: Kernel(r2, r1, θ)
         self.K_rev = self.outermap(self.Kernel_rev)  # really needed?
         self.setup_differential_oprators()
-        self.kernel_type = kernel_type
+        # self.kernel_type = kernel_type
         super().__init__()
 
     def trainingK_all(self, θ, train_pts):

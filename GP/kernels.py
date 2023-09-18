@@ -299,7 +299,7 @@ def coodinate_sm_hyperparams(theta, num_mixture, input_dim):
 
 
 def define_kernel(
-    params,
+    params_model,
     lbox=None,
 ):
     """
@@ -310,15 +310,15 @@ def define_kernel(
         kernel_form: additive or product
         input_dim: dimension of inputs for kenel
     """
-    kernel_type = params["model"]["kernel_type"]
-    kernel_form = params["model"]["kernel_form"]
-    distance_func = params["model"]["distance_func"]
-    input_dim = params["input_dim"]
+    kernel_type = params_model["kernel_type"]
+    kernel_form = params_model["kernel_form"]
+    distance_func = params_model["distance_func"]
+    input_dim = params_model["input_dim"]
     if input_dim == 2:
         if kernel_type == "sm":
             base_kernel = partial(
                 K_Spectral_Mixture,
-                num_mixture=params["model"]["num_mixture"],
+                num_mixture=params_model["model"]["num_mixture"],
                 input_dim=input_dim,
             )
         if kernel_form == "additive":
@@ -370,7 +370,7 @@ def define_kernel(
         if kernel_type == "sm":
             base_kernel = partial(
                 K_Spectral_Mixture,
-                num_mixture=params["model"]["num_mixture"],
+                num_mixture=params_model["num_mixture"],
                 input_dim=input_dim,
             )
         if kernel_type == "se":

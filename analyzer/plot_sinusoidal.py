@@ -10,14 +10,12 @@ from stopro.data_handler.data_handle_module import HdfOperator
 import stopro.analyzer.make_each_plot as plot_modules
 
 
-def plot_each_sinusoidal(contents, params, lbls, vnames, infer_p):
+def plot_each_sinusoidal(contents, params_plot, params_prepare, lbls, vnames):
     hdf_operator = HdfOperator()
 
-    plot_param = params["plot"]
-    val_limits = plot_param["val_limits"]
-    std_limit = plot_param["std_limit"]
-    error_limit = plot_param["error_limit"]
-    x_for_ux = plot_param["x_for_ux"]
+    val_limits = params_plot["val_limits"]
+    std_limit = params_plot["std_limit"]
+    error_limit = params_plot["error_limit"]
 
     abs_error, abs_error, rel_error = hdf_operator.load_analysis_data(
         ["abs_error", "abs_error", "rel_error"], vnames["analysis"]
@@ -32,7 +30,7 @@ def plot_each_sinusoidal(contents, params, lbls, vnames, infer_p):
     y_bottom = sinusoidal.calc_y_bottom(xs)
 
     # prepare grid for pcolormesh
-    test_num = params["test_data"]["test_num"]
+    test_num = params_prepare["generate_test"]["test_num"]
     maximum_height = sinusoidal.w / 2 + sinusoidal.a
     ############ analytical solution #####################
     y_num = test_num
@@ -48,7 +46,7 @@ def plot_each_sinusoidal(contents, params, lbls, vnames, infer_p):
     x_grid = np.linspace(0, sinusoidal.L, x_num)
     if "all" in contents:
         # plot for output_all
-        if infer_p:
+        if params_prepare["generate_test"]["infer_p"]:
             fig, axes = plt.subplots(figsize=(5 * 4, 4 * 3), nrows=3, ncols=3)
         else:
             fig, axes = plt.subplots(figsize=(5 * 3, 4 * 2), nrows=2, ncols=3)

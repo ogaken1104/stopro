@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from jax import jacfwd, jacrev, jit
+import numpy as np
 
 
 def get_init(
@@ -9,9 +9,8 @@ def get_init(
     l=None,
     use_gradp_training=False,
     system_type="Stokes_2D",
-    params=None,
 ):
-    if params["model"]["kernel_type"] == "sm":
+    if kernel_type == "sm":
         for kernel_arg, hyp_each_kernel in hyperparams.items():
             for name, hyp_each in hyp_each_kernel.items():
                 hyperparams[kernel_arg][name] = jnp.array(hyp_each)
@@ -59,8 +58,22 @@ def get_init(
     return init
 
 
-def hessian(f):
-    """Returns a function which computes the Hessian of a function f
-    if f(x) gives the values of the function at x, and J = hessian(f)
-    J(x) gives the Hessian at x"""
-    return jit(jacfwd(jacrev(f)))
+def reshape_init(init, params_model, params_kernel_arg):
+    # init = init["yy"]
+    num_mixture = params_model["num_mixture"]
+    input_dim = params_model["input_dim"]
+    init_dict = init
+    init = np.zeros((6, num_mixture * (1 + 2 * input_dim)))
+    for i, labl_kernel in enumerate(params_kernel_arg):
+        for j, the in enumerate(init_dict[labl_kernel].values()):
+            if j == 0:
+                init[i, :num_mixture] = the
+            elif j == 1:
+                init[i, num_mixture : num_mixture * (input_dim + 1)] = the.reshape(-1)
+            elif j == 2:
+                init[
+                    i,
+                    num_mixture * (input_dim + 1) : num_mixture * (2 * input_dim + 1),
+                ] = the.reshape(-1)
+    init = init.reshape(-1)
+    return init
