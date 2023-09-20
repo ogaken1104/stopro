@@ -90,6 +90,11 @@ def analyze_result(
             f.write(f"{vname} : {np.mean(st):.7f}\n")
         f.write(f"\n- loss\n{loss[-1]:.5f}\n")
         f.write("\n- thata\n")
+        print(theta[-1])
+        if len(theta[-1]) % len(lbls_kernel_arg) != 0:
+            f.write(f"noise ")
+            np.savetxt(f, [theta[-1][-1:]], fmt="%.3f")
+            theta[-1] = theta[-1][:-1]
         for i, thet in enumerate(np.split(theta[-1], len(lbls_kernel_arg))):
             f.write(f"{lbls_kernel_arg[i]: <5}")
             np.savetxt(f, [thet], fmt="%.3f")

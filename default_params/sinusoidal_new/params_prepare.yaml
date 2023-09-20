@@ -14,7 +14,6 @@ setting:
   delta_p: -30
   infer_gradp: false
   infer_ux_wall: false
-  noise_fraction: 0.0
   oscillation_amplitude: 0.2
   random_arrange: false
   use_1d_u: false
@@ -23,7 +22,6 @@ setting:
   use_force_as_constant_pressure: true
   use_gradp_training: false
   use_inlet_outlet_u: false
-  use_noisy_ux: false
   use_only_bottom_u: false
   use_only_inlet_gradp: false
   use_random_u: false

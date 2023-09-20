@@ -18,6 +18,7 @@ class GPSinusoidalWithoutPIndependent(GPmodel2DStokesIndependent):
         use_difu: bool = False,
         infer_governing_eqs: bool = False,
         Kernel: callable = None,
+        index_optimize_noise: list = None,
         # kernel_type: str = None,
         # approx_non_pd: bool = False,
     ):
@@ -41,6 +42,7 @@ class GPSinusoidalWithoutPIndependent(GPmodel2DStokesIndependent):
         self.Kernel_rev = lambda r1, r2, θ: Kernel(r2, r1, θ)
         self.K_rev = self.outermap(self.Kernel_rev)  # really needed?
         self.setup_differential_oprators()
+        self.index_optimize_noise = index_optimize_noise
         # self.kernel_type = kernel_type
 
     def trainingK_all(self, θ, train_pts):
@@ -104,7 +106,7 @@ class GPSinusoidalWithoutPIndependent(GPmodel2DStokesIndependent):
             [Kdifpdifp],
         ]
 
-        return self.calculate_K_symmetric(train_pts, Ks)
+        return self.calculate_K_training(train_pts, Ks)
 
     def mixedK_all(self, θ, test_pts, train_pts):
         """
@@ -226,4 +228,4 @@ class GPSinusoidalWithoutPIndependent(GPmodel2DStokesIndependent):
                 [Kuyuy],
             ]
 
-        return self.calculate_K_symmetric(test_pts, Ks)
+        return self.calculate_K_test(test_pts, Ks)

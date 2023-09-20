@@ -33,6 +33,7 @@ model:
   epsilon: 1.0e-06
   input_dim: 2
   system_type: Stokes_2D
+  index_optimize_noise: null
 optimization:
   eps: 1.0e-05
   loss_ridge_regression: false

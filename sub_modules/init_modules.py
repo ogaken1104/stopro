@@ -8,6 +8,11 @@ def get_init(
     use_gradp_training=False,
     system_type="Stokes_2D",
 ):
+    if "noise" in hyperparams:
+        noise = jnp.array(hyperparams["noise"])
+        del hyperparams["noise"]
+    else:
+        noise = None
     if kernel_type == "sm":
         for kernel_arg, hyp_each_kernel in hyperparams.items():
             for name, hyp_each in hyp_each_kernel.items():
@@ -45,19 +50,21 @@ def get_init(
             θuxp = jnp.array(hyperparams["uxp"])
             θuyp = jnp.array(hyperparams["uyp"])
             init = jnp.concatenate([θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp])
-        ## when using std of noise included in training data as hyperparams
-        elif len(hyperparams) == 7:
-            θuxux = jnp.array(hyperparams["uxux"])
-            θuyuy = jnp.array(hyperparams["uyuy"])
-            θpp = jnp.array(hyperparams["pp"])
-            θuxuy = jnp.array(hyperparams["uxuy"])
-            θuxp = jnp.array(hyperparams["uxp"])
-            θuyp = jnp.array(hyperparams["uyp"])
-            θstdnoise = jnp.array(hyperparams["std_noise"])
-            init = jnp.concatenate([θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp, θstdnoise])
+        # ## when using std of noise included in training data as hyperparams
+        # elif len(hyperparams) == 7:
+        #     θuxux = jnp.array(hyperparams["uxux"])
+        #     θuyuy = jnp.array(hyperparams["uyuy"])
+        #     θpp = jnp.array(hyperparams["pp"])
+        #     θuxuy = jnp.array(hyperparams["uxuy"])
+        #     θuxp = jnp.array(hyperparams["uxp"])
+        #     θuyp = jnp.array(hyperparams["uyp"])
+        #     θstdnoise = jnp.array(hyperparams["std_noise"])
+        #     init = jnp.concatenate([θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp, θstdnoise])
 
     elif system_type == "1D":
         init = jnp.array(hyperparams)
+    if noise:
+        init = jnp.append(init, noise)
     return init
 
 

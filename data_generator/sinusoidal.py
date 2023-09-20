@@ -36,8 +36,6 @@ class Sinusoidal(StokesDataGenerator):
         use_force_as_constant_pressure=False,
         use_1d_u=False,
         seed=43,
-        use_noisy_ux=False,
-        noise_fraction=0.01,
         use_broad_governing_eqs=False,
         use_diff=False,
         infer_difp=False,
@@ -74,8 +72,6 @@ class Sinusoidal(StokesDataGenerator):
         self.use_force_as_constant_pressure = use_force_as_constant_pressure
         self.use_1d_u = use_1d_u
         self.seed = seed
-        self.use_noisy_ux = use_noisy_ux
-        self.noise_fraction = noise_fraction
         self.use_broad_governing_eqs = use_broad_governing_eqs
         self.use_diff = use_diff
         self.infer_difp = infer_difp
@@ -503,30 +499,30 @@ class Sinusoidal(StokesDataGenerator):
                 ux = u_wall
                 uy = u_wall
 
-        if self.use_noisy_ux:
-            # データの読み込み
-            try:
-                with open(
-                    f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_interpolation_50.pickle',
-                    "rb",
-                ) as file:
-                    save_dict = pickle.load(file)
-            except:
-                with open(
-                    f'{os.environ["HOME"]}/template_data/test_from_fenics/0303_interpolation_50.pickle',
-                    "rb",
-                ) as file:
-                    save_dict = pickle.load(file)
-            ux_max = np.max(save_dict["ux"])
-            ux_min = np.min(save_dict["ux"])
-            # print(ux_max, ux_min)
-            std_noise = (
-                ux_max - ux_min
-            ) * self.noise_fraction  # （最大値-最小値）*noise_fractionの大きさの標準偏差を用いてノイズを生成する
-            noise_ux = np.random.normal(0.0, std_noise, len(ux))
-            print(ux)
-            ux += noise_ux
-            print(ux)
+        # if self.use_noisy_ux:
+        #     # データの読み込み
+        #     try:
+        #         with open(
+        #             f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_interpolation_50.pickle',
+        #             "rb",
+        #         ) as file:
+        #             save_dict = pickle.load(file)
+        #     except:
+        #         with open(
+        #             f'{os.environ["HOME"]}/template_data/test_from_fenics/0303_interpolation_50.pickle',
+        #             "rb",
+        #         ) as file:
+        #             save_dict = pickle.load(file)
+        #     ux_max = np.max(save_dict["ux"])
+        #     ux_min = np.min(save_dict["ux"])
+        #     # print(ux_max, ux_min)
+        #     std_noise = (
+        #         ux_max - ux_min
+        #     ) * self.noise_fraction  # （最大値-最小値）*noise_fractionの大きさの標準偏差を用いてノイズを生成する
+        #     noise_ux = np.random.normal(0.0, std_noise, len(ux))
+        #     print(ux)
+        #     ux += noise_ux
+        #     print(ux)
 
         self.r += [r_ux, r_uy]
         self.f += [np.array(ux), np.array(uy)]
@@ -1008,6 +1004,7 @@ class Sinusoidal(StokesDataGenerator):
         difu_num=None,
         diff_num=None,
         without_f=False,
+        sigma2_noise: float = None,
     ):
         self.without_f = without_f
         if without_f:
@@ -1029,9 +1026,20 @@ class Sinusoidal(StokesDataGenerator):
                 difu_num,
                 diff_num,
             )
+            if sigma2_noise:
+                # add noise for velocities
+                for i in range(2):
+                    self.f[i] = self.add_white_noise(self.f[i], sigma2_noise)
             # if self.use_difp:
             #     self.generate_difp(difp_num, difp_pad, difp_loc)
         return self.r, self.f
+
+    def add_white_noise(self, f, sigma2_noise):
+        if self.seed is not None:
+            np.random.seed(self.seed)
+        noise = np.random.normal(0, np.sqrt(sigma2_noise), f.shape)
+        noisy_f = f + noise
+        return noisy_f
 
     def make_r_mesh_sinusoidal(
         self, x_start, x_end, y_start, y_end, num_x, num_y, pad, periodic_test=False
