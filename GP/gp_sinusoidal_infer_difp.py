@@ -2,10 +2,10 @@ import jax.numpy as jnp
 import numpy as np
 from jax import grad, jit, vmap
 
-from stopro.GP.gp_sinusoidal_without_p import GPSinusoidalWithoutP
+from stopro.GP.gp_sinusoidal_independent import GPSinusoidalWithoutPIndependent
 
 
-class GPSinusoidalInferDifP(GPSinusoidalWithoutP):
+class GPSinusoidalInferDifP(GPSinusoidalWithoutPIndependent):
     def trainingK_all(self, θ, train_pts):
         """
         Args :
@@ -83,22 +83,22 @@ class GPSinusoidalInferDifP(GPSinusoidalWithoutP):
         return self.calculate_K_symmetric(train_pts, Ks)
 
     def mixedK_all(self, θ, test_pts, train_pts):
-        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
+        θuxux, θuyuy, θpp = self.split_hyperparam(θ)
 
         def Kpux(r, rp):
-            return self.K_rev(r, rp, θuxp)
+            return self.Kzero(r, rp, self.dummy_theta)
 
         def Kpuy(r, rp):
-            return self.K_rev(r, rp, θuyp)
+            return self.Kzero(r, rp, self.dummy_theta)
 
         def Kpfx(r, rp):
-            return self.d10(r, rp, θpp) - self.L1_rev(r, rp, θuxp)
+            return self.d10(r, rp, θpp)
 
         def Kpfy(r, rp):
-            return self.d11(r, rp, θpp) - self.L1_rev(r, rp, θuyp)
+            return self.d11(r, rp, θpp)
 
         def Kpdiv(r, rp):
-            return self.d10_rev(r, rp, θuxp) + self.d11_rev(r, rp, θuyp)
+            return self.Kzero(r, rp, self.dummy_theta)
 
         Kdifpux = self.setup_kernel_include_difference(Kpux)
         Kdifpuy = self.setup_kernel_include_difference(Kpuy)
@@ -132,8 +132,6 @@ class GPSinusoidalInferDifP(GPSinusoidalWithoutP):
         return self.calculate_K_asymmetric(train_pts, test_pts, Ks)
 
     def testK_all(self, θ, test_pts):
-        θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp = jnp.split(θ, 6)
-
         Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
         Kdifpdifp = self.setup_kernel_difdif(Kpp)
 
