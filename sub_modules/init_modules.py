@@ -5,8 +5,6 @@ import numpy as np
 def get_init(
     hyperparams,
     kernel_type,
-    eta=None,
-    l=None,
     use_gradp_training=False,
     system_type="Stokes_2D",
 ):
@@ -34,6 +32,11 @@ def get_init(
             #         θ_same,
             #     ]
             # )
+        elif len(hyperparams) == 3:
+            θuxux = jnp.array(hyperparams["uxux"])
+            θuyuy = jnp.array(hyperparams["uyuy"])
+            θpp = jnp.array(hyperparams["pp"])
+            init = jnp.concatenate([θuxux, θuyuy, θpp])
         elif len(hyperparams) == 6:
             θuxux = jnp.array(hyperparams["uxux"])
             θuyuy = jnp.array(hyperparams["uyuy"])
