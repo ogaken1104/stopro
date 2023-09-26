@@ -28,10 +28,14 @@ def rel_error(true, pred):
     return rel_error
 
 
+# def calc_abs_error(true, pred):
+#     """eliminate values outside the domain"""
+#     index_to_calculate = true != 0
+#     return np.abs(true - pred)[index_to_calculate]
+
+
 def calc_abs_error(true, pred):
-    """eliminate values outside the domain"""
-    index_to_calculate = true != 0
-    return np.abs(true - pred)[index_to_calculate]
+    return np.abs(true - pred)
 
 
 def analyze_result(
@@ -114,6 +118,24 @@ def analyze_result(
     ]
 
     return vals_list
+
+
+def analyze_error_interval(f_test, f_infer):
+    max_abs_error = []
+    mean_abs_error = []
+    absolute_error = []
+    for f_te, f_inf in zip(f_test, f_infer):
+        abs_err = calc_abs_error(f_te, f_inf)
+        # rel_err = rel_error(f_te, f_inf)
+        absolute_error.append(np.abs(f_te - f_inf))  # plot用については、領域外の値も削除せず保存する
+        # relative_error.append(rel_err)
+        if np.any(abs_err):
+            max_abs_error.append(np.max(abs_err))
+            mean_abs_error.append(np.mean(abs_err))
+        # if np.any(rel_err):
+        #     max_rel_error.append(np.max(rel_err))
+        #     mean_rel_error.append(np.mean(rel_err[rel_err != 0.0]))
+    return mean_abs_error
 
 
 if __name__ == "__main__":

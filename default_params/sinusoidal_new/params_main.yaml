@@ -45,3 +45,5 @@ optimization:
   method_scipy: 
   - Nelder-Mead
   print_process: True
+  interval_check: null
+  index_fixed: null

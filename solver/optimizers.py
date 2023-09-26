@@ -3,6 +3,8 @@ import optax
 from jax import jit, value_and_grad
 from jax.example_libraries import optimizers
 from scipy import optimize
+from functools import partial
+import numpy as np
 
 # from evosax import EvoParams, SimAnneal
 
@@ -126,13 +128,29 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
     # _:ignore returns
     r_train, *_ = args
     ntraining = 0
-    res = [{"x": init}]
     for r in r_train:
         ntraining += r.shape[0]
     # the number of training points
     func = lambda p, *args: f(p, *args) / ntraining
     dfunc = lambda p, *args: df(p, *args) / ntraining
     hess = lambda p, *args: hf(p, *args) / ntraining
+
+    index_fixed = params_optimization["index_fixed"]
+    if index_fixed:
+        index_fixed = jnp.array(index_fixed)
+        init_fixed = init[index_fixed]
+        init = jnp.delete(init, index_fixed)
+
+        def func_sub_theta(init_fixed, init_optimize, *args):
+            ## TODO thetaを復元するプログラムを書く
+            init = jnp.zeros(len(init_optimize) + len(init_fixed))
+            init = init.at[index_fixed].set(init_fixed)
+            index_optimize = jnp.setdiff1d(jnp.arange(len(init)), index_fixed)
+            init = init.at[index_optimize].set(init_optimize)
+            return f(init, *args) / ntraining
+
+        func = partial(func_sub_theta, init_fixed)
+        theta = [init]
 
     def step(t, opt_state, optimizer, theta):
         value, grads = value_and_grad(func)(theta, *args)
@@ -179,8 +197,9 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
                 raise Exception("発散しました、やりなおしましょう")
         return theta, loss
 
+    res = [{"x": init}]
     # optimize by scipy method
-    loss_before_optimize = func(init, *args)
+    loss_before_optimize = func(theta[0], *args)
     print(f"loss before optimize: {loss_before_optimize}")
     loss.append(loss_before_optimize)
     print(method_scipy)

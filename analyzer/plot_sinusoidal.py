@@ -10,7 +10,9 @@ from stopro.data_handler.data_handle_module import HdfOperator
 import stopro.analyzer.make_each_plot as plot_modules
 
 
-def plot_each_sinusoidal(contents, params_plot, params_prepare, lbls, vnames):
+def plot_each_sinusoidal(
+    contents, params_plot, params_prepare, params_main, lbls, vnames
+):
     hdf_operator = HdfOperator()
 
     val_limits = params_plot["val_limits"]
@@ -191,6 +193,26 @@ def plot_each_sinusoidal(contents, params_plot, params_prepare, lbls, vnames):
         ax.set_ylabel("loss", fontsize=22)
         ax.set_xlabel("iteration", fontsize=22)
         fig.savefig(f"../fig/loss.png")
+        plt.clf()
+        plt.close()
+
+    interval_check = params_main["optimization"]["interval_check"]
+    if interval_check:
+        num_check = int(params_main["optimization"]["maxiter_GD"] / interval_check)
+        index_check = np.arange(0, num_check * interval_check + 1, interval_check)
+        mean_abs_error_interval = hdf_operator.load_analysis_data(
+            ["mean_abs_error_interval"], ["ux", "uy"]
+        )[0]
+        fig, axs = plt.subplots(figsize=(10, 6), ncols=2)
+        clr = plot_modules.COLOR["dark"]
+        marker = "o"
+        axs[0].semilogy(index_check, mean_abs_error_interval[0], marker=marker)
+        axs[1].semilogy(index_check, mean_abs_error_interval[1], marker=marker)
+        axs[0].set_title("ux")
+        axs[1].set_title("uy")
+        axs[0].set_xlabel("iteration")
+        axs[1].set_xlabel("iteration")
+        fig.savefig(f"../fig/mean_abs_error_interval.png")
         plt.clf()
         plt.close()
 
