@@ -9,6 +9,7 @@ class GPmodel1DNaive(GPmodel1D):
     def __init__(
         self,
         Kernel: callable = None,
+        index_optimize_noise: list = None,
     ):
         """
         Args:
@@ -17,6 +18,7 @@ class GPmodel1DNaive(GPmodel1D):
         super().__init__()
         self.Kernel = Kernel
         self.K = self.outermap(Kernel)
+        self.index_optimize_noise = index_optimize_noise
 
     # def split_hyperparams(func):
     #     def wrapper(self, *args):
@@ -33,7 +35,7 @@ class GPmodel1DNaive(GPmodel1D):
         """
         Ks = self.setup_Ks(theta)
 
-        return self.calculate_K_symmetric(train_pts, Ks)
+        return self.calculate_K_training(train_pts, Ks)
 
     def mixedK_all(self, theta, test_pts, train_pts):
         """
@@ -54,7 +56,7 @@ class GPmodel1DNaive(GPmodel1D):
         """
         Ks = self.setup_Ks(theta)
 
-        return self.calculate_K_symmetric(test_pts, Ks)
+        return self.calculate_K_test(test_pts, Ks)
 
     def setup_Ks(self, theta):
         def Kyy(r, rp):

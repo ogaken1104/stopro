@@ -9,8 +9,9 @@ model:
   epsilon: 1.0e-06
   input_dim: 1
   system_type: "1D"
+  index_optimize_noise: null
 optimization:
-  eps: 1.0e-05
+  eps: 1.0e-03
   lr: 1.0e-02
   maxiter_GD: 400
   maxiter_scipy: 
@@ -20,3 +21,5 @@ optimization:
   - Nelder-Mead
   loss_ridge_regression: false
   print_process: true
+  interval_check: null
+  index_fixed: null

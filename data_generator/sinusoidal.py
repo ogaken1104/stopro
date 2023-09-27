@@ -1034,13 +1034,6 @@ class Sinusoidal(StokesDataGenerator):
             #     self.generate_difp(difp_num, difp_pad, difp_loc)
         return self.r, self.f
 
-    def add_white_noise(self, f, sigma2_noise):
-        if self.seed is not None:
-            np.random.seed(self.seed)
-        noise = np.random.normal(0, np.sqrt(sigma2_noise), f.shape)
-        noisy_f = f + noise
-        return noisy_f
-
     def make_r_mesh_sinusoidal(
         self, x_start, x_end, y_start, y_end, num_x, num_y, pad, periodic_test=False
     ):

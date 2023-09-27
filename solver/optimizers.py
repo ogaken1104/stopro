@@ -157,7 +157,8 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
         updates, opt_state = optimizer.update(grads, opt_state, theta)
         theta = optax.apply_updates(theta, updates)
         try:
-            norm_of_grads = jnp.sqrt(jnp.sum(jnp.square(grads)))
+            # norm_of_grads = jnp.sqrt(jnp.sum(jnp.square(grads)))
+            norm_of_grads = jnp.linalg.norm(grads)
         except:
             norm_of_grads = sum(jnp.sum(value) for value in grads.values())
         if print_process:

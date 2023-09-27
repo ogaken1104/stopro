@@ -5,7 +5,7 @@ from stopro.data_generator.data_generator import DataGenerator
 
 
 class Sin1DNaive(DataGenerator):
-    def __init__(self, use_pbc_points=False):
+    def __init__(self, use_pbc_points=False, seed: int = 0):
         self.x_min = 0.0
         self.x_max = np.pi * 2
         self.r = []
@@ -13,6 +13,7 @@ class Sin1DNaive(DataGenerator):
         self.r_test = []
         self.f_test = []
         self.use_pbc_points = use_pbc_points
+        self.seed = seed
 
     def generate_y(self, y_num):
         r_y = np.linspace(self.x_min, self.x_max, y_num)
@@ -33,8 +34,10 @@ class Sin1DNaive(DataGenerator):
         self.r += [r_pbc]
         self.f += [f_pbc]
 
-    def generate_training_data(self, y_num):
+    def generate_training_data(self, y_num, sigma2_noise: float = None):
         self.generate_y(y_num)
+        if sigma2_noise:
+            self.f[0] = self.add_white_noise(self.f[0], sigma2_noise)
         if self.use_pbc_points:
             self.generate_pbc_y()
         return self.r, self.f
@@ -46,7 +49,7 @@ class Sin1DNaive(DataGenerator):
         )
         ax.scatter(
             self.r[0],
-            np.zeros(len(self.r[0])),
+            self.f[0],
             label=r"$y$ training",
             marker="o",
             color="k",

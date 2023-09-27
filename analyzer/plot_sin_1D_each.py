@@ -58,7 +58,7 @@ def plot_each_sin1D(contents, params_plot, params_prepare, lbls, vnames):
         ax.plot(r_test[0], f_test[0], label="answer", linestyle="--", color="k")
         ax.scatter(
             r_train[0],
-            np.zeros(len(r_train[0])),
+            f_train[0],
             label=r"$y$ training",
             marker="o",
             color="k",
@@ -73,7 +73,7 @@ def plot_each_sin1D(contents, params_plot, params_prepare, lbls, vnames):
         if len(r_train) >= 2:
             ax.scatter(
                 r_train[index_ly],
-                np.zeros(len(r_train[index_ly])),
+                f_train[index_ly],
                 label=r"$\Delta y$ train",
                 marker="x",
                 color="k",

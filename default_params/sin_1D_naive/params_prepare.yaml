@@ -1,5 +1,5 @@
 generate_test:
-  test_num: 50
+  test_num: 300
 setting:
   use_pbc_points: False
 generate_training:
