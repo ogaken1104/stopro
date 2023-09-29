@@ -79,8 +79,10 @@ class GPmodel:
         # W_ij  = v_i . v_j
         # v_i   = (L | c_i) ; c_i the i-th column of Kba, i-th row of Kab
         ### TODO we should eliminate for loop here
-        V = jnp.array([jnp.linalg.solve(L, c) for c in Kab])  # V = [v_1, v_2, ... ]^t
-        Kpost = Kaa - jnp.einsum("ik,jk->ij", V, V)
+        # V = jnp.array([jnp.linalg.solve(L, c) for c in Kab])  # V = [v_1, v_2, ... ]^t
+        # Kpost = Kaa - jnp.einsum("ik,jk->ij", V, V)
+        V = jnp.linalg.solve(L, jnp.transpose(Kab))  # V = [v_1, v_2, ... ]^t
+        Kpost = Kaa - jnp.einsum("ji, jk->ik", V, V)  # V^tV
         return μpost, Kpost  # note should add μ(x*) to average
 
     def calculate_K_training(self, pts, Ks, std_noise_list=[None] * 8):
