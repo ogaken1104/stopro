@@ -78,6 +78,7 @@ class GPmodel:
         #       = Kaa - W
         # W_ij  = v_i . v_j
         # v_i   = (L | c_i) ; c_i the i-th column of Kba, i-th row of Kab
+        ### TODO we should eliminate for loop here
         V = jnp.array([jnp.linalg.solve(L, c) for c in Kab])  # V = [v_1, v_2, ... ]^t
         Kpost = Kaa - jnp.einsum("ik,jk->ij", V, V)
         return μpost, Kpost  # note should add μ(x*) to average

@@ -189,8 +189,8 @@ def plot_each_sinusoidal(
         clr = plot_modules.COLOR["dark"]
         lbl = "loss"
         # ax.plot(range(5,100,5),np.array(loss),color=clr,label=lbl)
-        ax.plot(loss_index, loss, color=clr)
-        ax.set_ylabel("loss", fontsize=22)
+        ax.plot(loss_index, np.array(loss) + 15, color=clr)
+        ax.set_ylabel("loss+15", fontsize=22)
         ax.set_xlabel("iteration", fontsize=22)
         fig.savefig(f"../fig/loss.png")
         plt.clf()

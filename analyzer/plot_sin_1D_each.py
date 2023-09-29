@@ -148,8 +148,8 @@ def plot_each_sin1D(contents, params_plot, params_prepare, lbls, vnames):
         clr = COLOR["dark"]
         lbl = "loss"
         # ax.plot(range(5,100,5),np.array(loss),color=clr,label=lbl)
-        ax.plot(loss_index, loss, color=clr)
-        ax.set_ylabel("loss", fontsize=22)
+        ax.loglog(loss_index + 1, np.array(loss) + 3, color=clr)
+        ax.set_ylabel("loss+3", fontsize=22)
         ax.set_xlabel("iteration", fontsize=22)
         fig.savefig(f"../fig/loss.png")
         plt.clf()

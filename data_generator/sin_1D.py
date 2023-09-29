@@ -5,7 +5,7 @@ from stopro.data_generator.data_generator import DataGenerator
 
 
 class Sin1D(DataGenerator):
-    def __init__(self, use_pbc_points=False):
+    def __init__(self, use_pbc_points=False, seed: int = 0):
         self.x_min = 0.0
         self.x_max = np.pi * 2
         self.r = []
@@ -13,6 +13,7 @@ class Sin1D(DataGenerator):
         self.r_test = []
         self.f_test = []
         self.use_pbc_points = use_pbc_points
+        self.seed = seed
 
     def generate_y(self, y_loc):
         if y_loc == "both":
@@ -45,8 +46,10 @@ class Sin1D(DataGenerator):
         self.r += [r_pbc]
         self.f += [f_pbc]
 
-    def generate_training_data(self, ly_num, y_loc="both"):
+    def generate_training_data(self, ly_num, y_loc="both", sigma2_noise: float = None):
         self.generate_y(y_loc)
+        if sigma2_noise:
+            self.f[0] = self.add_white_noise(self.f[0], sigma2_noise)
         if self.use_pbc_points:
             self.generate_pbc_y()
         self.generate_ly(ly_num)
