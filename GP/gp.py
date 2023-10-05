@@ -38,14 +38,6 @@ class GPmodel:
     def logpGP(self, δf, Σ, ϵ):
         """Compute minus log-likelihood of observing δf = f - <f>, for GP with covariance matrix Σ"""
         n = len(δf)
-        # jiggle parameter to improve numerical stability of cholesky decomposition
-        # noise = jnp.ones_like(δf) * ϵ
-        # if approx_non_pd:
-        #     ####### modify semidifinite to difinite ###############
-        #     L, _is_non_pd = self.cholesky_decompose_non_positive_definite(Σ, noise)
-        # else:
-        #     ######### default ###################
-        # L = jnp.linalg.cholesky(Σ + jnp.diag(noise))
         L = jnp.linalg.cholesky(Σ)
         v = jnp.linalg.solve(L, δf)
         return (
@@ -59,13 +51,6 @@ class GPmodel:
         [fa,fb] ~ 𝒩([μ_fa, μ_fb], [[Kaa, Kab],[Kab^T, Kbb]])])
         fa|fb   ~ 𝒩(μf + Kab Kbb \ (fb - μ_fb) , Kaa - Kab Kbb \ Kab^T)
         """
-        # noise = jnp.ones(len(Kbb)) * ϵ
-        # if approx_non_pd:
-        #     ################## modify semidifinite to definite ###############
-        #     L, non_pd = self.cholesky_decompose_non_positive_definite(Kbb, noise)
-        # else:
-        #     ################# default ######################
-        # L = jnp.linalg.cholesky(Kbb + jnp.diag(noise))
         L = jnp.linalg.cholesky(Kbb)
 
         # α = K \ δ f = L^t \ (L | δ f)
@@ -78,9 +63,6 @@ class GPmodel:
         #       = Kaa - W
         # W_ij  = v_i . v_j
         # v_i   = (L | c_i) ; c_i the i-th column of Kba, i-th row of Kab
-        ### TODO we should eliminate for loop here
-        # V = jnp.array([jnp.linalg.solve(L, c) for c in Kab])  # V = [v_1, v_2, ... ]^t
-        # Kpost = Kaa - jnp.einsum("ik,jk->ij", V, V)
         V = jnp.linalg.solve(L, jnp.transpose(Kab))  # V = [v_1, v_2, ... ]^t
         Kpost = Kaa - jnp.einsum("ji, jk->ik", V, V)  # V^tV
         return μpost, Kpost  # note should add μ(x*) to average
@@ -155,6 +137,7 @@ class GPmodel:
         # r,μ,f,ϵ=args
         r, μ, f, ϵ = args
         r_num = len(r)
+        ##### TODO it may be better to precompute \delta y #####
         for i in range(r_num):
             if i == 0:
                 δy = jnp.array(f[i] - μ[i])
