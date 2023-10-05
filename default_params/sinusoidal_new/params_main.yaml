@@ -35,7 +35,7 @@ model:
   system_type: Stokes_2D
   index_optimize_noise: null
 optimization:
-  eps: 1.0e-05
+  eps: 0.0001
   loss_ridge_regression: false
   lr: 1.0e-05
   maxiter_GD: 0

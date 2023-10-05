@@ -92,7 +92,7 @@ def analyze_result(
         f.write(f"- mean\n")
         for vname, st in zip(vnames_analysis, std):
             f.write(f"{vname} : {np.mean(st):.7f}\n")
-        f.write(f"\n- loss\n{loss[-1]:.5f}\n")
+        f.write(f"\n- loss\nfinal value: {loss[-1]:.5f}\niteration: {len(loss)}\n")
         f.write("\n- thata\n")
         print(theta[-1])
         if len(theta[-1]) % len(lbls_kernel_arg) != 0:

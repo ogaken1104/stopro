@@ -182,14 +182,14 @@ def plot_each_sinusoidal(
         # plot for loss vs iteration
         itr_step = 1
         loss = hdf_operator.load_record("fun")
-        loss = loss[1:]  # Nelder-Meadによる最適化分を除外してプロット
+        loss = loss[1:]  # 初期値を除外してプロット
         loss_index = np.arange(len(loss)) * itr_step
         fig = plt.figure(figsize=(8, 6))
         ax = fig.add_subplot(111)
         clr = plot_modules.COLOR["dark"]
         lbl = "loss"
         # ax.plot(range(5,100,5),np.array(loss),color=clr,label=lbl)
-        ax.plot(loss_index, np.array(loss) + 15, color=clr)
+        ax.loglog(loss_index + 1, np.array(loss) + 15, color=clr)
         ax.set_ylabel("loss+15", fontsize=22)
         ax.set_xlabel("iteration", fontsize=22)
         fig.savefig(f"../fig/loss.png")
@@ -198,7 +198,7 @@ def plot_each_sinusoidal(
 
     interval_check = params_main["optimization"]["interval_check"]
     if interval_check:
-        num_check = int(params_main["optimization"]["maxiter_GD"] / interval_check)
+        num_check = int(len(loss) / interval_check)
         index_check = np.arange(0, num_check * interval_check + 1, interval_check)
         mean_abs_error_interval = hdf_operator.load_analysis_data(
             ["mean_abs_error_interval"], ["ux", "uy"]

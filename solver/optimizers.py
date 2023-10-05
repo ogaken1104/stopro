@@ -190,7 +190,11 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
             loss.append(value)
             if t < 1:
                 continue
-            elif norm_of_grads < eps:
+            ### TODO research stopping criterion
+            # elif norm_of_grads < eps:
+            #     print("converged")
+            #     break
+            elif jnp.abs(loss[-1] - loss[-2]) < eps:
                 print("converged")
                 break
             elif jnp.any(jnp.isnan(theta[-1])):
