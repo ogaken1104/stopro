@@ -68,10 +68,22 @@ def K_2d_SquareExp_Pro(r1, r2, θ):
     )
 
 
+def K_2d_SquareExp_isotropic(r1, r2, θ):
+    logγ, logl = θ
+    # return jnp.exp(logγ - 0.5 * (jnp.linalg.norm(r1 - r2) * jnp.exp(-logl)) ** 2)
+    return jnp.exp(logγ - 0.5 * jnp.sum((r1 - r2) ** 2) * jnp.exp(-logl) ** 2)
+
+
 # def K_2d_SquareExp_Pro_noise(r1, r2, θ):
 #     logγ, loglx, logly, lognoise = θ
 #     # noise is considered as first power
 #     return jnp.exp(logγ)*(K_SquareExp(r1[0], r2[0], loglx)*K_SquareExp(r1[1], r2[1], logly))+jnp.exp(lognoise)
+
+
+def K_2d_SmoothWalk_isotropic(r1, r2, θ):
+    logγ, logl = θ
+    l2norm = jnp.linalg.norm(r1 - r2)
+    return -jnp.exp(logγ) * l2norm * jnp.tanh(l2norm * jnp.exp(-logl)) + 10
 
 
 ######### テスト： ハイパーパラメータをそのままの値で与える場合 #################
@@ -365,6 +377,12 @@ def define_kernel(
 
                 def base_kernel(r1, r2, θ):
                     return K_2d_x_Periodic_y_SE_Pro(r1, r2, θ, lbox)
+
+        elif kernel_form == "isotropic":
+            if kernel_type == "se":
+                base_kernel = K_2d_SquareExp_isotropic
+            elif kernel_type == "sw":
+                base_kernel = K_2d_SmoothWalk_isotropic
 
     elif input_dim == 1:
         if kernel_type == "sm":

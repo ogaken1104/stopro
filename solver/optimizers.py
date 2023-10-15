@@ -180,6 +180,7 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
 
     def doopt(init, optimizer, maxiter_GD, loss, theta, norm_of_grads_list):
         opt_state = optimizer.init(init)
+        loss_converge = False  # 2回連続で基準値を下回ったときのみ計算を終了する
         for t in range(maxiter_GD):
             value, opt_state, current_theta, norm_of_grads = step(
                 t, opt_state, optimizer, theta[-1]
@@ -195,11 +196,16 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
             #     print("converged")
             #     break
             elif jnp.abs(loss[-1] - loss[-2]) < eps:
-                print("converged")
-                break
+                if loss_converge:
+                    print("converged")
+                    break
+                else:
+                    loss_converge = True
             elif jnp.any(jnp.isnan(theta[-1])):
                 print("diverged")
                 raise Exception("発散しました、やりなおしましょう")
+            else:
+                loss_converge = False
         return theta, loss
 
     res = [{"x": init}]
@@ -207,7 +213,6 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
     loss_before_optimize = func(theta[0], *args)
     print(f"loss before optimize: {loss_before_optimize}")
     loss.append(loss_before_optimize)
-    print(method_scipy)
     if jnp.isnan(loss_before_optimize):
         raise Exception("初期条件でlossがnanになりました")
     # optimize by scipy

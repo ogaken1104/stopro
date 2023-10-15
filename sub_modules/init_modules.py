@@ -42,6 +42,12 @@ def get_init(
             θuyuy = jnp.array(hyperparams["uyuy"])
             θpp = jnp.array(hyperparams["pp"])
             init = jnp.concatenate([θuxux, θuyuy, θpp])
+        elif len(hyperparams) == 4:
+            θuxux = jnp.array(hyperparams["uxux"])
+            θuyuy = jnp.array(hyperparams["uyuy"])
+            θpp = jnp.array(hyperparams["pp"])
+            θuxuy = jnp.array(hyperparams["uxuy"])
+            init = jnp.concatenate([θuxux, θuyuy, θpp, θuxuy])
         elif len(hyperparams) == 6:
             θuxux = jnp.array(hyperparams["uxux"])
             θuyuy = jnp.array(hyperparams["uyuy"])

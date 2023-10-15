@@ -80,7 +80,7 @@ class GPSinusoidalInferDifP(GPSinusoidalWithoutPIndependent):
                 [Kdivdiv],
             ]
 
-        return self.calculate_K_symmetric(train_pts, Ks)
+        return self.calculate_K_training(train_pts, Ks)
 
     def mixedK_all(self, θ, test_pts, train_pts):
         θuxux, θuyuy, θpp = self.split_hyperparam(θ)
@@ -139,4 +139,4 @@ class GPSinusoidalInferDifP(GPSinusoidalWithoutPIndependent):
             [Kdifpdifp],
         ]
 
-        return self.calculate_K_symmetric(test_pts, Ks)
+        return self.calculate_K_test(test_pts, Ks)
