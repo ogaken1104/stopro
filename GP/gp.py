@@ -259,3 +259,44 @@ class GPmodel:
             )
 
         return K_difdif
+
+    def d_trainingFunction_all(self, theta, *args):
+        """Returns minus log-likelihood given Kernel hyperparamters θ and training data args
+        args = velocity position, velocity average, velocity values,
+            force position, force average, force values,
+            jiggle parameter
+        """
+        # r,μ,f,ϵ=args
+        r, μ, f, ϵ = args
+        r_num = len(r)
+        ##### TODO it may be better to precompute \delta y #####
+        for i in range(r_num):
+            if i == 0:
+                δy = jnp.array(f[i] - μ[i])
+            else:
+                δy = jnp.concatenate([δy, f[i] - μ[i]], 0)
+
+        def calc_trainingK(theta, r):
+            θ, noise = self.split_hyp_and_noise(theta)
+            Σ = self.trainingK_all(θ, r)
+            Σ = self.add_eps_to_sigma(Σ, ϵ, noise_parameter=noise)
+            return Σ
+
+        dKdtheta = grad(calc_trainingK, 0)(theta, r)
+
+        ## calc matrix solve K^{-1}y
+        Σ = calc_trainingK(theta, r)
+        L = jnp.linalg.cholesky(Σ)
+        α = jnp.linalg.solve(L.transpose(), jnp.linalg.solve(L, δy))
+
+        ## calc first term of loss y^TK^{-1}\frac{dK}{d\theta}K^{-1}y
+        first_term = jnp.einsum(
+            "j, ij -> i", α.T, jnp.einsum("ijk, k ->ij", dKdtheta, α)
+        )
+
+        ## calc matrix inverse K^{-1}
+        Σ_inv = α / δy
+
+        ## calc second term of loss Tr(K^{-1}\frac{dK}{d\theta})
+        second_term = jnp.sum(jnp.diag(jnp.einsum("jk, ikl->ijl", Σ_inv, dKdtheta)))
+        return first_term + second_term
