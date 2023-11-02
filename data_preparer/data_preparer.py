@@ -87,9 +87,15 @@ class DataPreparer:
         self.params_num_points["training"] = {
             self.vnames["train"][i]: train_num[i] for i in range(len(train_num))
         }
+        self.params_num_points["training"]["sum"] = sum(
+            train_num[i] for i in range(len(train_num))
+        )
         self.params_num_points["test"] = {
             self.vnames["test"][i]: test_num[i] for i in range(len(test_num))
         }
+        self.params_num_points["test"]["sum"] = sum(
+            test_num[i] for i in range(len(test_num))
+        )
 
     def save_params_prepare(self):
         params_prepare = {
