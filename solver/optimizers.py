@@ -8,7 +8,8 @@ import numpy as np
 
 # from evosax import EvoParams, SimAnneal
 
-NO_GRAD_OPTIMIZE_LIST = ["Nelder-Mead", "Powell", "TNC", "BFGS", "L-BFGS-B"]
+# NO_GRAD_OPTIMIZE_LIST = ["Nelder-Mead", "Powell", "TNC", "BFGS", "L-BFGS-B"]
+NO_GRAD_OPTIMIZE_LIST = ["Nelder-Mead", "Powell"]
 ## if not use autograd
 
 FIRST_GRAD_OPTIMIZE_LIST = ["TNC", "BFGS", "L-BFGS-B", "CG"]  # ?
