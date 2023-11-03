@@ -135,18 +135,18 @@ class GPmodel:
             jiggle parameter
         """
         # r,μ,f,ϵ=args
-        r, μ, f, ϵ = args
+        r, delta_y, ϵ = args
         r_num = len(r)
-        ##### TODO it may be better to precompute \delta y #####
-        for i in range(r_num):
-            if i == 0:
-                δy = jnp.array(f[i] - μ[i])
-            else:
-                δy = jnp.concatenate([δy, f[i] - μ[i]], 0)
+        # ##### TODO it may be better to precompute \delta y #####
+        # for i in range(r_num):
+        #     if i == 0:
+        #         δy = jnp.array(f[i] - μ[i])
+        #     else:
+        #         δy = jnp.concatenate([δy, f[i] - μ[i]], 0)
         θ, noise = self.split_hyp_and_noise(theta)
         Σ = self.trainingK_all(θ, r)
         Σ = self.add_eps_to_sigma(Σ, ϵ, noise_parameter=noise)
-        return self.logpGP(δy, Σ, ϵ)
+        return self.logpGP(delta_y, Σ, ϵ)
 
     def predictingFunction_all(self, theta, *args):
         """Returns conditional posterior average and covariance matrix given Kernel hyperparamters θ  and test and training data
@@ -160,19 +160,19 @@ class GPmodel:
         μpost=[μux,μuy,μp]
         Σpost=[Σux,Σuy,Σp]
         """
-        r_test, μ_test, r_train, μ, f_train, ϵ = args
+        r_test, μ_test, r_train, delta_y_train, ϵ = args
         θ, noise = self.split_hyp_and_noise(theta)
         Σbb = self.trainingK_all(θ, r_train)
         Σab = self.mixedK_all(θ, r_test, r_train)
         Σbb = self.add_eps_to_sigma(Σbb, ϵ, noise_parameter=noise)
         Σaa = self.testK_all(θ, r_test)
-        for i in range(len(r_train)):
-            if i == 0:
-                δfb = jnp.array(f_train[i] - μ[i])
-            else:
-                δfb = jnp.concatenate([δfb, f_train[i] - μ[i]])
-                # create single training array, with velocities and forces (second derivatives)
-        μposts, Σposts = self.postGP(δfb, Σaa, Σab, Σbb, ϵ)
+        # for i in range(len(r_train)):
+        #     if i == 0:
+        #         δfb = jnp.array(f_train[i] - μ[i])
+        #     else:
+        #         δfb = jnp.concatenate([δfb, f_train[i] - μ[i]])
+        # create single training array, with velocities and forces (second derivatives)
+        μposts, Σposts = self.postGP(delta_y_train, Σaa, Σab, Σbb, ϵ)
         # seperate μpost,Σpost to 3 self.sec_teion (ux,uy,p)
         sec0 = 0
         sec1 = 0
@@ -192,9 +192,9 @@ class GPmodel:
 
     def set_constants(self, *args, only_training=False):
         if only_training:
-            r_train, μ, f_train, ϵ = args
+            r_train, delta_y_train, ϵ = args
         else:
-            r_test, μ_test, r_train, μ, f_train, ϵ = args
+            r_test, μ_test, r_train, delta_y_train, ϵ = args
             self.num_te = len(r_test)
             self.sec_te = self.calc_sec(r_test)
         self.num_tr = len(r_train)
@@ -267,14 +267,8 @@ class GPmodel:
             jiggle parameter
         """
         # r,μ,f,ϵ=args
-        r, μ, f, ϵ = args
+        r, δy, ϵ = args
         r_num = len(r)
-        ##### TODO it may be better to precompute \delta y #####
-        for i in range(r_num):
-            if i == 0:
-                δy = jnp.array(f[i] - μ[i])
-            else:
-                δy = jnp.concatenate([δy, f[i] - μ[i]], 0)
 
         def calc_trainingK(theta):
             θ, noise = self.split_hyp_and_noise(theta)
@@ -295,15 +289,12 @@ class GPmodel:
             "j, ij -> i", α.T, jnp.einsum("ijk, k ->ij", dKdtheta, α)
         )
 
-        ## calc matrix inverse K^{-1}
-        is_zero = δy == 0.0
-        # δy = δy.at[is_zero].set(1)
-        Σ_inv = jnp.einsum("i, j->ij", α, α)  ### TODO make left alpha y.
+        I = jnp.eye(len(δy))
+        Σ_inv = jnp.linalg.solve(L.T, jnp.linalg.solve(L, I))
 
         ## calc second term of loss Tr(K^{-1}\frac{dK}{d\theta})
         second_term = jnp.sum(
             jnp.diagonal(jnp.einsum("jk, ikl->ijl", Σ_inv, dKdtheta), axis1=1, axis2=2),
             axis=1,
         )
-        return first_term + second_term
-        # return first_term
+        return -(first_term + second_term) / 2 + 1
