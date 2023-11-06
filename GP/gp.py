@@ -297,4 +297,4 @@ class GPmodel:
             jnp.diagonal(jnp.einsum("jk, ikl->ijl", Σ_inv, dKdtheta), axis1=1, axis2=2),
             axis=1,
         )
-        return -(first_term + second_term) / 2 + 1
+        return (first_term + second_term) / 2 + 1
