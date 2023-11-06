@@ -51,7 +51,11 @@ class GPSinusoidalWithoutPIndependent(GPmodel2DStokesIndependent):
             θ (jnp.array) : kernel hyperparameters
             training points (List(jnp.array)): r_ux,r_uy,r_p,r_fx,r_fy,r_div
         """
+        Ks = self.trainingKs(θ)
 
+        return self.calculate_K_training(train_pts, Ks)
+
+    def trainingKs(self, θ):
         Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
         (
             Kuxfx,
@@ -105,8 +109,7 @@ class GPSinusoidalWithoutPIndependent(GPmodel2DStokesIndependent):
             [Kdivdiv, Kdivdifp],
             [Kdifpdifp],
         ]
-
-        return self.calculate_K_training(train_pts, Ks)
+        return Ks
 
     def mixedK_all(self, θ, test_pts, train_pts):
         """
