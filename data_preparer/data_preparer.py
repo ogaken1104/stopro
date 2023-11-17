@@ -53,22 +53,23 @@ class DataPreparer:
         self.params_num_points = {}
         self.params_main = params_main
 
-    def make_data(self, plot_training=True, plot_test=False):
+    def make_data(self, plot_training=True, plot_test=False, save=True):
         # DataGeneratorのインスタンスを作成
+        # 訓練データを生成して保存
         sample = self.class_data_generator(**self.params_setting)
         r_train, f_train = sample.generate_training_data(
             **self.params_generate_training
         )
-        # 訓練データを生成して保存
-        hdf_operator = HdfOperator(self.simulation_path)
-        hdf_operator.save_train_data(
-            self.lbls["train"], self.vnames["train"], [r_train, f_train]
-        )
         # テストデータを生成して保存
         r_test, f_test = sample.generate_test(**self.params_generate_test)
-        hdf_operator.save_test_data(
-            self.lbls["test"], self.vnames["test"], [r_test, f_test]
-        )
+        if save:
+            hdf_operator = HdfOperator(self.simulation_path)
+            hdf_operator.save_train_data(
+                self.lbls["train"], self.vnames["train"], [r_train, f_train]
+            )
+            hdf_operator.save_test_data(
+                self.lbls["test"], self.vnames["test"], [r_test, f_test]
+            )
         # plot
         if plot_training:
             sample.plot_train(save=True, path=self.simulation_path)

@@ -1,10 +1,11 @@
+from functools import partial
+
 import jax.numpy as jnp
+import numpy as np
 import optax
 from jax import jit, value_and_grad
 from jax.example_libraries import optimizers
 from scipy import optimize
-from functools import partial
-import numpy as np
 
 # from evosax import EvoParams, SimAnneal
 
@@ -162,6 +163,8 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
             norm_of_grads = jnp.linalg.norm(grads)
         except:
             norm_of_grads = sum(jnp.sum(value) for value in grads.values())
+        if jnp.any(jnp.isnan(grads)):
+            raise Exception("gradient of loss became nan")
         if print_process:
             print(
                 f"step{t:4} loss: {value:.4f} max_grad: {jnp.max(abs(grads)):.5f}, arg={jnp.argmax(abs(grads))}"

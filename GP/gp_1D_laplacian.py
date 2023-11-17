@@ -1,5 +1,5 @@
-from jax import grad
 import jax.numpy as jnp
+from jax import grad
 
 from stopro.GP.gp_1D import GPmodel1D
 
@@ -59,7 +59,7 @@ class GPmodel1DLaplacian(GPmodel1D):
 
         Ks = [[Kyy, Kyly], [Klyly]]
 
-        return self.calculate_K_symmetric(train_pts, Ks)
+        return self.calculate_K_training(train_pts, Ks)
 
     def mixedK_all(self, theta, test_pts, train_pts):
         """
@@ -87,4 +87,4 @@ class GPmodel1DLaplacian(GPmodel1D):
             [Kyy],
         ]
 
-        return self.calculate_K_symmetric(test_pts, Ks)
+        return self.calculate_K_test(test_pts, Ks)
