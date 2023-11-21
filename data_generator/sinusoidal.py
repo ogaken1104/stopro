@@ -285,6 +285,12 @@ class Sinusoidal(StokesDataGenerator):
         f[is_outside_the_domain] = 0.0
         return f
 
+    def get_index_in_channel(self, r):
+        top_ok = r[:, 1] < self.calc_y_top(r[:, 0])
+        bottom_ok = r[:, 1] > self.calc_y_bottom(r[:, 0])
+        index_in_channel = top_ok & bottom_ok
+        return index_in_channel
+
     def generate_wall_points(self, num_x):
         # velocity at wall
         x_wall_half = np.linspace(self.x_start, self.x_end, num_x)
