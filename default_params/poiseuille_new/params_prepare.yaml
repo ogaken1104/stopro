@@ -1,0 +1,64 @@
+plot:
+  error_limit:
+  - 0.00001
+  - 0.01
+  std_limit:
+  - 0.0001
+  - 0.01
+  val_limits:
+  - - 0.0
+    - 0.13
+  - - -0.01
+    - 0.01
+  - - 0.0
+    - 1.0
+  x_for_ux: 0.5
+training_data:
+setting:
+  Re: 1.
+  L: 1.
+  delta_p: -1.
+  pin: 1.
+  random_arrange: False
+  slide: 0.03
+  use_gradp_training: False
+  infer_gradp: False
+  infer_ux_wall: False
+  use_only_bottom_u: False
+  use_only_inlet_gradp: False
+  cut_last_x: False
+  use_difu: False
+generate_training:
+  div_num: 12
+  div_pad: 0.03
+  f_num: 12
+  f_pad: 0.03
+  p_num: 22
+  u_num: 22
+generate_test:
+  test_num: 33
+kernel_arg:
+- 'uxux'
+- 'uyuy'
+- 'pp'
+vnames:
+  train:
+  - 'ux'
+  - 'uy'
+  - 'p'
+  - 'fx'
+  - 'fy'
+  - 'divu'
+  test:
+  - 'ux'
+  - 'uy'
+  - 'p'
+  infer:
+  - 'ux'
+  - 'uy'
+  - 'p'
+  analysis:
+  - 'ux'
+  - 'uy'
+  - 'p'
+system_type: 'Stokes_2D'

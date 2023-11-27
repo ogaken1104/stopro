@@ -1,0 +1,34 @@
+model:
+  add_noise: false
+  init_kernel_hyperparameter:
+    uxux:
+    - 0.
+    - 0.
+    - 0.
+    uyuy:
+    - 0.
+    - 0.
+    - 0.
+    pp:
+    - 0.
+    - 0.
+    - 0.
+  kernel_form: additive
+  kernel_type: se
+  epsilon: 1.0e-06
+  input_dim: 2
+  system_type: Stokes_2D
+  distance_func: false
+optimization:
+  eps: 0.0001
+  loss_ridge_regression: false
+  lr: 1.0e-05
+  maxiter_GD: 0
+  maxiter_scipy: 
+  - 500
+  method_GD: adam
+  method_scipy: 
+  - Nelder-Mead
+  print_process: True
+  interval_check: null
+  index_fixed: null
