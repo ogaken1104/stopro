@@ -39,6 +39,7 @@ class Poiseuille(StokesDataGenerator):
             self.f_ux = (
                 lambda r: -0.5 * self.delta_p * self.Re * r[:, 1] * (1 - r[:, 1])
             )
+            self.f_duxdy = lambda r: -0.5 * self.delta_p * self.Re * (1 - 2 * r[:, 1])
             self.f_p = lambda r: pin + self.delta_p * r[:, 0]
             self.gradpx = self.delta_p / self.L
         #         self.f_uy=lambda r :0.
@@ -58,7 +59,7 @@ class Poiseuille(StokesDataGenerator):
         self.use_difu = use_difu
 
     # generation of training data
-    def generate_u(self, u_num, u_b=0.0):
+    def generate_u(self, u_num, u_b=0.0, u_1D2C=False):
         """
         premise: ux,uy values are taken at same points
         """
@@ -81,6 +82,8 @@ class Poiseuille(StokesDataGenerator):
             # define num_along_y
             if self.use_only_bottom_u:
                 num_along_y = 1
+            elif u_1D2C:
+                num_along_y = 7
             else:
                 num_along_y = 2
             if self.random_arrange:
@@ -122,7 +125,7 @@ class Poiseuille(StokesDataGenerator):
                 )
             else:
                 r_ux = self.make_r_mesh(0.0, x_last, 0.0, 1.0, u_num, num_along_y)
-            r_uy = self.make_r_mesh(0.0, x_last, 0.0, 1.0, u_num, num_along_y)
+                r_uy = self.make_r_mesh(0.0, x_last, 0.0, 1.0, u_num, num_along_y)
             # without_p test
             # r_ux_1 = self.make_r_mesh(0., 1., 0., 1., u_num, 2)
             # r_uy_1 = self.make_r_mesh(0., 1., 0., 1., u_num, 2)
@@ -138,7 +141,14 @@ class Poiseuille(StokesDataGenerator):
         self.r += [r_ux, r_uy]
         self.f += [ux, uy]
 
-    def generate_test(self, test_num, ux_test=False):
+    def generate_test(self, test_num, ux_test=False, infer_duxdy_boundary=False):
+        if infer_duxdy_boundary:
+            num_x = 100
+            r = self.make_r_mesh(0.0, self.L, 0.0, 1.0, num_x, 2)
+            duxdy = self.f_duxdy(r)
+            self.r_test = [r]
+            self.f_test = [duxdy]
+            return self.r_test, self.f_test
         if not ux_test:
             r = self.make_r_mesh(0.0, self.L, 0.0, 1.0, test_num, test_num)
             ux_test = self.f_ux(r)
@@ -388,7 +398,7 @@ class Poiseuille(StokesDataGenerator):
                 "div",
             ]
             axes = axs.reshape(-1)[:-1]
-        else:
+        elif len(self.r) == 6:
             fig, axs = plt.subplots(
                 figsize=(3 * 3, 3 * 2), nrows=2, ncols=3, sharex=True, sharey=True
             )
@@ -402,6 +412,22 @@ class Poiseuille(StokesDataGenerator):
             ]
             lbls = ["ux", "uy", "p", "fx", "fy", "div"]
             axes = axs.reshape(-1)
+        elif len(self.r) == 5:
+            fig, axs = plt.subplots(
+                figsize=(3 * 3, 3 * 2), nrows=2, ncols=3, sharex=True, sharey=True
+            )
+            clrs = [
+                self.COLOR["mid"],
+                self.COLOR["mid"],
+                "green",
+                "green",
+                self.COLOR["light"],
+            ]
+            lbls = ["ux", "uy", "fx", "fy", "div"]
+            fig.delaxes(axs.reshape(-1)[-1])
+            axes = axs.reshape(-1)[:-1]
+        else:
+            raise ValueError("plot function is not implemented for this case")
         x = [0, 0, self.L, self.L, 0]
         y = [0.0, 1.0, 1.0, 0.0, 0.0]
         for i, ax in enumerate(axes):
@@ -461,3 +487,44 @@ class Poiseuille(StokesDataGenerator):
         # for difux and difuy, use same points
         self.r += [r_difu, r_difu]
         self.f += [difu, difu]
+
+    def generate_training_data(
+        self,
+        u_num=None,
+        p_num=None,
+        f_num=None,
+        f_pad=None,
+        div_num=None,
+        div_pad=None,
+        difp_num=None,
+        difp_pad=None,
+        difp_loc=None,
+        difu_num=None,
+        diff_num=None,
+        u_1D2C=False,
+    ):
+        """
+        Args
+        u_num  :number of u training poitns at each boundary
+        p_num  :number of p training poitns at each boundary
+        f_num  :list of number of f training points [h,w]
+        f_pad  : distance from boundary for f
+        div_num:list of number of div training points [h,w]
+        div_pad:distance from boundary for div
+        """
+        self.r = []
+        self.f = []
+        self.generate_u(u_num, u_1D2C=u_1D2C)
+        if self.use_difu:
+            self.generate_difu(difu_num)
+        if self.use_gradp_training:
+            self.generate_gradp(p_num)
+        elif p_num:
+            self.generate_p(p_num)
+        self.generate_f(f_num, f_pad)
+        if self.use_diff:
+            self.generate_diff(diff_num)
+        self.generate_div(div_num, div_pad)
+        if self.use_difp:
+            self.generate_difp(difp_num, difp_pad, difp_loc)
+        return self.r, self.f
