@@ -1,0 +1,76 @@
+generate_test:
+  test_num: 33
+generate_training:
+  div_num: 12
+  div_pad: 0.03
+  f_num: 12
+  f_pad: 0.03
+  p_num: 22
+  u_num: 22
+kernel_arg:
+- uxux
+- uyuy
+- pp
+num_points:
+  test:
+    p: 1089
+    sum: 3267
+    ux: 1089
+    uy: 1089
+  training:
+    divu: 144
+    fx: 144
+    fy: 144
+    p: 22
+    sum: 498
+    ux: 22
+    uy: 22
+plot:
+  error_limit:
+  - 1.0e-05
+  - 0.01
+  std_limit:
+  - 0.0001
+  - 0.01
+  val_limits:
+  - - 0.0
+    - 0.13
+  - - -0.01
+    - 0.01
+  - - 0.0
+    - 1.0
+  x_for_ux: 0.5
+setting:
+  L: 1.0
+  Re: 1.0
+  cut_last_x: false
+  delta_p: -1.0
+  infer_gradp: false
+  infer_ux_wall: false
+  pin: 1.0
+  random_arrange: false
+  slide: 0.03
+  use_difu: false
+  use_gradp_training: false
+  use_only_bottom_u: false
+  use_only_inlet_gradp: false
+vnames:
+  analysis:
+  - ux
+  - uy
+  - p
+  infer:
+  - ux
+  - uy
+  - p
+  test:
+  - ux
+  - uy
+  - p
+  train:
+  - ux
+  - uy
+  - p
+  - fx
+  - fy
+  - divu

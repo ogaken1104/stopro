@@ -1,0 +1,35 @@
+absolute_error
+- max
+ux : 8.2515857
+uy : 0.9266732
+- mean
+ux : 0.4533814
+uy : 0.1001744
+
+relative_error
+- max
+ux : 0.06259
+uy : 1.44974
+- mean
+ux : 0.0037725
+uy : 0.0325052
+
+std
+- max
+ux : 0.2303164
+uy : 0.2727288
+- mean
+ux : 0.0129519
+uy : 0.0160710
+
+- loss
+final value: -1.08618
+iteration: 788
+
+- thata
+uxux 0.900 -1.367 -1.250
+uyuy -0.371 -1.259 -1.368
+pp   1.919 -1.446 -1.566
+
+- final norm of grads
+0.05372536617102985

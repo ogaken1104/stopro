@@ -1,5 +1,8 @@
 # 無視するファイル
 *.pyc
 settings/json
+*.sh
+*.out
+*.err
 
 # 無視しないファイル

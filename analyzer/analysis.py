@@ -47,9 +47,8 @@ def analyze_result(
     norm_of_grads_list,
     lbls_kernel_arg,
     vnames_analysis,
+    analysis_text_path=f"../data_output/analysis.txt",
 ):
-    analysis_text_path = f"../data_output/analysis.txt"
-
     # calculate absolute and relative errors
     absolute_error = []
     relative_error = []

@@ -1,0 +1,27 @@
+absolute_error
+- max
+y : 1.0306545
+- mean
+y : 0.2495246
+
+relative_error
+- max
+y : 25.85847
+- mean
+y : 0.5919046
+
+std
+- max
+y : 0.4881643
+- mean
+y : 0.1350585
+
+- loss
+final value: -0.26859
+iteration: 528
+
+- thata
+yy   -1.419 -0.397 -5.502
+
+- final norm of grads
+0.4551781442634261
