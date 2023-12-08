@@ -11,7 +11,7 @@ def prepare(
     project_name,
     simulation_name,
     use_existing_params=False,
-    system_name="poiseuille_new",
+    system_name="poiseuille",
     u_num=None,
     sigma2_noise=None,
 ):

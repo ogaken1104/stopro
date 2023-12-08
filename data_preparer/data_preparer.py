@@ -29,7 +29,7 @@ class DataPreparer:
         os.makedirs(self.simulation_path + "/fig")
         os.makedirs(self.simulation_path + "/scripts")
 
-    def load_params(self, system_name="sinusoidal_new", use_existing_params=False):
+    def load_params(self, system_name="sinusoidal", use_existing_params=False):
         if use_existing_params:
             params_path = use_existing_params
         else:

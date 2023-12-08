@@ -8,7 +8,7 @@ def prepare(
     project_name,
     simulation_name,
     use_existing_params=False,
-    system_name="sinusoidal_new",
+    system_name="sinusoidal",
 ):
     data_preparer = DataPreparer(
         project_name, simulation_name, class_data_generator=Sinusoidal
