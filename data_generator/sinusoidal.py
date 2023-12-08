@@ -303,7 +303,7 @@ class Sinusoidal(StokesDataGenerator):
         return r_wall, f_wall
 
     # generation of training data
-    def generate_u(self, u_num, u_b=0.0):
+    def generate_u(self, u_num, u_b=0.0, u_1D2C=False):
         """
         premise: ux,uy values are taken at same points
         """
@@ -311,7 +311,48 @@ class Sinusoidal(StokesDataGenerator):
         u_num_x, u_num_y = self.num_to_num_x_y(u_num)
         u_pad = self.slide
 
-        if self.use_random_u:
+        if u_1D2C:
+            r_u_wall, u_wall = self.generate_wall_points(u_num_x)
+
+            with open(
+                f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_random_training_50.pickle',
+                "rb",
+            ) as file:
+                save_dict = pickle.load(file)
+            r_train = save_dict["r"]
+            f_train = save_dict["u"]
+            r_u_all, _ = r_train
+            ux_all, uy_all = f_train
+            # num_lines = 4
+
+            # points for uy
+            ys = r_u_all[:, 1]
+            ys_unique = np.sort(np.unique(ys))
+            # 4line case ##
+            index_y = 4
+            index2_y = 12
+            ys_for_uy = np.array(
+                [
+                    ys_unique[index_y],
+                    ys_unique[index2_y],
+                    ys_unique[-index2_y],
+                    ys_unique[-index_y],
+                ]
+            )
+
+            split = 4
+            r_u = r_u_wall
+            ux = u_wall
+            uy = u_wall
+            for y_for_uy in ys_for_uy:
+                index_uy = np.isin(ys, y_for_uy)
+                r_u = np.append(r_u, r_u_all[index_uy][::split], axis=0)
+                ux = np.append(ux, ux_all[index_uy][::split])
+                uy = np.append(uy, uy_all[index_uy][::split])
+
+            r_ux = r_u
+            r_uy = r_u
+        elif self.use_random_u:
             # ############ when using semi-analytical ##############
             # u_num_x, u_num_y = self.num_to_num_x_y(28)
             # x_start = self.x_start+u_pad
@@ -1011,27 +1052,30 @@ class Sinusoidal(StokesDataGenerator):
         diff_num=None,
         without_f=False,
         sigma2_noise: float = None,
+        u_1D2C=False,
     ):
         self.without_f = without_f
         if without_f:
-            self.generate_u(u_num)
+            self.generate_u(u_num, u_1D2C=u_1D2C)
             self.generate_difu(difu_num)
             self.generate_div(div_num, div_pad)
             self.generate_difp(difp_num, difp_pad, difp_loc)
         else:
-            self.r, self.f = super().generate_training_data(
-                u_num,
-                p_num,
-                f_num,
-                f_pad,
-                div_num,
-                div_pad,
-                difp_num,
-                difp_pad,
-                difp_loc,
-                difu_num,
-                diff_num,
-            )
+            self.r = []
+            self.f = []
+            self.generate_u(u_num, u_1D2C=u_1D2C)
+            if self.use_difu:
+                self.generate_difu(difu_num)
+            if self.use_gradp_training:
+                self.generate_gradp(p_num)
+            elif p_num:
+                self.generate_p(p_num)
+            self.generate_f(f_num, f_pad)
+            if self.use_diff:
+                self.generate_diff(diff_num)
+            self.generate_div(div_num, div_pad)
+            if self.use_difp:
+                self.generate_difp(difp_num, difp_pad, difp_loc)
             if sigma2_noise:
                 # add noise for velocities
                 for i in range(2):
@@ -1192,6 +1236,26 @@ class Sinusoidal(StokesDataGenerator):
                 r"$\nabla \cdot u$",
             ]
             axes = axs.reshape(-1)
+        elif len(self.r) == 5:
+            fig, axs = plt.subplots(
+                figsize=(3 * 3, 3 * 2), nrows=2, ncols=3, sharex=True, sharey=True
+            )
+            clrs = [
+                self.COLOR["mid"],
+                self.COLOR["mid"],
+                "green",
+                "green",
+                self.COLOR["light"],
+            ]
+            lbls = [
+                "$u_x$",
+                "$u_y$",
+                "$f_x$",
+                "$f_y$",
+                r"$\nabla \cdot u$",
+            ]
+            fig.delaxes(axs.reshape(-1)[-1])
+            axes = axs.reshape(-1)[:-1]
         elif self.use_difu and not self.use_difp:
             fig, axs = plt.subplots(
                 figsize=(3 * 3, 3 * 3), nrows=3, ncols=3, sharex=True, sharey=True
