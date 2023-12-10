@@ -1,10 +1,10 @@
 import jax.numpy as jnp
 import numpy as np
 
-from stopro.GP.gp_sinusoidal_without_p_dif import GPSinusoidalWithoutPDif
+from stopro.GP.gp_sinusoidal_without_p_dif import GPufdiv
 
 
-class GPSinusoidalInferDuxx(GPSinusoidalWithoutPDif):
+class GPSinusoidalInferDuxx(GPufdiv):
     def mixedK_all(self, θ, test_pts, train_pts):
         θuxux, θuyuy, θpp = self.split_hyperparam(theta=θ)
 
@@ -48,7 +48,7 @@ class GPSinusoidalInferDuxx(GPSinusoidalWithoutPDif):
         return self.calculate_K_test(test_pts, Ks)
 
 
-class GPSinusoidalInferDuyy(GPSinusoidalWithoutPDif):
+class GPSinusoidalInferDuyy(GPufdiv):
     def mixedK_all(self, θ, test_pts, train_pts):
         θuxux, θuyuy, θpp = self.split_hyperparam(theta=θ)
 
@@ -92,7 +92,7 @@ class GPSinusoidalInferDuyy(GPSinusoidalWithoutPDif):
         return self.calculate_K_test(test_pts, Ks)
 
 
-class GPSinusoidalInferDuxy(GPSinusoidalWithoutPDif):
+class GPSinusoidalInferDuxy(GPufdiv):
     def mixedK_all(self, θ, test_pts, train_pts):
         θuxux, θuyuy, θpp = self.split_hyperparam(theta=θ)
 
@@ -136,7 +136,7 @@ class GPSinusoidalInferDuxy(GPSinusoidalWithoutPDif):
         return self.calculate_K_test(test_pts, Ks)
 
 
-class GPSinusoidalInferDuyx(GPSinusoidalWithoutPDif):
+class GPSinusoidalInferDuyx(GPufdiv):
     def mixedK_all(self, θ, test_pts, train_pts):
         θuxux, θuyuy, θpp = self.split_hyperparam(theta=θ)
 

@@ -303,7 +303,7 @@ class Sinusoidal(StokesDataGenerator):
         return r_wall, f_wall
 
     # generation of training data
-    def generate_u(self, u_num, u_b=0.0, u_1D2C=False):
+    def generate_u(self, u_num, u_b=0.0, u_1D2C=False, sigma2_noise=None):
         """
         premise: ux,uy values are taken at same points
         """
@@ -314,6 +314,10 @@ class Sinusoidal(StokesDataGenerator):
         if u_1D2C:
             r_u_wall, u_wall = self.generate_wall_points(u_num_x)
 
+            # r_u = r_u_wall
+            # ux = u_wall
+            # uy = u_wall
+
             with open(
                 f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_random_training_50.pickle',
                 "rb",
@@ -323,6 +327,7 @@ class Sinusoidal(StokesDataGenerator):
             f_train = save_dict["u"]
             r_u_all, _ = r_train
             ux_all, uy_all = f_train
+
             # num_lines = 4
 
             # points for uy
@@ -341,17 +346,41 @@ class Sinusoidal(StokesDataGenerator):
             )
 
             split = 4
-            r_u = r_u_wall
-            ux = u_wall
-            uy = u_wall
+            r_u_obs = np.empty((0, 2))
+            ux_obs = np.empty(0)
+            uy_obs = np.empty(0)
             for y_for_uy in ys_for_uy:
                 index_uy = np.isin(ys, y_for_uy)
-                r_u = np.append(r_u, r_u_all[index_uy][::split], axis=0)
-                ux = np.append(ux, ux_all[index_uy][::split])
-                uy = np.append(uy, uy_all[index_uy][::split])
-
-            r_ux = r_u
-            r_uy = r_u
+                r_u_obs = np.append(r_u_obs, r_u_all[index_uy][::split], axis=0)
+                ux_obs = np.append(ux_obs, ux_all[index_uy][::split])
+                uy_obs = np.append(uy_obs, uy_all[index_uy][::split])
+            if sigma2_noise:
+                # add velocity at walls
+                # self.r += [r_u_wall, r_u_wall]
+                # self.f += [np.array(u_wall), np.array(u_wall)]
+                # # add velocity observations
+                ux_obs = self.add_white_noise(ux_obs, sigma2_noise)
+                uy_obs = self.add_white_noise(uy_obs, sigma2_noise)
+                # self.r += [r_u_obs, r_u_obs]
+                # self.f += [np.array(ux_obs), np.array(uy_obs)]
+                self.r += [
+                    r_u_obs,
+                    r_u_obs,
+                    r_u_wall,
+                    r_u_wall,
+                ]
+                self.f += [
+                    np.array(ux_obs),
+                    np.array(uy_obs),
+                    np.array(u_wall),
+                    np.array(u_wall),
+                ]
+                return None
+            else:
+                r_ux = np.concatenate([r_u_wall, r_u_obs])
+                r_uy = np.concatenate([r_u_wall, r_u_obs])
+                ux = np.concatenate([ux_obs, ux_obs])
+                uy = np.concatenate([uy_obs, uy_obs])
         elif self.use_random_u:
             # ############ when using semi-analytical ##############
             # u_num_x, u_num_y = self.num_to_num_x_y(28)
@@ -1063,7 +1092,7 @@ class Sinusoidal(StokesDataGenerator):
         else:
             self.r = []
             self.f = []
-            self.generate_u(u_num, u_1D2C=u_1D2C)
+            self.generate_u(u_num, u_1D2C=u_1D2C, sigma2_noise=sigma2_noise)
             if self.use_difu:
                 self.generate_difu(difu_num)
             if self.use_gradp_training:
@@ -1076,7 +1105,7 @@ class Sinusoidal(StokesDataGenerator):
             self.generate_div(div_num, div_pad)
             if self.use_difp:
                 self.generate_difp(difp_num, difp_pad, difp_loc)
-            if sigma2_noise:
+            if sigma2_noise and not u_1D2C:
                 # add noise for velocities
                 for i in range(2):
                     self.f[i] = self.add_white_noise(self.f[i], sigma2_noise)
