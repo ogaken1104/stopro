@@ -632,8 +632,8 @@ class Sinusoidal(StokesDataGenerator):
             y = np.concatenate([y_top - pad_boundary, y_bottom + pad_boundary])
             r = np.stack([np.concatenate([x, x]), y], axis=1)
             duidui = np.zeros(len(r))
-            self.r_test = [r] * 4
-            self.f_test = [duidui] * 4
+            self.r_test = [r] * 5
+            self.f_test = [duidui] * 5
             return self.r_test, self.f_test
 
         if infer_du_grid:

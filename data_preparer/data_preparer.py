@@ -167,9 +167,9 @@ class DataPreparer:
             self.vnames["infer"] = ["fx", "fy", "divu"]
             self.vnames["test"] = ["fx", "fy", "divu"]
         if self.params_generate_test["infer_du_boundary"]:
-            self.vnames["analysis"] = ["duxx", "duxy", "duyx", "duyy"]
-            self.vnames["infer"] = ["duxx", "duxy", "duyx", "duyy"]
-            self.vnames["test"] = ["duxx", "duxy", "duyx", "duyy"]
+            self.vnames["analysis"] = ["duxx", "duxy", "duyx", "duyy", "p"]
+            self.vnames["infer"] = ["duxx", "duxy", "duyx", "duyy", "p"]
+            self.vnames["test"] = ["duxx", "duxy", "duyx", "duyy", "p"]
         if self.params_generate_test["infer_du_grid"]:
             val = "duxy"
             self.vnames["analysis"] = [val]
