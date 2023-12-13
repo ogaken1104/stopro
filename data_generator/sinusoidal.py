@@ -303,7 +303,7 @@ class Sinusoidal(StokesDataGenerator):
         return r_wall, f_wall
 
     # generation of training data
-    def generate_u(self, u_num, u_b=0.0, u_1D2C=False, sigma2_noise=None):
+    def generate_u(self, u_num, u_b=0.0, u_1D2C=False, sigma2_noise=None, u_split=4):
         """
         premise: ux,uy values are taken at same points
         """
@@ -345,7 +345,7 @@ class Sinusoidal(StokesDataGenerator):
                 ]
             )
 
-            split = 4
+            split = u_split
             r_u_obs = np.empty((0, 2))
             ux_obs = np.empty(0)
             uy_obs = np.empty(0)
@@ -379,8 +379,8 @@ class Sinusoidal(StokesDataGenerator):
             else:
                 r_ux = np.concatenate([r_u_wall, r_u_obs])
                 r_uy = np.concatenate([r_u_wall, r_u_obs])
-                ux = np.concatenate([ux_obs, ux_obs])
-                uy = np.concatenate([uy_obs, uy_obs])
+                ux = np.concatenate([u_wall, ux_obs])
+                uy = np.concatenate([u_wall, uy_obs])
         elif self.use_random_u:
             # ############ when using semi-analytical ##############
             # u_num_x, u_num_y = self.num_to_num_x_y(28)
@@ -1082,6 +1082,7 @@ class Sinusoidal(StokesDataGenerator):
         without_f=False,
         sigma2_noise: float = None,
         u_1D2C=False,
+        u_split=4,
     ):
         self.without_f = without_f
         if without_f:
@@ -1092,7 +1093,9 @@ class Sinusoidal(StokesDataGenerator):
         else:
             self.r = []
             self.f = []
-            self.generate_u(u_num, u_1D2C=u_1D2C, sigma2_noise=sigma2_noise)
+            self.generate_u(
+                u_num, u_1D2C=u_1D2C, sigma2_noise=sigma2_noise, u_split=u_split
+            )
             if self.use_difu:
                 self.generate_difu(difu_num)
             if self.use_gradp_training:

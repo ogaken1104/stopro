@@ -40,6 +40,8 @@ generate_training:
   p_num: 0
   u_num: 44
   without_f: false
+  sigma2_noise: null
+  u_1D2C: False
 vnames:
   analysis:
   - ux
