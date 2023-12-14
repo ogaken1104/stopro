@@ -1083,6 +1083,7 @@ class Sinusoidal(StokesDataGenerator):
         sigma2_noise: float = None,
         u_1D2C=False,
         u_split=4,
+        difu_pad=0.03,
     ):
         self.without_f = without_f
         if without_f:
@@ -1097,7 +1098,7 @@ class Sinusoidal(StokesDataGenerator):
                 u_num, u_1D2C=u_1D2C, sigma2_noise=sigma2_noise, u_split=u_split
             )
             if self.use_difu:
-                self.generate_difu(difu_num)
+                self.generate_difu(difu_num, difu_pad=difu_pad)
             if self.use_gradp_training:
                 self.generate_gradp(p_num)
             elif p_num:
@@ -1477,29 +1478,29 @@ class Sinusoidal(StokesDataGenerator):
     #     self.generate_div(div_num, div_pad)
     #     return self.r, self.f
 
-    def generate_difu(self, difu_num, difu_loc="inlet_outlet"):
+    def generate_difu(self, difu_num, difu_loc="inlet_outlet", difu_pad=0.03):
         # difu_loc = 'all_inside'
         if difu_loc == "inlet_outlet":
             # use difu at inlet and outlet
             r_difu = self.make_r_mesh_sinusoidal(
                 self.x_start,
                 self.x_end,
-                -self.w / 2 + self.slide,
-                self.w / 2 - self.slide,
+                -self.w / 2 + difu_pad,
+                self.w / 2 - difu_pad,
                 1,
                 difu_num,
-                self.slide,
+                difu_pad,
             )
         elif difu_loc == "all_inside":
             difu_num_x, difu_num_y = self.num_to_num_x_y(difu_num)
             r_difu = self.make_r_mesh_sinusoidal(
                 self.x_start - self.L / 2,
                 self.x_end - self.L / 2,
-                -self.w / 2 + self.slide,
-                self.w / 2 - self.slide,
+                -self.w / 2 + difu_pad,
+                self.w / 2 - difu_pad,
                 difu_num_x,
                 difu_num_y,
-                self.slide,
+                difu_pad,
             )
         difu = np.full(len(r_difu), 0.0)
         # for difux and difuy, use same points

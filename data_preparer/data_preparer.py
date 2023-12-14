@@ -53,7 +53,14 @@ class DataPreparer:
         self.params_num_points = {}
         self.params_main = params_main
 
-    def make_data(self, plot_training=True, plot_test=False, save=True):
+    def make_data(
+        self,
+        plot_training=True,
+        plot_test=False,
+        save_data=True,
+        save_plot=True,
+        return_data=False,
+    ):
         # DataGeneratorのインスタンスを作成
         # 訓練データを生成して保存
         sample = self.class_data_generator(**self.params_setting)
@@ -62,7 +69,7 @@ class DataPreparer:
         )
         # テストデータを生成して保存
         r_test, f_test = sample.generate_test(**self.params_generate_test)
-        if save:
+        if save_data:
             hdf_operator = HdfOperator(self.simulation_path)
             hdf_operator.save_train_data(
                 self.lbls["train"], self.vnames["train"], [r_train, f_train]
@@ -71,18 +78,23 @@ class DataPreparer:
                 self.lbls["test"], self.vnames["test"], [r_test, f_test]
             )
         # plot
-        if plot_training:
-            sample.plot_train(save=True, path=self.simulation_path)
-        if plot_test:
+        if plot_training or save_plot:
+            sample.plot_train(
+                save=save_plot, path=self.simulation_path, show=plot_training
+            )
+        if plot_test or save_plot:
             sample.plot_test(
-                save=True,
+                save=save_plot,
                 val_limits=self.params_plot["val_limits"],
                 path=self.simulation_path,
+                show=plot_test,
             )
         # 生成された点の数を保存
         train_num = [len(_r) for _r in r_train]
         test_num = [len(_r) for _r in r_test]
         self.save_num(train_num, test_num)
+        if return_data:
+            return r_train, f_train, r_test, f_test
 
     def save_num(self, train_num, test_num):
         self.params_num_points["training"] = {
