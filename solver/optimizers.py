@@ -136,6 +136,16 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
     func = lambda p, *args: f(p, *args) / ntraining
     dfunc = lambda p, *args: df(p, *args) / ntraining
     hess = lambda p, *args: hf(p, *args) / ntraining
+    try:
+        use_explicit_derivative_for_adam = params_optimization[
+            "use_explicit_derivative_for_adam"
+        ]
+    except:
+        use_explicit_derivative_for_adam = False
+    if use_explicit_derivative_for_adam:
+        calc_value_and_grad = lambda p, *args: (func(p, *args), dfunc(p, *args))
+    else:
+        calc_value_and_grad = value_and_grad(func)
 
     index_fixed = params_optimization["index_fixed"]
     if index_fixed:
@@ -155,7 +165,7 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
         theta = [init]
 
     def step(t, opt_state, optimizer, theta):
-        value, grads = value_and_grad(func)(theta, *args)
+        value, grads = calc_value_and_grad(theta, *args)
         updates, opt_state = optimizer.update(grads, opt_state, theta)
         theta = optax.apply_updates(theta, updates)
         try:
