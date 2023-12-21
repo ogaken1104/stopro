@@ -297,6 +297,7 @@ class GPmodel:
             jnp.diagonal(jnp.einsum("jk, ikl->ijl", Σ_inv, dKdtheta), axis1=1, axis2=2),
             axis=1,
         )
+        # print(f"first_term: {first_term[0]:.3e}, second_term: {second_term[0]:.3e}")
         return (-first_term + second_term) / 2
 
     def d_logposterior(self, theta, *args):

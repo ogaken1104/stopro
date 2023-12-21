@@ -232,3 +232,65 @@ class GPufdivNoisyu(GPSinusoidalWithoutPIndependent):
             ]
 
         return self.calculate_K_asymmetric(train_pts, test_pts, Ks)
+
+
+class GPuxfdiv(GPSinusoidalWithoutPIndependent):
+    def trainingKs(self, θ):
+        Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
+        (
+            Kuxfx,
+            Kuyfx,
+            Kuxfy,
+            Kuyfy,
+            Kuxdiv,
+            Kuydiv,
+            Kuxdifux,
+            Kuxdifuy,
+            Kuydifux,
+            Kuydifuy,
+            Kuxdifp,
+            Kuydifp,
+            Kpdifp,
+        ) = self.setup_latter_difop_kerenl(θ)
+        Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv = self.setup_gov_gov_kernel(θ)
+
+        Ks = [
+            [Kuxux, Kuxfx, Kuxfy, Kuxdiv],
+            [Kfxfx, Kfxfy, Kfxdiv],
+            [Kfyfy, Kfydiv],
+            [Kdivdiv],
+        ]
+        return Ks
+
+    def mixedK_all(self, θ, test_pts, train_pts):
+        """
+        Args :
+            θ (jnp.array) : kernel hyperparameters
+            test points (List(jnp.array)): r_test
+            training points (List(jnp.array)): r_ux,r_uy,r_p,r_fx,r_fy,r_div
+        """
+        θuxux, θuyuy, θpp = self.split_hyperparam(theta=θ)
+
+        Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
+        (
+            Kuxfx,
+            Kuyfx,
+            Kuxfy,
+            Kuyfy,
+            Kuxdiv,
+            Kuydiv,
+            Kuxdifux,
+            Kuxdifuy,
+            Kuydifux,
+            Kuydifuy,
+            Kuxdifp,
+            Kuydifp,
+            Kpdifp,
+        ) = self.setup_latter_difop_kerenl(θ)
+
+        Ks = [
+            [Kuxux, Kuxfx, Kuxfy, Kuxdiv],
+            [Kuxuy, Kuyfx, Kuyfy, Kuydiv],
+        ]
+
+        return self.calculate_K_asymmetric(train_pts, test_pts, Ks)
