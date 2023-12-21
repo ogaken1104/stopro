@@ -297,8 +297,8 @@ class GPmodel:
             jnp.diagonal(jnp.einsum("jk, ikl->ijl", Σ_inv, dKdtheta), axis1=1, axis2=2),
             axis=1,
         )
-        return (first_term + second_term) / 2
+        return (-first_term + second_term) / 2
 
     def d_logposterior(self, theta, *args):
-        loglikelihood = self.trainingFunction_all(theta, *args)
+        loglikelihood = self.d_trainingFunction_all(theta, *args)
         return loglikelihood + len(theta)
