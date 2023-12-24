@@ -1,5 +1,5 @@
-from pathlib import Path
 import time
+from pathlib import Path
 
 import jax.numpy as jnp
 from jax import grad, jit
@@ -13,11 +13,10 @@ from stopro.data_handler.data_handle_module import *
 from stopro.GP.gp_1D_laplacian import GPmodel1DLaplacian
 from stopro.GP.gp_1D_laplacian_pbc import GPmodel1DLaplacianPbc
 from stopro.GP.gp_1D_naive import GPmodel1DNaive
-
 from stopro.GP.kernels import define_kernel
 from stopro.solver.optimizers import optimize_by_adam
 from stopro.sub_modules.init_modules import get_init, reshape_init
-from stopro.sub_modules.load_modules import load_params, load_data
+from stopro.sub_modules.load_modules import load_data, load_params
 from stopro.sub_modules.loss_modules import hessian, logposterior
 
 # FP32→FP64に変更することで、小さい値でもnanにならないようにする
@@ -56,7 +55,6 @@ def test_sin_1D_naive_noise_main():
         delta_y_train = jnp.append(delta_y_train, f_train[i] - μ_train[i])
     del f_train
     del μ_train
-    print(delta_y_train)
 
     args_predict = r_test, μ_test, r_train, delta_y_train, params_model["epsilon"]
 

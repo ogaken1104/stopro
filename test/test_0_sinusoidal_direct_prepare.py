@@ -29,11 +29,14 @@ def prepare(
     data_preparer.params_main["optimization"]["maxiter_scipy"] = [0]
     data_preparer.params_main["optimization"]["eps"] = 0.0001
     data_preparer.params_main["optimization"]["interval_check"] = 300
+    data_preparer.params_main["optimization"]["print_process"] = False
     #############################################
     data_preparer.update_params()
     data_preparer.params_kernel_arg = ["uxux", "uyuy", "pp"]
 
-    data_preparer.make_data(plot_training=False, plot_test=False, save=True)
+    data_preparer.make_data(
+        plot_training=False, plot_test=False, save_data=True, save_plot=False
+    )
     data_preparer.save_params_prepare()
     data_preparer.save_params_main()
     data_preparer.save_lbls()

@@ -1,29 +1,27 @@
 import argparse
+import copy
 import time
 from functools import partial
-import copy
 
 import jax.numpy as jnp
 import yaml
 from jax import grad, jacfwd, jacrev, jit
 from jax.config import config
 
-from stopro.analyzer.analysis import analyze_result, analyze_error_interval
+from stopro.analyzer.analysis import analyze_error_interval, analyze_result
 from stopro.analyzer.make_each_plot import *
 from stopro.analyzer.plot_sin_1D_each import plot_each_sin1D
 from stopro.analyzer.plot_sinusoidal import plot_each_sinusoidal
 from stopro.data_handler.data_handle_module import *
-from stopro.GP.gp_sinusoidal_without_p import GPSinusoidalWithoutP
-from stopro.GP.gp_sinusoidal_independent import GPSinusoidalWithoutPIndependent
 from stopro.GP.gp_sinusoidal_4kernels import GPSinusoidal4Kernels
+from stopro.GP.gp_sinusoidal_independent import GPSinusoidalWithoutPIndependent
 from stopro.GP.gp_sinusoidal_infer_difp import GPSinusoidalInferDifP
-
+from stopro.GP.gp_sinusoidal_without_p import GPSinusoidalWithoutP
 from stopro.GP.kernels import define_kernel
 from stopro.solver.optimizers import optimize_by_adam
 from stopro.sub_modules.init_modules import get_init, reshape_init
-from stopro.sub_modules.load_modules import load_params, load_data
+from stopro.sub_modules.load_modules import load_data, load_params
 from stopro.sub_modules.loss_modules import hessian, logposterior
-
 
 config.update("jax_enable_x64", True)
 
@@ -62,7 +60,6 @@ def test_sinusoidal_direct_main():
         delta_y_train = jnp.append(delta_y_train, f_train[i] - μ_train[i])
     del f_train
     del μ_train
-    print(delta_y_train)
 
     args_predict = r_test, μ_test, r_train, delta_y_train, params_model["epsilon"]
 

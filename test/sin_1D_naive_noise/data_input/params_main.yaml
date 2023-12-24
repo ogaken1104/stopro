@@ -20,8 +20,8 @@ optimization:
   lr: 0.01
   maxiter_GD: 1600
   maxiter_scipy:
-  - 1
+  - 0
   method_GD: adam
   method_scipy:
   - Nelder-Mead
-  print_process: true
+  print_process: false

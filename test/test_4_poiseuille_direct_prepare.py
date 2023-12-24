@@ -1,7 +1,7 @@
 import argparse
 
-from jax.config import config
 import numpy as np
+from jax.config import config
 
 from stopro.data_generator.poiseuille import Poiseuille
 from stopro.data_preparer.data_preparer import DataPreparer
@@ -27,12 +27,15 @@ def prepare(
     data_preparer.params_main["optimization"]["lr"] = 1.0e-02  # 1e-02
     data_preparer.params_main["optimization"]["maxiter_scipy"] = [0]
     data_preparer.params_main["optimization"]["eps"] = 0.0001
+    data_preparer.params_main["optimization"]["print_process"] = False
     # # data_preparer.params_main["optimization"]["interval_check"] = 50
     # #############################################
     data_preparer.update_params()
     # data_preparer.params_kernel_arg = ["uxux", "uyuy", "pp"]
 
-    data_preparer.make_data(plot_training=False, plot_test=False, save=True)
+    data_preparer.make_data(
+        plot_training=False, plot_test=False, save_data=True, save_plot=False
+    )
     data_preparer.save_params_prepare()
     data_preparer.save_params_main()
     data_preparer.save_lbls()

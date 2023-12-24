@@ -1,8 +1,7 @@
-from jax.config import config
 import numpy as np
+from jax.config import config
 
 from stopro.data_generator.sin_1D import Sin1D
-
 from stopro.data_generator.sin_1D_naive import Sin1DNaive
 from stopro.data_preparer.data_preparer import DataPreparer
 
@@ -38,9 +37,14 @@ def prepare(
     params_model = data_preparer.params_main["model"]
     params_model["index_optimize_noise"] = [0]
     params_model["init_kernel_hyperparameter"].append(float(np.log(0.0004)))
+    data_preparer.params_main["optimization"]["maxiter_scipy"] = [0]
+
+    data_preparer.params_main["optimization"]["print_process"] = False
     #############################################
     data_preparer.update_params()
-    data_preparer.make_data(plot_training=False, plot_test=False)
+    data_preparer.make_data(
+        plot_training=False, plot_test=False, save_data=True, save_plot=False
+    )
     data_preparer.save_params_prepare()
     data_preparer.save_params_main()
     data_preparer.save_lbls()

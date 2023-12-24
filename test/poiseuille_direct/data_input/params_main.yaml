@@ -31,4 +31,4 @@ optimization:
   method_GD: adam
   method_scipy:
   - Nelder-Mead
-  print_process: true
+  print_process: false

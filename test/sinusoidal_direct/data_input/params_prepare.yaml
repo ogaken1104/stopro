@@ -17,6 +17,8 @@ generate_training:
   f_num: 44
   f_pad: 0.03
   p_num: 0
+  sigma2_noise: null
+  u_1D2C: false
   u_num: 44
   without_f: false
 kernel_arg:

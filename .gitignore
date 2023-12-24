@@ -4,5 +4,8 @@ settings/json
 *.sh
 *.out
 *.err
+test/poiseuille_direct/**
+test/sin_1D_naive_noise/**
+test/sinusoidal_direct/**
 
 # 無視しないファイル
