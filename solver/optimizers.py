@@ -133,9 +133,12 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
     for r in r_train:
         ntraining += r.shape[0]
     # the number of training points
-    func = lambda p, *args: f(p, *args) / ntraining
-    dfunc = lambda p, *args: df(p, *args) / ntraining
-    hess = lambda p, *args: hf(p, *args) / ntraining
+    if df:
+        func = lambda p, *args: f(p, *args) / ntraining
+        dfunc = lambda p, *args: df(p, *args) / ntraining
+        hess = lambda p, *args: hf(p, *args) / ntraining
+    else:
+        func = f
     try:
         use_explicit_derivative_for_adam = params_optimization[
             "use_explicit_derivative_for_adam"
@@ -143,7 +146,10 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
     except:
         use_explicit_derivative_for_adam = False
     if use_explicit_derivative_for_adam:
-        calc_value_and_grad = lambda p, *args: (func(p, *args), dfunc(p, *args))
+        if df:
+            calc_value_and_grad = lambda p, *args: (func(p, *args), dfunc(p, *args))
+        else:
+            calc_value_and_grad = func
     else:
         calc_value_and_grad = value_and_grad(func)
 
@@ -224,7 +230,10 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
 
     res = [{"x": init}]
     # optimize by scipy method
-    loss_before_optimize = func(theta[0], *args)
+    if df:
+        loss_before_optimize = func(theta[0], *args)
+    else:
+        loss_before_optimize, _ = func(theta[0], *args)
     print(f"loss before optimize: {loss_before_optimize}")
     loss.append(loss_before_optimize)
     if jnp.isnan(loss_before_optimize):
