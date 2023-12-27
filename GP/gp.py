@@ -302,4 +302,4 @@ class GPmodel:
 
     def d_logposterior(self, theta, *args):
         loglikelihood = self.d_trainingFunction_all(theta, *args)
-        return loglikelihood + len(theta)
+        return loglikelihood + 1.0  # gradient of jeffery's prior len(theta)
