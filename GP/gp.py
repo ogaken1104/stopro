@@ -303,3 +303,41 @@ class GPmodel:
     def d_logposterior(self, theta, *args):
         loglikelihood = self.d_trainingFunction_all(theta, *args)
         return loglikelihood + 1.0  # gradient of jeffery's prior len(theta)
+
+    def _calc_yKinvy(self, theta, *args):
+        """Returns y^TK^{-1}y given Kernel hyperparamters θ and training data args"""
+        # r,μ,f,ϵ=args
+        r, delta_y, ϵ = args
+        θ, noise = self.split_hyp_and_noise(theta)
+        Σ = self.trainingK_all(θ, r)
+        Σ = self.add_eps_to_sigma(Σ, ϵ, noise_parameter=noise)
+        n = len(delta_y)
+        L = jnp.linalg.cholesky(Σ)
+        v = jnp.linalg.solve(L, delta_y)
+        return jnp.dot(v, v)
+
+    def _calc_yKdKKy(self, theta, *args):
+        """Returns y^TK^{-1}y given Kernel hyperparamters θ and training data args"""
+        # r,μ,f,ϵ=args
+        r, delta_y, ϵ = args
+        θ, noise = self.split_hyp_and_noise(theta)
+
+        def calc_trainingK(theta):
+            θ, noise = self.split_hyp_and_noise(theta)
+            Σ = self.trainingK_all(θ, r)
+            Σ = self.add_eps_to_sigma(Σ, ϵ, noise_parameter=noise)
+            return Σ
+
+        dKdtheta = jax.jacfwd(calc_trainingK)(θ)
+        dKdtheta = jnp.transpose(dKdtheta, (2, 0, 1))
+
+        ## calc matrix solve K^{-1}y
+        Σ = calc_trainingK(θ)
+        L = jnp.linalg.cholesky(Σ)
+        α = jnp.linalg.solve(L.transpose(), jnp.linalg.solve(L, delta_y))
+
+        ## calc first term of loss y^TK^{-1}\frac{dK}{d\theta}K^{-1}y
+        first_term = jnp.einsum(
+            "j, ij -> i", α.T, jnp.einsum("ijk, k ->ij", dKdtheta, α)
+        )
+        return first_term
