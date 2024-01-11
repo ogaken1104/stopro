@@ -18,6 +18,7 @@ class GPmodel2DStokesIndependent(GPmodel2D):
         self.ind_uyuy = slice(3, 6)
         self.ind_pp = slice(6, 9)
 
+    ## Kernels between variables with no differential operators
     def Kuxux(self, r, rp, theta):
         return self.K(r, rp, theta[self.ind_uxux])
 
@@ -36,6 +37,7 @@ class GPmodel2DStokesIndependent(GPmodel2D):
     def Kpp(self, r, rp, theta):
         return self.K(r, rp, theta[self.ind_pp])
 
+    ## Kernels between variables with differential operators
     def Kfxfx(self, r, rp, theta):
         return self.d0d0(r, rp, theta[self.ind_pp]) + self.LL(
             r, rp, theta[self.ind_uxux]
@@ -60,6 +62,7 @@ class GPmodel2DStokesIndependent(GPmodel2D):
             r, rp, theta[self.ind_uyuy]
         )
 
+    ## Kernels between variable with no differential operators and variable with
     def Kuxfx(self, r, rp, theta):
         return -self.L1(r, rp, theta[self.ind_uxux])
 
@@ -105,6 +108,7 @@ class GPmodel2DStokesIndependent(GPmodel2D):
     def Kuydiv(self, r, rp, theta):
         return self.d11(r, rp, theta[self.ind_uyuy])
 
+    ## Kernels between variable with differential operators and variable without
     def Kfxp(self, r, rp, theta):
         return self.d00(r, rp, theta[self.ind_pp])
 
@@ -123,32 +127,114 @@ class GPmodel2DStokesIndependent(GPmodel2D):
     def Kpuy(self, r, rp, theta):
         return self.Kzero(r, rp, self.dummy_theta)
 
-    def Kuxdifux(self):
-        return self.setup_kernel_include_difference_prime(self.Kuxux)
+    def Kfxux(self, r, rp, theta):
+        return -self.L0(r, rp, theta[self.ind_uxux])
 
-    def Kuxdifuy(self):
-        return self.setup_kernel_include_difference_prime(self.Kuxuy)
+    def Kfxuy(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
 
-    def Kuydifux(self):
-        return self.setup_kernel_include_difference_prime(self.Kuxuy)
+    def Kfyux(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
 
-    def Kuydifuy(self):
-        return self.setup_kernel_include_difference_prime(self.Kuyuy)
+    def Kfyuy(self, r, rp, theta):
+        return -self.L0(r, rp, theta[self.ind_uyuy])
 
-    def Kuxdifp(self):
-        return self.setup_kernel_include_difference_prime(self.Kuxp)
+    def Kdivfx(self, r, rp, theta):
+        return -self.d0L(r, rp, theta[self.ind_uxux])
 
-    def Kuydifp(self):
-        return self.setup_kernel_include_difference_prime(self.Kuyp)
+    def Kdivfy(self, r, rp, theta):
+        return -self.d1L(r, rp, theta[self.ind_uyuy])
 
-    def Kpdifp(self):
-        return self.setup_kernel_include_difference_prime(self.Kpp)
+    def Kfyfx(self, r, rp, theta):
+        return self.d1d0(r, rp, theta[self.ind_pp])
 
-    def Kfxdifp(self):
-        return self.setup_kernel_include_difference_prime(self.Kfxp)
+    ## Kernels include difference of variables
+    def Kuxdifux(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kuxux)(r, rp, theta)
 
-    def Kfydifp(self):
-        return self.setup_kernel_include_difference_prime(self.Kfyp)
+    def Kuxdifuy(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kuxuy)(r, rp, theta)
 
-    def Kdivdifp(self):
-        return self.setup_kernel_include_difference_prime(self.Kdivp)
+    def Kuydifux(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kuxuy)(r, rp, theta)
+
+    def Kuydifuy(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kuyuy)(r, rp, theta)
+
+    def Kuxdifp(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kuxp)(r, rp, theta)
+
+    def Kuydifp(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kuyp)(r, rp, theta)
+
+    def Kpdifp(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kpp)(r, rp, theta)
+
+    def Kfxdifp(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kfxp)(r, rp, theta)
+
+    def Kfydifp(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kfyp)(r, rp, theta)
+
+    def Kdivdifp(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kdivp)(r, rp, theta)
+
+    def Kdifuxdifux(self, r, rp, theta):
+        return self.setup_kernel_difdif(self.Kuxux)(r, rp, theta)
+
+    def Kdifuxdifuy(self, r, rp, theta):
+        return self.setup_kernel_difdif(self.Kuxuy)(r, rp, theta)
+
+    def Kdifuxfx(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kuxfx)(r, rp, theta)
+
+    def Kdifuxfy(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kuxfy)(r, rp, theta)
+
+    def Kdifuxdiv(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kuxdiv)(r, rp, theta)
+
+    def Kdifuydifuy(self, r, rp, theta):
+        return self.setup_kernel_difdif(self.Kuyuy)(r, rp, theta)
+
+    def Kdifuyfx(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kuyfx)(r, rp, theta)
+
+    def Kdifuyfy(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kuyfy)(r, rp, theta)
+
+    def Kdifuydiv(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kuydiv)(r, rp, theta)
+
+    def Kdifuxp(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kuxp)(r, rp, theta)
+
+    def Kdifuxdifp(self, r, rp, theta):
+        return self.setup_kernel_difdif(self.Kuxp)(r, rp, theta)
+
+    def Kdifuyp(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kuyp)(r, rp, theta)
+
+    def Kdifuydifp(self, r, rp, theta):
+        return self.setup_kernel_difdif(self.Kuyp)(r, rp, theta)
+
+    def Kdifpdifp(self, r, rp, theta):
+        return self.setup_kernel_difdif(self.Kpp)(r, rp, theta)
+
+    def Kfxdifux(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kfxux)(r, rp, theta)
+
+    def Kfxdifuy(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kfxuy)(r, rp, theta)
+
+    def Kfydifux(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kfyux)(r, rp, theta)
+
+    def Kfydifuy(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kfyuy)(r, rp, theta)
+
+    def Kdivdifux(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kdivux)(r, rp, theta)
+
+    def Kdivdifuy(self, r, rp, theta):
+        return self.setup_kernel_include_difference_prime(self.Kdivuy)(r, rp, theta)
