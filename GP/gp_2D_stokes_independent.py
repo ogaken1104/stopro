@@ -14,111 +14,120 @@ class GPmodel2DStokesIndependent(GPmodel2D):
         self.Kernel_zero = lambda r, rp, theta: 0.0
         self.Kzero = self.outermap(self.Kernel_zero)
         self.dummy_theta = jnp.zeros(3)
+        self.ind_uxux = slice(0, 3)
+        self.ind_uyuy = slice(3, 6)
+        self.ind_pp = slice(6, 9)
 
-    def setup_no_diffop_kernel(self, θ):
-        """
-        Construct kernel of (uxux, uxuy, uyuy, uxp, uyp, pp)
+    def Kuxux(self, r, rp, theta):
+        return self.K(r, rp, theta[self.ind_uxux])
 
-        Args:
-            \theta (jnp.array): array of hyper-parameter
+    def Kuxuy(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
 
-        Returns:
-            Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp
-        """
-        θuxux, θuyuy, θpp = self.split_hyperparam(theta=θ)
+    def Kuyuy(self, r, rp, theta):
+        return self.K(r, rp, theta[self.ind_uyuy])
 
-        def Kuxux(r, rp):
-            return self.K(r, rp, θuxux)
+    def Kuxp(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
 
-        def Kuxuy(r, rp):
-            return self.Kzero(r, rp, self.dummy_theta)
+    def Kuyp(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
 
-        def Kuyuy(r, rp):
-            return self.K(r, rp, θuyuy)
+    def Kpp(self, r, rp, theta):
+        return self.K(r, rp, theta[self.ind_pp])
 
-        def Kuxp(r, rp):
-            return self.Kzero(r, rp, self.dummy_theta)
+    def Kfxfx(self, r, rp, theta):
+        return self.d0d0(r, rp, theta[self.ind_pp]) + self.LL(
+            r, rp, theta[self.ind_uxux]
+        )
 
-        def Kuyp(r, rp):
-            return self.Kzero(r, rp, self.dummy_theta)
+    def Kfxfy(self, r, rp, theta):
+        return self.d0d1(r, rp, theta[self.ind_pp])
 
-        def Kpp(r, rp):
-            return self.K(r, rp, θpp)
+    def Kfyfy(self, r, rp, theta):
+        return self.d1d1(r, rp, theta[self.ind_pp]) + self.LL(
+            r, rp, theta[self.ind_uyuy]
+        )
 
-        return Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp
+    def Kfxdiv(self, r, rp, theta):
+        return -self.Ld0(r, rp, theta[self.ind_uxux])
 
-    def setup_gov_gov_kernel(self, θ):
-        """
-        Construct kernels of (Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv)
+    def Kfydiv(self, r, rp, theta):
+        return -self.Ld1(r, rp, theta[self.ind_uyuy])
 
-        Args:
-            \theta (jnp.array): array of hyper-parameter
+    def Kdivdiv(self, r, rp, theta):
+        return self.d0d0(r, rp, theta[self.ind_uxux]) + self.d1d1(
+            r, rp, theta[self.ind_uyuy]
+        )
 
-        Returns:
-            Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv
-        """
-        θuxux, θuyuy, θpp = self.split_hyperparam(theta=θ)
+    def Kuxfx(self, r, rp, theta):
+        return -self.L1(r, rp, theta[self.ind_uxux])
 
-        def Kfxfx(r, rp):
-            return self.d0d0(r, rp, θpp) + self.LL(r, rp, θuxux)
+    def Kuyfx(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
 
-        def Kfxfy(r, rp):
-            return self.d0d1(r, rp, θpp)
+    def Kpfx(self, r, rp, theta):
+        return self.d10(r, rp, theta[self.ind_pp])
 
-        def Kfyfy(r, rp):
-            return self.d1d1(r, rp, θpp) + self.LL(r, rp, θuyuy)
+    def Kuxfy(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
 
-        def Kfxdiv(r, rp):
-            return -self.Ld0(r, rp, θuxux)
+    def Kuyfy(self, r, rp, theta):
+        return -self.L1(r, rp, theta[self.ind_uyuy])
 
-        def Kfydiv(r, rp):
-            return -self.Ld1(r, rp, θuyuy)
+    def Kpfy(self, r, rp, theta):
+        return self.d11(r, rp, theta[self.ind_pp])
 
-        def Kdivdiv(r, rp):
-            return self.d0d0(r, rp, θuxux) + self.d1d1(r, rp, θuyuy)
+    def Kuxdiv(self, r, rp, theta):
+        return self.d10(r, rp, theta[self.ind_uxux])
 
-        return Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv
+    def Kuydiv(self, r, rp, theta):
+        return self.d11(r, rp, theta[self.ind_uyuy])
 
-    def setup_nondifop_difop_kernel(self, θ):
-        """
-        Construct kernels of (Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv)
+    def Kpdiv(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
 
-        Args:
-            \theta (jnp.array): array of hyper-parameter
+    # def setup_no_diffop_kernel(self, θ):
+    #     """
+    #     Construct kernel of (uxux, uxuy, uyuy, uxp, uyp, pp)
 
-        Returns:
-            Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv
-        """
-        θuxux, θuyuy, θpp = self.split_hyperparam(theta=θ)
+    #     Args:
+    #         \theta (jnp.array): array of hyper-parameter
 
-        def Kuxfx(r, rp):
-            return -self.L1(r, rp, θuxux)
+    #     Returns:
+    #         Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp
+    #     """
+    #     θuxux, θuyuy, θpp = self.split_hyperparam(theta=θ)
 
-        def Kuyfx(r, rp):
-            return self.Kzero(r, rp, self.dummy_theta)
+    #     return Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp
 
-        def Kpfx(r, rp):
-            return self.d10(r, rp, θpp)
+    # def setup_gov_gov_kernel(self, θ):
+    #     """
+    #     Construct kernels of (Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv)
 
-        def Kuxfy(r, rp):
-            return self.Kzero(r, rp, self.dummy_theta)
+    #     Args:
+    #         \theta (jnp.array): array of hyper-parameter
 
-        def Kuyfy(r, rp):
-            return -self.L1(r, rp, θuyuy)
+    #     Returns:
+    #         Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv
+    #     """
+    #     θuxux, θuyuy, θpp = self.split_hyperparam(theta=θ)
 
-        def Kpfy(r, rp):
-            return self.d11(r, rp, θpp)
+    #     return Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv
 
-        def Kuxdiv(r, rp):
-            return self.d10(r, rp, θuxux)
+    # def setup_nondifop_difop_kernel(self, θ):
+    #     """
+    #     Construct kernels of (Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv)
 
-        def Kuydiv(r, rp):
-            return self.d11(r, rp, θuyuy)
+    #     Args:
+    #         \theta (jnp.array): array of hyper-parameter
 
-        def Kpdiv(r, rp):
-            return self.Kzero(r, rp, self.dummy_theta)
+    #     Returns:
+    #         Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv
+    #     """
+    #     θuxux, θuyuy, θpp = self.split_hyperparam(theta=θ)
 
-        return Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv
+    #     return Kuxfx, Kuxfy, Kuxdiv, Kuyfx, Kuyfy, Kuydiv, Kpfx, Kpfy, Kpdiv
 
     def setup_latter_difop_kerenl(self, θ):
         """

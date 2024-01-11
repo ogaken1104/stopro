@@ -67,7 +67,7 @@ class GPmodel:
         Kpost = Kaa - jnp.einsum("ji, jk->ik", V, V)  # V^tV
         return μpost, Kpost  # note should add μ(x*) to average
 
-    def calculate_K_training(self, pts, Ks, std_noise_list=[None] * 8):
+    def calculate_K_training(self, pts, Ks, theta, std_noise_list=[None] * 8):
         """Compute symmetric part of covariance matrix (training_K and test_K)"""
         Σ = jnp.zeros((self.sec_tr[self.num_tr], self.sec_tr[self.num_tr]))
         for i in range(self.num_tr):
@@ -76,7 +76,7 @@ class GPmodel:
                 Σ = Σ.at[
                     self.sec_tr[i] : self.sec_tr[i + 1],
                     self.sec_tr[j] : self.sec_tr[j + 1],
-                ].set(Ks[i][j - i](pts[i], pts[j]))
+                ].set(Ks[i][j - i](pts[i], pts[j], theta))
                 if not j == i:
                     # transpose
                     Σ = Σ.at[
