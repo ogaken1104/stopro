@@ -234,6 +234,15 @@ class GPmodel:
         Ks = self.testKs()
         return self.calculate_K_test(test_pts, Ks, theta)
 
+    def trainingKs(self):
+        raise NotImplementedError
+
+    def mixedKs(self):
+        raise NotImplementedError
+
+    def testKs(self):
+        raise NotImplementedError
+
     def setup_kernel_include_difference_prime(self, K_func):
         """
         Function that construct a kernel that calculates shifted difference of variable at first argument.

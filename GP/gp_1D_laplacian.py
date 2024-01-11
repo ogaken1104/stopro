@@ -22,6 +22,15 @@ class GPmodel1DLaplacian(GPmodel1D):
         self.K = self.outermap(Kernel)
         self.setup_differential_operators()
 
+    def Kyy(self, r, rp, theta):
+        return self.K(r, rp, theta)
+
+    def Kyly(self, r, rp, theta):
+        return self.L1K(r, rp, theta)
+
+    def Klyly(self, r, rp, theta):
+        return self.LLK(r, rp, theta)
+
     def setup_differential_operators(self):
         # define operators
         def L(f, i):
@@ -35,56 +44,18 @@ class GPmodel1DLaplacian(GPmodel1D):
         self.L1K = self.outermap(_L1K)
         self.LLK = self.outermap(_LLK)
 
-    def setup_kernel(self, theta):
-        """Construct Kernels"""
+    def trainingKs(self):
+        Ks = [[self.Kyy, self.Kyly], [self.Klyly]]
+        return Ks
 
-        def Kyy(r, rp):
-            return self.K(r, rp, theta)
-
-        def Kyly(r, rp):
-            return self.L1K(r, rp, theta)
-
-        def Klyly(r, rp):
-            return self.LLK(r, rp, theta)
-
-        return Kyy, Kyly, Klyly
-
-    def trainingK_all(self, theta, train_pts):
-        """
-        Args :
-            θ (jnp.array) : kernel hyperparameters
-            training points (list(jnp.array)):
-        """
-        Kyy, Kyly, Klyly = self.setup_kernel(theta)
-
-        Ks = [[Kyy, Kyly], [Klyly]]
-
-        return self.calculate_K_training(train_pts, Ks)
-
-    def mixedK_all(self, theta, test_pts, train_pts):
-        """
-        Args :
-            θ (jnp.array) : kernel hyperparameters
-            test points (list(jnp.array)):
-            training points (list(jnp.array)):
-        """
-        Kyy, Kyly, _ = self.setup_kernel(theta)
-
+    def mixedKs(self):
         Ks = [
-            [Kyy, Kyly],
+            [self.Kyy, self.Kyly],
         ]
+        return Ks
 
-        return self.calculate_K_asymmetric(train_pts, test_pts, Ks)
-
-    def testK_all(self, theta, test_pts):
-        """
-        Args :
-            θ (jnp.array) : kernel hyperparameters
-            test points (List(jnp.array)): r_test
-        """
-        Kyy, _, _ = self.setup_kernel(theta)
+    def testKs(self):
         Ks = [
-            [Kyy],
+            [self.Kyy],
         ]
-
-        return self.calculate_K_test(test_pts, Ks)
+        return Ks

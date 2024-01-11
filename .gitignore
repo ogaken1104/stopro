@@ -7,5 +7,7 @@ settings/json
 test/poiseuille_direct/**
 test/sin_1D_naive_noise/**
 test/sinusoidal_direct/**
+test/sin_1D_direct/**
+test/outputs/**
 
 # 無視しないファイル
