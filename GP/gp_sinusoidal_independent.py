@@ -43,10 +43,11 @@ class GPSinusoidalWithoutPIndependent(GPmodel2DStokesIndependent):
         self.K_rev = self.outermap(self.Kernel_rev)  # really needed?
         self.setup_differential_oprators()
         self.index_optimize_noise = index_optimize_noise
+        self.setup_all_Ks()
         # self.kernel_type = kernel_type
 
-    def trainingKs(self):
-        Ks = [
+    def setup_trainingKs(self):
+        self.trainingKs = [
             [
                 self.Kuxux,
                 self.Kuxuy,
@@ -86,11 +87,10 @@ class GPSinusoidalWithoutPIndependent(GPmodel2DStokesIndependent):
             [self.Kdivdiv, self.Kdivdifp],
             [self.Kdifpdifp],
         ]
-        return Ks
 
-    def mixedKs(self):
+    def setup_mixedKs(self):
         if self.infer_governing_eqs:
-            Ks = [
+            self.mixedKs = [
                 [
                     self.Kfxux,
                     self.Kfxuy,
@@ -123,7 +123,7 @@ class GPSinusoidalWithoutPIndependent(GPmodel2DStokesIndependent):
                 ],
             ]
         elif self.use_difp:
-            Ks = [
+            self.mixedKs = [
                 [
                     self.Kuxux,
                     self.Kuxuy,
@@ -146,7 +146,7 @@ class GPSinusoidalWithoutPIndependent(GPmodel2DStokesIndependent):
                 ],
             ]
         else:
-            Ks = [
+            self.mixedKs = [
                 [
                     self.Kuxux,
                     self.Kuxuy,
@@ -167,19 +167,15 @@ class GPSinusoidalWithoutPIndependent(GPmodel2DStokesIndependent):
                 ],
             ]
 
-        return Ks
-
-    def testKs(self):
+    def setup_testKs(self):
         if self.infer_governing_eqs:
-            Ks = [
+            self.testKs = [
                 [self.Kfxfx, self.Kfxfy, self.Kfxdiv],
                 [self.Kfyfy, self.Kfydiv],
                 [self.Kdivdiv],
             ]
         else:
-            Ks = [
+            self.testKs = [
                 [self.Kuxux, self.Kuxuy],
                 [self.Kuyuy],
             ]
-
-        return Ks

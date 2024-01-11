@@ -21,6 +21,7 @@ class GPmodel1DLaplacian(GPmodel1D):
         self.Kernel = Kernel
         self.K = self.outermap(Kernel)
         self.setup_differential_operators()
+        self.setup_all_Ks()
 
     def Kyy(self, r, rp, theta):
         return self.K(r, rp, theta)
@@ -44,18 +45,15 @@ class GPmodel1DLaplacian(GPmodel1D):
         self.L1K = self.outermap(_L1K)
         self.LLK = self.outermap(_LLK)
 
-    def trainingKs(self):
-        Ks = [[self.Kyy, self.Kyly], [self.Klyly]]
-        return Ks
+    def setup_trainingKs(self):
+        self.trainingKs = [[self.Kyy, self.Kyly], [self.Klyly]]
 
-    def mixedKs(self):
-        Ks = [
+    def setup_mixedKs(self):
+        self.mixedKs = [
             [self.Kyy, self.Kyly],
         ]
-        return Ks
 
-    def testKs(self):
-        Ks = [
+    def setup_testKs(self):
+        self.testKs = [
             [self.Kyy],
         ]
-        return Ks

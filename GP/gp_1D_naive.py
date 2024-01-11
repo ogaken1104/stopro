@@ -19,6 +19,7 @@ class GPmodel1DNaive(GPmodel1D):
         self.Kernel = Kernel
         self.K = self.outermap(Kernel)
         self.index_optimize_noise = index_optimize_noise
+        self.setup_all_Ks()
 
     # def split_hyperparams(func):
     #     def wrapper(self, *args):
@@ -27,17 +28,14 @@ class GPmodel1DNaive(GPmodel1D):
 
     #     return wrapper
 
-    def trainingKs(self):
-        Ks = self.setup_Ks()
-        return Ks
+    def setup_trainingKs(self):
+        self.trainingKs = self.setup_Ks()
 
-    def mixedKs(self):
-        Ks = self.setup_Ks()
-        return Ks
+    def setup_mixedKs(self):
+        self.mixedKs = self.setup_Ks()
 
-    def testKs(self):
-        Ks = self.setup_Ks()
-        return Ks
+    def setup_testKs(self):
+        self.testKs = self.setup_Ks()
 
     def setup_Ks(self):
         def Kyy(r, rp, theta):

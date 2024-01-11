@@ -222,26 +222,73 @@ class GPmodel:
         Retruns:
         - jnp.ndarray: traininc covariance matrix
         """
-        Ks = self.trainingKs()
+        Ks = self.trainingKs
 
         return self.calculate_K_training(train_pts, Ks, theta)
 
     def mixedK_all(self, theta, test_pts, train_pts):
-        Ks = self.mixedKs()
+        Ks = self.mixedKs
         return self.calculate_K_asymmetric(train_pts, test_pts, Ks, theta)
 
     def testK_all(self, theta, test_pts):
-        Ks = self.testKs()
+        Ks = self.testKs
         return self.calculate_K_test(test_pts, Ks, theta)
 
-    def trainingKs(self):
+    def setup_trainingKs(self):
         raise NotImplementedError
 
-    def mixedKs(self):
+    def setup_mixedKs(self):
         raise NotImplementedError
 
-    def testKs(self):
+    def setup_testKs(self):
         raise NotImplementedError
+
+    def setup_all_Ks(self):
+        self.setup_trainingKs()
+        self.setup_mixedKs()
+        self.setup_testKs()
+
+    def setup_Ks_dKdtheta(self):
+        r"""Setup \frac{dK}{dtheta} for training covariance matrix"""
+
+        self.Ks_dKdtheta = []
+        for _K_row in self.trainingKs:
+            dKdtheta_row = []
+            for _K in _K_row:
+                dKdtheta_row.append(jax.jacfwd(_K, 2))
+            self.Ks_dKdtheta.append(dKdtheta_row)
+
+    def calc_dKdtheta(self, theta, train_pts):
+        r"""Compute \frac{dK}{dtheta} for training covariance matrix"""
+        dKdtheta = jnp.zeros(
+            (
+                self.sec_tr[self.num_tr],
+                self.sec_tr[self.num_tr],
+                len(theta),
+            )
+        )
+        for i in range(self.num_tr):
+            for j in range(i, self.num_tr):
+                # upper triangular matrix
+                dKdtheta = dKdtheta.at[
+                    self.sec_tr[i] : self.sec_tr[i + 1],
+                    self.sec_tr[j] : self.sec_tr[j + 1],
+                ].set(self.Ks_dKdtheta[i][j - i](train_pts[i], train_pts[j], theta))
+                if not j == i:
+                    # transpose
+                    dKdtheta = dKdtheta.at[
+                        self.sec_tr[j] : self.sec_tr[j + 1],
+                        self.sec_tr[i] : self.sec_tr[i + 1],
+                    ].set(
+                        jnp.transpose(
+                            dKdtheta[
+                                self.sec_tr[i] : self.sec_tr[i + 1],
+                                self.sec_tr[j] : self.sec_tr[j + 1],
+                            ],
+                            (1, 0, 2),
+                        )
+                    )
+        return dKdtheta
 
     def setup_kernel_include_difference_prime(self, K_func):
         """
@@ -297,7 +344,8 @@ class GPmodel:
             Σ = self.add_eps_to_sigma(Σ, ϵ, noise_parameter=noise)
             return Σ
 
-        dKdtheta = jax.jacfwd(calc_trainingK)(theta)
+        # dKdtheta = jax.jacfwd(calc_trainingK)(theta)
+        dKdtheta = self.calc_dKdtheta(theta, r)
         dKdtheta = jnp.transpose(dKdtheta, (2, 0, 1))
 
         ## calc matrix solve K^{-1}y

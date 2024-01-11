@@ -15,9 +15,10 @@ class GPPoiseuilleIndependent(GPmodel2DStokesIndependent):
         self.Kernel_rev = lambda r1, r2, θ: Kernel(r2, r1, θ)
         self.K_rev = self.outermap(self.Kernel_rev)  # really needed?
         self.setup_differential_oprators()
+        self.setup_all_Ks()
 
-    def trainingKs(self):
-        Ks = [
+    def setup_trainingKs(self):
+        self.trainingKs = [
             [self.Kuxux, self.Kuxuy, self.Kuxp, self.Kuxfx, self.Kuxfy, self.Kuxdiv],
             [self.Kuyuy, self.Kuyp, self.Kuyfx, self.Kuyfy, self.Kuydiv],
             [self.Kpp, self.Kpfx, self.Kpfy, self.Kpdiv],
@@ -26,18 +27,16 @@ class GPPoiseuilleIndependent(GPmodel2DStokesIndependent):
             [self.Kdivdiv],
         ]
 
-        return Ks
-
-    def mixedKs(self):
-        Ks = [
+    def setup_mixedKs(self):
+        self.mixedKs = [
             [self.Kuxux, self.Kuxuy, self.Kuxp, self.Kuxfx, self.Kuxfy, self.Kuxdiv],
             [self.Kuyux, self.Kuyuy, self.Kuyp, self.Kuyfx, self.Kuyfy, self.Kuydiv],
             [self.Kpux, self.Kpuy, self.Kpp, self.Kpfx, self.Kpfy, self.Kpdiv],
         ]
 
-        return Ks
-
-    def testKs(self):
-        Ks = [[self.Kuxux, self.Kuxuy, self.Kuxp], [self.Kuyuy, self.Kuyp], [self.Kpp]]
-
-        return Ks
+    def setup_testKs(self):
+        self.testKs = [
+            [self.Kuxux, self.Kuxuy, self.Kuxp],
+            [self.Kuyuy, self.Kuyp],
+            [self.Kpp],
+        ]

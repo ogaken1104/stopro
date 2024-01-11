@@ -148,6 +148,12 @@ class GPmodel2DStokesIndependent(GPmodel2D):
     def Kfyfx(self, r, rp, theta):
         return self.d1d0(r, rp, theta[self.ind_pp])
 
+    def Kdivux(self, r, rp, theta):
+        return self.d00(r, rp, theta[self.ind_uxux])
+
+    def Kdivuy(self, r, rp, theta):
+        return self.d01(r, rp, theta[self.ind_uyuy])
+
     ## Kernels include difference of variables
     def Kuxdifux(self, r, rp, theta):
         return self.setup_kernel_include_difference_prime(self.Kuxux)(r, rp, theta)
