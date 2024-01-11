@@ -92,7 +92,7 @@ class GPmodel:
                     )
         return Σ
 
-    def calculate_K_test(self, pts, Ks, std_noise_list=[None] * 8):
+    def calculate_K_test(self, pts, Ks, theta, std_noise_list=[None] * 8):
         """Compute symmetric part of covariance matrix (training_K and test_K)"""
         Σ = jnp.zeros((self.sec_te[self.num_te], self.sec_te[self.num_te]))
         for i in range(self.num_te):
@@ -101,7 +101,7 @@ class GPmodel:
                 Σ = Σ.at[
                     self.sec_te[i] : self.sec_te[i + 1],
                     self.sec_te[j] : self.sec_te[j + 1],
-                ].set(Ks[i][j - i](pts[i], pts[j]))
+                ].set(Ks[i][j - i](pts[i], pts[j], theta))
                 if not j == i:
                     # transpose
                     Σ = Σ.at[
@@ -117,7 +117,7 @@ class GPmodel:
                     )
         return Σ
 
-    def calculate_K_asymmetric(self, train_pts, test_pts, Ks):
+    def calculate_K_asymmetric(self, train_pts, test_pts, Ks, theta):
         """Compute asymmetric part of covariance matrix (mixed_K)"""
         Σ = jnp.zeros((self.sec_te[self.num_te], self.sec_tr[self.num_tr]))
         for i in range(self.num_te):
@@ -125,7 +125,7 @@ class GPmodel:
                 Σ = Σ.at[
                     self.sec_te[i] : self.sec_te[i + 1],
                     self.sec_tr[j] : self.sec_tr[j + 1],
-                ].set(Ks[i][j](test_pts[i], train_pts[j]))
+                ].set(Ks[i][j](test_pts[i], train_pts[j], theta))
         return Σ
 
     def trainingFunction_all(self, theta, *args):
@@ -213,14 +213,26 @@ class GPmodel:
         noise = theta[-1]
         return θ, noise
 
-    def trainingK_all(self):
-        raise NotImplementedError
+    def trainingK_all(self, theta, train_pts):
+        """
+        Args:
+        - theta (jnp.ndarray) : kernel hyperparameters
+        - train_pts (list[jnp.ndarray]) : list of coodinates of training points
 
-    def mixedK_all(self):
-        raise NotImplementedError
+        Retruns:
+        - jnp.ndarray: traininc covariance matrix
+        """
+        Ks = self.trainingKs()
 
-    def testK_all(self):
-        raise NotImplementedError
+        return self.calculate_K_training(train_pts, Ks, theta)
+
+    def mixedK_all(self, theta, test_pts, train_pts):
+        Ks = self.mixedKs()
+        return self.calculate_K_asymmetric(train_pts, test_pts, Ks, theta)
+
+    def testK_all(self, theta, test_pts):
+        Ks = self.testKs()
+        return self.calculate_K_test(test_pts, Ks, theta)
 
     def setup_kernel_include_difference_prime(self, K_func):
         """
@@ -228,8 +240,8 @@ class GPmodel:
         S_{L\boldsymbol{e}^{alpha}}(kernel)
         """
 
-        def K_difprime(r, rp):
-            return K_func(r, rp + self.lbox) - K_func(r, rp)
+        def K_difprime(r, rp, theta):
+            return K_func(r, rp + self.lbox, theta) - K_func(r, rp, theta)
 
         return K_difprime
 
@@ -239,8 +251,8 @@ class GPmodel:
         S^{prime}_{L\boldsymbol{e}^{alpha}}(kernel)
         """
 
-        def K_dif(r, rp):
-            return K_func(r + self.lbox, rp) - K_func(r, rp)
+        def K_dif(r, rp, theta):
+            return K_func(r + self.lbox, rp, theta) - K_func(r, rp, theta)
 
         return K_dif
 
@@ -250,12 +262,12 @@ class GPmodel:
         S_{L\boldsymbol{e}^{alpha}}S^{prime}_{L\boldsymbol{e}^{alpha}}(kernel)
         """
 
-        def K_difdif(r, rp):
+        def K_difdif(r, rp, theta):
             return (
-                K_func(r + self.lbox, rp + self.lbox)
-                - K_func(r + self.lbox, rp)
-                - K_func(r, rp + self.lbox)
-                + K_func(r, rp)
+                K_func(r + self.lbox, rp + self.lbox, theta)
+                - K_func(r + self.lbox, rp, theta)
+                - K_func(r, rp + self.lbox, theta)
+                + K_func(r, rp, theta)
             )
 
         return K_difdif
