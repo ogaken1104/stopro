@@ -23,7 +23,11 @@ class GPPoiseuilleIndependent(GPmodel2DStokesIndependent):
         θ  : kernel hyperparameters
         args: training points r_ux,r_uy,r_p,r_fx,r_fy,r_div
         """
+        Ks = self.trainingKs(θ)
 
+        return self.calculate_K_training(train_pts, Ks)
+
+    def trainingKs(self, θ):
         Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
         Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv = self.setup_gov_gov_kernel(θ)
         (
@@ -46,8 +50,29 @@ class GPPoiseuilleIndependent(GPmodel2DStokesIndependent):
             [Kfyfy, Kfydiv],
             [Kdivdiv],
         ]
+        return Ks
 
-        return self.calculate_K_training(train_pts, Ks)
+    # def trainingK_all(self, θ, train_pts):
+    #     """
+    #     Args :
+    #     θ  : kernel hyperparameters
+    #     args: training points r_ux,r_uy,r_p,r_fx,r_fy,r_div
+    #     """
+    #     Ks = self.trainingKs()
+
+    #     return self.calculate_K_training(train_pts, Ks, θ)
+
+    # def trainingKs(self):
+    #     Ks = [
+    #         [self.Kuxux, self.Kuxuy, self.Kuxp, self.Kuxfx, self.Kuxfy, self.Kuxdiv],
+    #         [self.Kuyuy, self.Kuyp, self.Kuyfx, self.Kuyfy, self.Kuydiv],
+    #         [self.Kpp, self.Kpfx, self.Kpfy, self.Kpdiv],
+    #         [self.Kfxfx, self.Kfxfy, self.Kfxdiv],
+    #         [self.Kfyfy, self.Kfydiv],
+    #         [self.Kdivdiv],
+    #     ]
+
+    #     return Ks
 
     def mixedK_all(self, θ, test_pts, train_pts):
         Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
