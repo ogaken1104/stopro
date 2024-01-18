@@ -5,9 +5,9 @@ from stopro.data_generator.data_generator import DataGenerator
 
 
 class Sin1DNaive(DataGenerator):
-    def __init__(self, use_pbc_points=False, seed: int = 0):
+    def __init__(self, use_pbc_points=False, seed: int = 0, num_period: float = 1.0):
         self.x_min = 0.0
-        self.x_max = np.pi * 2
+        self.x_max = np.pi * 2 * num_period
         self.r = []
         self.f = []
         self.r_test = []
@@ -21,8 +21,11 @@ class Sin1DNaive(DataGenerator):
         self.r += [r_y]
         self.f += [y]
 
-    def generate_test(self, test_num):
-        r = np.linspace(-np.pi / 2, 2.5 * np.pi, test_num)
+    def generate_test(self, test_num, test_side: bool = True):
+        if test_side:
+            r = np.linspace(-np.pi / 2, 2.5 * np.pi, test_num)
+        else:
+            r = np.linspace(0.0, self.x_max, test_num)
         y = np.sin(r)
         self.r_test += [r]
         self.f_test += [y]
@@ -42,7 +45,7 @@ class Sin1DNaive(DataGenerator):
             self.generate_pbc_y()
         return self.r, self.f
 
-    def plot_train(self, save=False, path=None):
+    def plot_train(self, save=False, path=None, show=False):
         fig, ax = plt.subplots()
         ax.plot(
             self.r_test[0], self.f_test[0], label="answer", linestyle="--", color="k"
@@ -67,5 +70,7 @@ class Sin1DNaive(DataGenerator):
                 f"{dir_path}/train.png",
                 bbox_inches="tight",
             )
+        if show:
+            plt.show()
         plt.clf()
         plt.close()
