@@ -1,0 +1,53 @@
+plot:
+  error_limit:
+  - 0.00001
+  - 0.01
+  std_limit:
+  - 0.0001
+  - 0.01
+  val_limits:
+  - - null
+    - null
+  - - null
+    - null
+  - - null
+    - null
+training_data:
+setting:
+  particle_radius: 0.1
+  L: 1.
+  constant_velocity: 1.0
+generate_training:
+  div_num: 8
+  f_num: 8
+  u_num: 6
+generate_test:
+  test_num: 30
+  z_plane: 0.
+kernel_arg:
+- 'uxux'
+- 'uyuy'
+- 'uzuz'
+- 'pp'
+vnames:
+  train:
+  - 'ux'
+  - 'uy'
+  - 'uz'
+  - 'fx'
+  - 'fy'
+  - 'fz'
+  - 'divu'
+  test:
+  - 'ux'
+  - 'uy'
+  - 'uz'
+  infer:
+  - 'ux'
+  - 'uy'
+  - 'uz'
+  analysis:
+  - 'ux'
+  - 'uy'
+  - 'uz'
+system_type: 'Stokes_3D'
