@@ -1,7 +1,7 @@
 from stopro.GP.gp_1D import GPmodel1D
 
 
-class GPmodel1DNaive(GPmodel1D):
+class GPmodelNaive(GPmodel1D):
     """
     The base class for 1D gaussian process with naive
     """

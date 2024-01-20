@@ -12,7 +12,7 @@ from stopro.analyzer.plot_sinusoidal import plot_each_sinusoidal
 from stopro.data_handler.data_handle_module import *
 from stopro.GP.gp_1D_laplacian import GPmodel1DLaplacian
 from stopro.GP.gp_1D_laplacian_pbc import GPmodel1DLaplacianPbc
-from stopro.GP.gp_1D_naive import GPmodel1DNaive
+from stopro.GP.gp_naive import GPmodelNaive
 from stopro.GP.kernels import define_kernel
 from stopro.solver.optimizers import optimize_by_adam
 from stopro.sub_modules.init_modules import get_init, reshape_init

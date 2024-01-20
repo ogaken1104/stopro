@@ -12,7 +12,7 @@ from stopro.analyzer.plot_sinusoidal import plot_each_sinusoidal
 from stopro.data_handler.data_handle_module import *
 from stopro.GP.gp_1D_laplacian import GPmodel1DLaplacian
 from stopro.GP.gp_1D_laplacian_pbc import GPmodel1DLaplacianPbc
-from stopro.GP.gp_1D_naive import GPmodel1DNaive
+from stopro.GP.gp_naive import GPmodelNaive
 from stopro.GP.kernels import define_kernel
 from stopro.solver.optimizers import optimize_by_adam
 from stopro.sub_modules.init_modules import get_init, reshape_init
@@ -62,7 +62,7 @@ def test_sin_1D_naive_noise_main():
     Kernel = define_kernel(params_model)
     # gp_model = GPmodel1DLaplacian(
     # gp_model = GPmodel1DLaplacianPbc(
-    gp_model = GPmodel1DNaive(
+    gp_model = GPmodelNaive(
         Kernel=Kernel, index_optimize_noise=params_model["index_optimize_noise"]
     )
     loglikelihood, predictor = (
