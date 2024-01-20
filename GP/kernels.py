@@ -68,6 +68,15 @@ def K_2d_SquareExp_Pro(r1, r2, θ):
     )
 
 
+def K_3d_SquareExp_Pro(r1, r2, theta):
+    loggamma, loglx, logly, loglz = theta
+    return jnp.exp(loggamma) * (
+        K_SquareExp(r1[0], r2[0], loglx)
+        * K_SquareExp(r1[1], r2[1], logly)
+        * K_SquareExp(r1[2], r2[2], loglz)
+    )
+
+
 def K_2d_SquareExp_isotropic(r1, r2, θ):
     logγ, logl = θ
     # return jnp.exp(logγ - 0.5 * (jnp.linalg.norm(r1 - r2) * jnp.exp(-logl)) ** 2)
@@ -398,5 +407,7 @@ def define_kernel(
                 base_kernel = K_1d_SquareExp
         elif kernel_type == "periodic":
             base_kernel = K_1d_periodic
-
+    elif input_dim == 3:
+        if kernel_type == "se":
+            base_kernel = K_3d_SquareExp_Pro
     return base_kernel

@@ -67,7 +67,7 @@ def get_init(
         #     θstdnoise = jnp.array(hyperparams["std_noise"])
         #     init = jnp.concatenate([θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp, θstdnoise])
 
-    elif system_type == "1D":
+    else:
         init = jnp.array(hyperparams)
     if noise:
         init = jnp.append(init, noise)

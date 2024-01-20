@@ -1,0 +1,28 @@
+generate_test:
+  test_num: 20
+setting:
+  seed: 0
+generate_training:
+   f_num: 10
+vnames:
+  train:
+   - "f"
+  test:
+   - "f"
+  infer:
+   - "f"
+  analysis:
+   - "f"
+plot:
+  error_limit:
+  - 0.0001
+  - 0.1
+  std_limit:
+  - 0
+  - 0.002
+  val_limits:
+  - - -1.0
+    - 1.0
+  x_for_ux: 0.5
+kernel_arg:
+  - 'ff'
