@@ -1,7 +1,7 @@
 import numpy as np
 from jax.config import config
 
-from stopro.data_generator.sphereuniformflow3D import SphereUniformFlow
+from stopro.data_generator.sphereuniformflow3D import SphereUniformFlow3D
 from stopro.data_preparer.data_preparer import DataPreparer
 
 
@@ -15,7 +15,7 @@ def prepare(
         # project_name, simulation_name, class_data_generator=Sin1DNaive
         project_name,
         simulation_name,
-        class_data_generator=SphereUniformFlow,
+        class_data_generator=SphereUniformFlow3D,
     )
     data_preparer.create_directory()
     data_preparer.load_params(

@@ -9,6 +9,7 @@ test/sin_1D_naive_noise/**
 test/sinusoidal_direct/**
 test/sin_1D_direct/**
 test/gaussian3D/**
+test/sphereuniformflow3D/**
 test/outputs/**
 
 # 無視しないファイル

@@ -3,24 +3,24 @@ model:
   init_kernel_hyperparameter:
     uxux:
     - 0.
-    - 0.
-    - 0.
-    - 0.
+    - -1.0
+    - -1.0
+    - -1.0
     uyuy:
     - 0.
-    - 0.
-    - 0.
-    - 0.
+    - -1.0
+    - -1.0
+    - -1.0
     uzuz:
     - 0.
-    - 0.
-    - 0.
-    - 0.
+    - -1.0
+    - -1.0
+    - -1.0
     pp:
     - 0.
-    - 0.
-    - 0.
-    - 0.
+    - -1.0
+    - -1.0
+    - -1.0
   kernel_form: product
   kernel_type: se
   epsilon: 1.0e-06

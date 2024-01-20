@@ -8,7 +8,7 @@ from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from stopro.data_generator.stokes_3D_generator import Stokes3DGenerator
 
 
-class SphereUniformFlow(Stokes3DGenerator):
+class SphereUniformFlow3D(Stokes3DGenerator):
     def __init__(
         self,
         particle_radius: float = 0.1,

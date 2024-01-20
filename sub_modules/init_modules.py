@@ -18,7 +18,13 @@ def get_init(
             for name, hyp_each in hyp_each_kernel.items():
                 hyperparams[kernel_arg][name] = jnp.array(hyp_each)
         return hyperparams
-    if system_type == "Stokes_2D":
+    if system_type == "Stokes_3D":
+        θuxux = jnp.array(hyperparams["uxux"])
+        θuyuy = jnp.array(hyperparams["uyuy"])
+        θuzuz = jnp.array(hyperparams["uzuz"])
+        θpp = jnp.array(hyperparams["pp"])
+        init = jnp.concatenate([θuxux, θuyuy, θuzuz, θpp])
+    elif system_type == "Stokes_2D":
         if use_gradp_training:
             pass
             # θ_same = jnp.array([eta1, l1, l1])
