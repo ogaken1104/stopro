@@ -174,6 +174,15 @@ def K_2d_Matern92_Pro(r1, r2, θ):
     )
 
 
+def K_3d_Matern92_Pro(r1, r2, θ):
+    logγ, loglx, logly, loglz = θ
+    return jnp.exp(logγ) * (
+        K_Matern92(r1[0], r2[0], loglx)
+        * K_Matern92(r1[1], r2[1], logly)
+        * K_Matern92(r1[2], r2[2], loglz)
+    )
+
+
 #############################################################################
 
 
@@ -410,4 +419,6 @@ def define_kernel(
     elif input_dim == 3:
         if kernel_type == "se":
             base_kernel = K_3d_SquareExp_Pro
+        elif kernel_type == "mt92":
+            base_kernel = K_3d_Matern92_Pro
     return base_kernel

@@ -8,7 +8,7 @@ from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from stopro.data_generator.stokes_3D_generator import Stokes3DGenerator
 
 
-class SphereUniformFlow3D(Stokes3DGenerator):
+class Drag3D(Stokes3DGenerator):
     def __init__(
         self,
         particle_radius: float = 0.1,
@@ -73,9 +73,37 @@ class SphereUniformFlow3D(Stokes3DGenerator):
     def make_r_surface(self, num, z_plane=0.0):
         pass
 
-    def generate_u(self, u_num):
-        r = self.make_r_mesh_sphere(u_num)
+    def generate_u(self, u_num, u_surface_num, slice_axis, slice_num):
+        if slice_axis:
+            x_num, y_num, z_num = u_num, u_num, u_num
+            if slice_axis == "x":
+                x_num = slice_num
+            elif slice_axis == "y":
+                y_num = slice_num
+            elif slice_axis == "z":
+                z_num = slice_num
+            r = self.make_r_mesh(
+                -self.L,
+                self.L,
+                -self.L,
+                self.L,
+                -self.L,
+                self.L,
+                x_num,
+                y_num,
+                z_num,
+            )
+            r = self.delete_out_domain(r)
+        else:
+            r = self.make_r_mesh_sphere(u_num)
         ux, uy, uz = self.func_u(r)
+        if u_surface_num:
+            r_surface = self.make_r_sphere_surface(u_surface_num, self.a)
+            u_surface = np.zeros(len(r_surface))
+            r = np.concatenate([r, r_surface])
+            ux = np.concatenate([ux, u_surface])
+            uy = np.concatenate([uy, u_surface])
+            uz = np.concatenate([uz, u_surface])
         self.r += [r, r, r]
         self.f += [ux, uy, uz]
 
@@ -100,8 +128,17 @@ class SphereUniformFlow3D(Stokes3DGenerator):
         self.f_test += [ux, uy, uz]
         return self.r_test, self.f_test
 
-    def generate_training_data(self, u_num, f_num, div_num, sigma2_noise: float = None):
-        self.generate_u(u_num)
+    def generate_training_data(
+        self,
+        u_num,
+        f_num,
+        div_num,
+        u_surface_num: int = 0,
+        sigma2_noise: float = None,
+        slice_axis: str = None,
+        slice_num: int = None,
+    ):
+        self.generate_u(u_num, u_surface_num, slice_axis, slice_num)
         self.generate_f(f_num)
         self.generate_div(div_num)
         return self.r, self.f

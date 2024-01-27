@@ -1,7 +1,7 @@
 import numpy as np
 from jax.config import config
 
-from stopro.data_generator.sphereuniformflow3D import SphereUniformFlow3D
+from stopro.data_generator.drag3D import Drag3D
 from stopro.data_preparer.data_preparer import DataPreparer
 
 
@@ -9,13 +9,13 @@ def prepare(
     project_name,
     simulation_name,
     use_existing_params=False,
-    system_name="sphereuniformflow3D",
+    system_name="drag3D",
 ):
     data_preparer = DataPreparer(
         # project_name, simulation_name, class_data_generator=Sin1DNaive
         project_name,
         simulation_name,
-        class_data_generator=SphereUniformFlow3D,
+        class_data_generator=Drag3D,
     )
     data_preparer.create_directory()
     data_preparer.load_params(
@@ -42,4 +42,4 @@ def test_sin_1D_prepare():
     config.update("jax_enable_x64", True)
     project_name = "test"
     # y_num_range = [5, 10, 20, 40, 80, 160, 320, 640]
-    prepare(project_name, f"sphereuniformflow3D", use_existing_params=False)
+    prepare(project_name, f"drag3D", use_existing_params=False)

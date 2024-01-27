@@ -74,7 +74,7 @@ class GPStokes3D(GPmodel3DStokesIndependent):
             ],
             [self.Kfxfx, self.Kfxfy, self.Kfxfz, self.Kfxdiv],
             [self.Kfyfy, self.Kfyfz, self.Kfydiv],
-            [self.Kfzfz, self.Kfydiv],
+            [self.Kfzfz, self.Kfzdiv],
             [self.Kdivdiv],
         ]
 

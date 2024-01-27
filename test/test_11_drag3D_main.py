@@ -11,7 +11,7 @@ from stopro.analyzer.plot_sin_1D_each import plot_each_sin1D
 from stopro.analyzer.plot_sinusoidal import plot_each_sinusoidal
 from stopro.data_handler.data_handle_module import *
 from stopro.GP.gp_stokes_3D import GPStokes3D
-from stopro.data_generator.sphereuniformflow3D import SphereUniformFlow3D
+from stopro.data_generator.drag3D import Drag3D
 from stopro.GP.kernels import define_kernel
 from stopro.solver.optimizers import optimize_by_adam
 from stopro.sub_modules.init_modules import get_init, reshape_init
@@ -24,7 +24,7 @@ config.update("jax_enable_x64", True)
 
 def test_gaussian3D_main():
     optimize = 1
-    data_path = Path("test/sphereuniformflow3D")
+    data_path = Path("test/drag3D")
 
     # load params
     params_main, params_prepare, lbls = load_params(data_path / "data_input")
@@ -101,7 +101,7 @@ def test_gaussian3D_main():
     std = [jnp.sqrt(jnp.diag(Σ)) for Σ in Σs]
 
     # change outside values to be zero
-    sample = SphereUniformFlow3D(**params_setting)
+    sample = Drag3D(**params_setting)
     f_infer = [
         sample.change_outside_values_to_zero(r, f) for r, f in zip(r_test, f_infer)
     ]
