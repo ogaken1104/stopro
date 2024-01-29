@@ -365,7 +365,31 @@ class GPmodel:
             axis=1,
         )
         # print(f"first_term: {first_term[0]:.3e}, second_term: {second_term[0]:.3e}")
+
+        # def calc_trainingK_given_theta(theta_i, index_theta, theta_without_i):
+        #     theta = jnp.zeros(len(theta_without_i) + 1)
+        #     theta = theta.at[index_theta].set(theta_i)
+        #     theta = theta.at[:index_theta].set(theta_without_i[:index_theta])
+        #     theta = theta.at[index_theta + 1 :].set(theta_without_i[index_theta:])
+        #     θ, noise = self.split_hyp_and_noise(theta)
+        #     Σ = self.trainingK_all(θ, r)
+        #     Σ = self.add_eps_to_sigma(Σ, ϵ, noise_parameter=noise)
+        #     return Σ
+
+        # dloss = jnp.zeros(len(theta))
+        # for i in range(len(theta)):
+        #     dKdtheta_i = jax.jacfwd(calc_trainingK_given_theta, 0)(
+        #         theta[i], i, jnp.delete(theta, i)
+        #     )
+        #     first_term = jnp.dot(α.T, jnp.matmul(dKdtheta_i, α))
+        #     second_term = jnp.sum(
+        #         jnp.diagonal(
+        #             jnp.matmul(Σ_inv, dKdtheta_i),
+        #         )
+        #     )
+        #     dloss = dloss.at[i].set((-first_term + second_term) / 2)
         return (-first_term + second_term) / 2
+        # return dloss
 
     def d_logposterior(self, theta, *args):
         loglikelihood = self.d_trainingFunction_all(theta, *args)

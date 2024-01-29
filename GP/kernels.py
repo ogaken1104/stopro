@@ -421,4 +421,7 @@ def define_kernel(
             base_kernel = K_3d_SquareExp_Pro
         elif kernel_type == "mt92":
             base_kernel = K_3d_Matern92_Pro
+        elif kernel_form == "isotropic":
+            if kernel_type == "se":
+                base_kernel = K_2d_SquareExp_isotropic
     return base_kernel
