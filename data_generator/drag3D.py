@@ -15,10 +15,12 @@ class Drag3D(Stokes3DGenerator):
         L: float = 1.0,
         constant_velocity: float = 1.0,
         seed: int = 0,
+        moving_particle: bool = False,
     ):
         self.a = particle_radius
         self.L = L
         self.U0 = constant_velocity
+        self.moving_particle = moving_particle
         self.r = []
         self.f = []
         self.r_test = []
@@ -40,6 +42,10 @@ class Drag3D(Stokes3DGenerator):
         )
         uy = -self.U0 * 3 / 4 * self.a * x * y / r3 * (1 - a2_r2)
         uz = -self.U0 * 3 / 4 * self.a * x * z / r3 * (1 - a2_r2)
+        if self.moving_particle:
+            ux -= self.U0
+            # uy = -uy
+            # uz = -uz
         ux = self.change_outside_values_to_zero(r, ux)
         uy = self.change_outside_values_to_zero(r, uy)
         uz = self.change_outside_values_to_zero(r, uz)
@@ -99,11 +105,21 @@ class Drag3D(Stokes3DGenerator):
         ux, uy, uz = self.func_u(r)
         if u_surface_num:
             r_surface = self.make_r_sphere_surface(u_surface_num, self.a)
-            u_surface = np.zeros(len(r_surface))
+            if self.moving_particle:
+                u_on_surface_x = -self.U0
+                u_on_surface_y = 0.0
+                u_on_surface_z = 0.0
+                u_surface_x = np.full(len(r_surface), u_on_surface_x)
+                u_surface_y = np.full(len(r_surface), u_on_surface_y)
+                u_surface_z = np.full(len(r_surface), u_on_surface_z)
+            else:
+                u_on_surface = 0.0
+                u_surface = np.full(len(r_surface), u_on_surface)
+                u_surface_x, u_surface_y, u_surface_z = u_surface, u_surface, u_surface
             r = np.concatenate([r, r_surface])
-            ux = np.concatenate([ux, u_surface])
-            uy = np.concatenate([uy, u_surface])
-            uz = np.concatenate([uz, u_surface])
+            ux = np.concatenate([ux, u_surface_x])
+            uy = np.concatenate([uy, u_surface_y])
+            uz = np.concatenate([uz, u_surface_z])
         self.r += [r, r, r]
         self.f += [ux, uy, uz]
 

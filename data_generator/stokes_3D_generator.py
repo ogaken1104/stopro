@@ -37,14 +37,14 @@ class Stokes3DGenerator(StokesDataGenerator):
         x = np.empty(0)
         y = np.empty(0)
         z = np.empty(0)
-        phi = np.linspace(0.0001, np.pi - 0.0001, num_points)
-        for ph in phi:
-            num_theta = int(np.sin(ph) * num_points * 2)
-            theta = np.linspace(0.0, 2.0 * np.pi, num_theta, endpoint=False)
-            tt, pp = np.meshgrid(theta, ph)
-            _x = np.sin(pp) * np.cos(tt) * radius
-            _y = np.sin(pp) * np.sin(tt) * radius
-            _z = np.cos(pp) * radius
+        theta = np.linspace(0.0001, np.pi - 0.0001, num_points)
+        for thet in theta:
+            num_phi = int(np.sin(thet) * num_points * 2)
+            phi = np.linspace(0.0, 2.0 * np.pi, num_phi, endpoint=False)
+            tt, pp = np.meshgrid(theta, phi)
+            _x = np.sin(tt) * np.cos(pp) * radius
+            _y = np.sin(tt) * np.sin(pp) * radius
+            _z = np.cos(tt) * radius
             x = np.append(x, _x)
             y = np.append(y, _y)
             z = np.append(z, _z)

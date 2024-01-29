@@ -336,7 +336,6 @@ class GPmodel:
         """
         # r,μ,f,ϵ=args
         r, δy, ϵ = args
-        r_num = len(r)
 
         def calc_trainingK(theta):
             θ, noise = self.split_hyp_and_noise(theta)
@@ -344,22 +343,21 @@ class GPmodel:
             Σ = self.add_eps_to_sigma(Σ, ϵ, noise_parameter=noise)
             return Σ
 
-        # dKdtheta = jax.jacfwd(calc_trainingK)(theta)
-        dKdtheta = self.calc_dKdtheta(theta, r)
-        dKdtheta = jnp.transpose(dKdtheta, (2, 0, 1))
-
         ## calc matrix solve K^{-1}y
         Σ = calc_trainingK(theta)
         L = jnp.linalg.cholesky(Σ)
+        I = jnp.eye(len(δy))
+        Σ_inv = jnp.linalg.solve(L.T, jnp.linalg.solve(L, I))
         α = jnp.linalg.solve(L.transpose(), jnp.linalg.solve(L, δy))
+
+        # dKdtheta = jax.jacfwd(calc_trainingK)(theta)
+        dKdtheta = self.calc_dKdtheta(theta, r)
+        dKdtheta = jnp.transpose(dKdtheta, (2, 0, 1))
 
         ## calc first term of loss y^TK^{-1}\frac{dK}{d\theta}K^{-1}y
         first_term = jnp.einsum(
             "j, ij -> i", α.T, jnp.einsum("ijk, k ->ij", dKdtheta, α)
         )
-
-        I = jnp.eye(len(δy))
-        Σ_inv = jnp.linalg.solve(L.T, jnp.linalg.solve(L, I))
 
         ## calc second term of loss Tr(K^{-1}\frac{dK}{d\theta})
         second_term = jnp.sum(
