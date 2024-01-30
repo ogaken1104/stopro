@@ -91,21 +91,24 @@ def analyze_result(
         f.write(f"- mean\n")
         for vname, st in zip(vnames_analysis, std):
             f.write(f"{vname} : {np.mean(st):.7f}\n")
-        f.write(f"\n- loss\nfinal value: {loss[-1]:.5f}\niteration: {len(loss)}\n")
-        f.write("\n- thata\n")
-        print(theta[-1])
-        if len(theta[-1]) % len(lbls_kernel_arg) != 0:
-            f.write(f"noise ")
-            np.savetxt(f, [theta[-1][-1:]], fmt="%.3f")
-            theta[-1] = theta[-1][:-1]
-        for i, thet in enumerate(np.split(theta[-1], len(lbls_kernel_arg))):
-            f.write(f"{lbls_kernel_arg[i]: <5}")
-            np.savetxt(f, [thet], fmt="%.3f")
-        f.write(f"\n- final norm of grads\n")
-        try:
-            f.write(f"{norm_of_grads_list[-1]}")
-        except:
-            pass
+        if loss:
+            f.write(f"\n- loss\nfinal value: {loss[-1]:.5f}\niteration: {len(loss)}\n")
+        if theta:
+            f.write("\n- thata\n")
+            print(theta[-1])
+            if len(theta[-1]) % len(lbls_kernel_arg) != 0:
+                f.write(f"noise ")
+                np.savetxt(f, [theta[-1][-1:]], fmt="%.3f")
+                theta[-1] = theta[-1][:-1]
+            for i, thet in enumerate(np.split(theta[-1], len(lbls_kernel_arg))):
+                f.write(f"{lbls_kernel_arg[i]: <5}")
+                np.savetxt(f, [thet], fmt="%.3f")
+        if norm_of_grads_list:
+            f.write(f"\n- final norm of grads\n")
+            try:
+                f.write(f"{norm_of_grads_list[-1]}")
+            except:
+                pass
     # hdf5ファイルに保存
     vals_list = [
         absolute_error,
