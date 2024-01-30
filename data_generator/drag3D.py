@@ -16,6 +16,7 @@ class Drag3D(Stokes3DGenerator):
         constant_velocity: float = 1.0,
         seed: int = 0,
         moving_particle: bool = False,
+        half_space: bool = False,
     ):
         self.a = particle_radius
         self.L = L
@@ -26,6 +27,12 @@ class Drag3D(Stokes3DGenerator):
         self.r_test = []
         self.f_test = []
         self.seed = seed
+        self.end = self.L
+        self.half_space = half_space
+        if half_space:
+            self.start = 0.0
+        else:
+            self.start = -self.L
 
     def func_u(self, r):
         x = r[:, 0]
@@ -61,25 +68,25 @@ class Drag3D(Stokes3DGenerator):
             index_in_domain = np.where(rx**2 + ry**2 + rz**2 > radius_min**2)[0]
         return index_in_domain
 
-    def make_r_mesh_sphere(self, num_per_side: int):
+    def make_r_mesh_sphere(self, num_per_side: int, pad: float = 0.0):
         r = self.make_r_mesh(
-            -self.L,
-            self.L,
-            -self.L,
-            self.L,
-            -self.L,
-            self.L,
+            self.start + pad,
+            self.end - pad,
+            self.start + pad,
+            self.end - pad,
+            self.start + pad,
+            self.end - pad,
             num_per_side,
             num_per_side,
             num_per_side,
         )
-        r = self.delete_out_domain(r)
+        r = self.delete_out_domain(r, radius_min=self.a + pad)
         return r
 
     def make_r_surface(self, num, z_plane=0.0):
         pass
 
-    def generate_u(self, u_num, u_surface_num, slice_axis, slice_num):
+    def generate_u(self, u_num, u_surface_num, slice_axis, slice_num, u_pad):
         if slice_axis:
             x_num, y_num, z_num = u_num, u_num, u_num
             if slice_axis == "x":
@@ -89,22 +96,25 @@ class Drag3D(Stokes3DGenerator):
             elif slice_axis == "z":
                 z_num = slice_num
             r = self.make_r_mesh(
-                -self.L,
-                self.L,
-                -self.L,
-                self.L,
-                -self.L,
-                self.L,
+                self.start + u_pad,
+                self.end - u_pad,
+                self.start + u_pad,
+                self.end - u_pad,
+                self.start + u_pad,
+                self.end - u_pad,
                 x_num,
                 y_num,
                 z_num,
             )
             r = self.delete_out_domain(r)
         else:
-            r = self.make_r_mesh_sphere(u_num)
+            r = self.make_r_mesh_sphere(u_num, u_pad)
         ux, uy, uz = self.func_u(r)
         if u_surface_num:
             r_surface = self.make_r_sphere_surface(u_surface_num, self.a)
+            if self.half_space:
+                index_in_domain = np.all(r_surface >= 0.0, axis=1)
+                r_surface = r_surface[index_in_domain]
             if self.moving_particle:
                 u_on_surface_x = -self.U0
                 u_on_surface_y = 0.0
@@ -123,22 +133,43 @@ class Drag3D(Stokes3DGenerator):
         self.r += [r, r, r]
         self.f += [ux, uy, uz]
 
-    def generate_f(self, f_num):
-        r = self.make_r_mesh_sphere(f_num)
+    def generate_f(self, f_num, f_pad):
+        r = self.make_r_mesh_sphere(f_num, f_pad)
         f = np.zeros(len(r))
         self.r += [r, r, r]
         self.f += [f, f, f]
 
-    def generate_div(self, div_num):
-        r = self.make_r_mesh_sphere(div_num)
+    def generate_div(self, div_num, div_pad):
+        r = self.make_r_mesh_sphere(div_num, div_pad)
         div = np.zeros(len(r))
         self.r += [r]
         self.f += [div]
 
     def generate_test(self, test_num, z_plane=0.0):
-        r = self.make_r_mesh(
-            -self.L, self.L, -self.L, self.L, z_plane, z_plane, test_num, test_num, 1
-        )
+        if z_plane is None:
+            r = self.make_r_mesh(
+                self.start,
+                self.end,
+                self.start,
+                self.end,
+                self.start,
+                self.end,
+                test_num,
+                test_num,
+                test_num,
+            )
+        else:
+            r = self.make_r_mesh(
+                self.start,
+                self.end,
+                self.start,
+                self.end,
+                z_plane,
+                z_plane,
+                test_num,
+                test_num,
+                1,
+            )
         ux, uy, uz = self.func_u(r)
         self.r_test += [r] * 3
         self.f_test += [ux, uy, uz]
@@ -153,10 +184,17 @@ class Drag3D(Stokes3DGenerator):
         sigma2_noise: float = None,
         slice_axis: str = None,
         slice_num: int = None,
+        gov_pad: float = 0.03,
+        u_pad: float = 0.03,
+        only_velocity: bool = False,
     ):
-        self.generate_u(u_num, u_surface_num, slice_axis, slice_num)
-        self.generate_f(f_num)
-        self.generate_div(div_num)
+        self.generate_u(u_num, u_surface_num, slice_axis, slice_num, u_pad)
+        if sigma2_noise:
+            for i in range(3):
+                self.f[i] = self.add_white_noise(self.f[i], sigma2_noise)
+        if not only_velocity:
+            self.generate_f(f_num, gov_pad)
+            self.generate_div(div_num, gov_pad)
         return self.r, self.f
 
     def plot_train(self, save=False, path=None, show=False):
@@ -187,8 +225,8 @@ class Drag3D(Stokes3DGenerator):
         fig, axs = plt.subplots(figsize=(5 * 3, 3), ncols=3, sharex=True, sharey=True)
         y_num = int(np.sqrt(len(self.r_test[0])))
         x_num = y_num
-        y_grid = np.linspace(-self.L, self.L, y_num)
-        x_grid = np.linspace(-self.L, self.L, x_num)
+        y_grid = np.linspace(self.start, self.end, y_num)
+        x_grid = np.linspace(self.start, self.end, x_num)
         cmaps = [cmo.cm.dense, cmo.cm.balance, cmo.cm.balance]
         for i, ax in enumerate(axs):
             f_mesh = self.f_test[i].reshape(y_num, x_num)

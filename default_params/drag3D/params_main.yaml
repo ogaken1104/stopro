@@ -27,6 +27,7 @@ model:
   input_dim: 3
   system_type: Stokes_3D
   distance_func: false
+  index_optimize_noise: null
 optimization:
   eps: 0.0001
   loss_ridge_regression: false
