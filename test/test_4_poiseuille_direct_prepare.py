@@ -34,7 +34,11 @@ def prepare(
     # data_preparer.params_kernel_arg = ["uxux", "uyuy", "pp"]
 
     data_preparer.make_data(
-        plot_training=False, plot_test=False, save_data=True, save_plot=False
+        show_train_plot=False,
+        show_test_plot=False,
+        save_data=True,
+        save_train_plot=False,
+        save_test_plot=False,
     )
     data_preparer.save_params_prepare()
     data_preparer.save_params_main()

@@ -55,10 +55,11 @@ class DataPreparer:
 
     def make_data(
         self,
-        plot_training=True,
-        plot_test=False,
+        show_train_plot=True,
+        show_test_plot=False,
         save_data=True,
-        save_plot=True,
+        save_train_plot=True,
+        save_test_plot=True,
         return_data=False,
     ):
         # DataGeneratorのインスタンスを作成
@@ -78,16 +79,16 @@ class DataPreparer:
                 self.lbls["test"], self.vnames["test"], [r_test, f_test]
             )
         # plot
-        if plot_training or save_plot:
+        if show_train_plot or save_train_plot:
             sample.plot_train(
-                save=save_plot, path=self.simulation_path, show=plot_training
+                save=save_train_plot, path=self.simulation_path, show=show_train_plot
             )
-        if plot_test or save_plot:
+        if show_test_plot or save_test_plot:
             sample.plot_test(
-                save=save_plot,
+                save=save_test_plot,
                 val_limits=self.params_plot["val_limits"],
                 path=self.simulation_path,
-                show=plot_test,
+                show=show_test_plot,
             )
         # 生成された点の数を保存
         train_num = [len(_r) for _r in r_train]

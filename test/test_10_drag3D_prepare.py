@@ -31,7 +31,11 @@ def prepare(
     #############################################
     data_preparer.update_params()
     data_preparer.make_data(
-        plot_training=True, plot_test=False, save_data=True, save_plot=True
+        show_train_plot=True,
+        show_test_plot=False,
+        save_data=True,
+        save_train_plot=True,
+        save_test_plot=True,
     )
     data_preparer.save_params_prepare()
     data_preparer.save_params_main()
