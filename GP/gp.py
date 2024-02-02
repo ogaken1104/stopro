@@ -2,6 +2,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import grad, jit, vmap
+import copy
 
 
 class GPmodel:
@@ -290,6 +291,47 @@ class GPmodel:
                     )
         return dKdtheta
 
+    def calc_K_given_theta_i(self, theta_i, theta_other, index_theta, r, ϵ):
+        theta = jnp.zeros(len(theta_other) + 1)
+        theta = theta.at[index_theta].set(theta_i)
+        theta = theta.at[:index_theta].set(theta_other[:index_theta])
+        theta = theta.at[index_theta + 1 :].set(theta_other[index_theta:])
+        θ, noise = self.split_hyp_and_noise(theta)
+        Σ = self.trainingK_all(θ, r)
+        Σ = self.add_eps_to_sigma(Σ, ϵ, noise_parameter=noise)
+        return Σ
+
+    def generate_dK_wrt_theta_i(self, _K, index_theta):
+        def dK_wrt_theta_i(r, rp, theta):
+            theta_i = theta[index_theta]
+            theta_other = jnp.delete(theta, index_theta)
+
+            def K_given_theta_i(theta_i, theta_other, index_theta, r, rp):
+                theta = jnp.zeros(len(theta_other) + 1)
+                theta = theta.at[index_theta].set(theta_i)
+                theta = theta.at[:index_theta].set(theta_other[:index_theta])
+                theta = theta.at[index_theta + 1 :].set(theta_other[index_theta:])
+                return _K(r, rp, theta)
+
+            return jax.jacfwd(K_given_theta_i, argnums=0)(
+                theta_i, theta_other, index_theta, r, rp
+            )
+
+        return dK_wrt_theta_i
+
+    def setup_dKss_theta_i(
+        self,
+        index_theta,
+    ):
+        dKss = []
+        for Ks in self.trainingKs:
+            dKss_row = []
+            for _K in Ks:
+                dK_wrt_theta_i = self.generate_dK_wrt_theta_i(_K, index_theta)
+                dKss_row.append(copy.copy(dK_wrt_theta_i))
+            dKss.append(dKss_row)
+        return dKss
+
     def setup_kernel_include_difference_prime(self, K_func):
         """
         Function that construct a kernel that calculates shifted difference of variable at first argument.
@@ -336,6 +378,7 @@ class GPmodel:
         """
         # r,μ,f,ϵ=args
         r, δy, ϵ = args
+        θ, noise = self.split_hyp_and_noise(theta)
 
         def calc_trainingK(theta):
             θ, noise = self.split_hyp_and_noise(theta)
@@ -349,47 +392,62 @@ class GPmodel:
         I = jnp.eye(len(δy))
         Σ_inv = jnp.linalg.solve(L.T, jnp.linalg.solve(L, I))
         α = jnp.linalg.solve(L.transpose(), jnp.linalg.solve(L, δy))
+        del L, Σ, I
+        ########### previous version #################
+        # # dKdtheta = jax.jacfwd(calc_trainingK)(theta)
+        # dKdtheta = self.calc_dKdtheta(theta, r)
+        # dKdtheta = jnp.transpose(dKdtheta, (2, 0, 1))
 
-        # dKdtheta = jax.jacfwd(calc_trainingK)(theta)
-        dKdtheta = self.calc_dKdtheta(theta, r)
-        dKdtheta = jnp.transpose(dKdtheta, (2, 0, 1))
+        # ## calc first term of loss y^TK^{-1}\frac{dK}{d\theta}K^{-1}y
+        # first_term = jnp.einsum(
+        #     "j, ij -> i", α.T, jnp.einsum("ijk, k ->ij", dKdtheta, α)
+        # )
 
-        ## calc first term of loss y^TK^{-1}\frac{dK}{d\theta}K^{-1}y
-        first_term = jnp.einsum(
-            "j, ij -> i", α.T, jnp.einsum("ijk, k ->ij", dKdtheta, α)
-        )
-
-        ## calc second term of loss Tr(K^{-1}\frac{dK}{d\theta})
-        second_term = jnp.sum(
-            jnp.diagonal(jnp.einsum("jk, ikl->ijl", Σ_inv, dKdtheta), axis1=1, axis2=2),
-            axis=1,
-        )
+        # ## calc second term of loss Tr(K^{-1}\frac{dK}{d\theta})
+        # second_term = jnp.sum(
+        #     jnp.diagonal(jnp.einsum("jk, ikl->ijl", Σ_inv, dKdtheta), axis1=1, axis2=2),
+        #     axis=1,
+        # )
+        #########################################
         # print(f"first_term: {first_term[0]:.3e}, second_term: {second_term[0]:.3e}")
+        dloss = jnp.zeros(len(theta))
+        # dloss = []
 
-        # def calc_trainingK_given_theta(theta_i, index_theta, theta_without_i):
-        #     theta = jnp.zeros(len(theta_without_i) + 1)
-        #     theta = theta.at[index_theta].set(theta_i)
-        #     theta = theta.at[:index_theta].set(theta_without_i[:index_theta])
-        #     theta = theta.at[index_theta + 1 :].set(theta_without_i[index_theta:])
-        #     θ, noise = self.split_hyp_and_noise(theta)
-        #     Σ = self.trainingK_all(θ, r)
-        #     Σ = self.add_eps_to_sigma(Σ, ϵ, noise_parameter=noise)
-        #     return Σ
+        for index_theta in range(len(theta)):
+            # v1
+            theta_i = theta[index_theta]
+            theta_other = jnp.delete(theta, index_theta)
+            calc_dKdtheta_i = jax.jacfwd(self.calc_K_given_theta_i, argnums=0)
+            dKdtheta_i = calc_dKdtheta_i(theta_i, theta_other, index_theta, r, ϵ)
 
-        # dloss = jnp.zeros(len(theta))
-        # for i in range(len(theta)):
-        #     dKdtheta_i = jax.jacfwd(calc_trainingK_given_theta, 0)(
-        #         theta[i], i, jnp.delete(theta, i)
-        #     )
-        #     first_term = jnp.dot(α.T, jnp.matmul(dKdtheta_i, α))
-        #     second_term = jnp.sum(
-        #         jnp.diagonal(
-        #             jnp.matmul(Σ_inv, dKdtheta_i),
-        #         )
-        #     )
-        #     dloss = dloss.at[i].set((-first_term + second_term) / 2)
-        return (-first_term + second_term) / 2
-        # return dloss
+            # # v2こちらの方が，BBMMの際にメモリを節約できるが，コンパイルに非常に非常に時間がかかる ##
+            # ## ノイズを最適化する場合，dKdthetaは，最適化するノイズに該当する対角成分が1，それ以外が0の行列となる
+            # if self.index_optimize_noise and index_theta == len(theta) - 1:
+            #     dKdtheta_i = jnp.zeros(
+            #         (self.sec_tr[self.num_tr], self.sec_tr[self.num_tr])
+            #     )
+            #     r_index_noise_start = self.index_optimize_noise[0]
+            #     r_index_noise_end = self.index_optimize_noise[-1]
+            #     index_noise_start = self.sec_tr[r_index_noise_start]
+            #     index_noise_end = self.sec_tr[r_index_noise_end + 1]
+            #     dKdtheta_i = dKdtheta_i.at[index_noise_start:index_noise_end].set(
+            #         jnp.exp(1.0)
+            #     )
+            # else:
+            #     dKss_i = self.setup_dKss_theta_i(index_theta)
+            #     dKdtheta_i = self.calculate_K_training(r, dKss_i, θ)
+            # #########################################
+
+            first_term = jnp.dot(α.T, jnp.matmul(dKdtheta_i, α))
+            second_term = jnp.sum(
+                jnp.diagonal(
+                    jnp.matmul(Σ_inv, dKdtheta_i),
+                )
+            )
+            dloss = dloss.at[index_theta].set((-first_term + second_term) / 2)
+
+        return dloss
+        # return (-first_term + second_term) / 2
 
     def d_logposterior(self, theta, *args):
         loglikelihood = self.d_trainingFunction_all(theta, *args)

@@ -193,13 +193,13 @@ def optimize_by_adam(f, df, hf, init, params_optimization, *args):
             # )
             # print(f"norm_of_grads: {norm_of_grads:.5f}")
 
-            # if len(theta) >= 18:
-            #     for thet in jnp.split(theta[:18], 6):
-            #         print(f"{jnp.round(thet, 4)}")
-            # else:
-            #     # if use_sm_kernel:
-            #     #     print(theta)
-            #     print(jnp.round(theta, 4))
+            if len(theta) >= 18:
+                for thet in jnp.split(theta[:18], 6):
+                    print(f"{jnp.round(thet, 4)}")
+            else:
+                # if use_sm_kernel:
+                #     print(theta)
+                print(jnp.round(theta, 4))
             # print(f"theta_max: {jnp.max(theta):.5f}")
             # print(f"theta_min: {jnp.min(theta):.5f}\n")
         return value, opt_state, theta, norm_of_grads
