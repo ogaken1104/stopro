@@ -86,8 +86,40 @@ class Drag3D(Stokes3DGenerator):
     def make_r_surface(self, num, z_plane=0.0):
         pass
 
-    def generate_u(self, u_num, u_surface_num, slice_axis, slice_num, u_pad):
-        if slice_axis:
+    def generate_u(self, u_num, u_surface_num, slice_axis, slice_num, u_pad, u_2D2C=False):
+        if slice_axis == "xz":
+            r_slice_z = self.make_r_mesh(
+                self.start,
+                self.end,
+                self.start,
+                self.end,
+                self.start + u_pad,
+                self.end - u_pad,
+                u_num,
+                u_num,
+                slice_num,
+            )
+            r_slice_x = self.make_r_mesh(
+                self.start + u_pad,
+                self.end - u_pad,
+                self.start,
+                self.end,
+                self.start,
+                self.end,
+                slice_num,
+                u_num,
+                u_num,
+            )
+            r_slice_z= self.delete_out_domain(r_slice_z)
+            r_slice_x = self.delete_out_domain(r_slice_x)
+            ux_slice_z, uy_slice_z, _ = self.func_u(r_slice_z)
+            _, uy_slice_x, uz_slice_x = self.func_u(r_slice_x)
+            uy = np.concatenate([uy_slice_z, uy_slice_x])
+            r_uy = np.concatenate([r_slice_z, r_slice_x])
+            self.r += [r_slice_z, r_uy, r_slice_x]
+            self.f += [ux_slice_z, uy, uz_slice_x]
+            return None
+        elif slice_axis:
             x_num, y_num, z_num = u_num, u_num, u_num
             if slice_axis == "x":
                 x_num = slice_num
@@ -126,10 +158,18 @@ class Drag3D(Stokes3DGenerator):
                 u_on_surface = 0.0
                 u_surface = np.full(len(r_surface), u_on_surface)
                 u_surface_x, u_surface_y, u_surface_z = u_surface, u_surface, u_surface
+            if u_2D2C:
+                self.r += [r, r, r_surface, r_surface, r_surface]
+                self.f += [ux, uy, u_surface_x, u_surface_y, u_surface_z]
+                return None
             r = np.concatenate([r, r_surface])
             ux = np.concatenate([ux, u_surface_x])
             uy = np.concatenate([uy, u_surface_y])
             uz = np.concatenate([uz, u_surface_z])
+        if u_2D2C:
+            self.r += [r, r]
+            self.f += [ux, uy]
+            return None
         self.r += [r, r, r]
         self.f += [ux, uy, uz]
 
@@ -187,8 +227,9 @@ class Drag3D(Stokes3DGenerator):
         gov_pad: float = 0.03,
         u_pad: float = 0.03,
         only_velocity: bool = False,
+        u_2D2C: bool=False,
     ):
-        self.generate_u(u_num, u_surface_num, slice_axis, slice_num, u_pad)
+        self.generate_u(u_num, u_surface_num, slice_axis, slice_num, u_pad,u_2D2C=u_2D2C)
         if sigma2_noise:
             for i in range(3):
                 self.f[i] = self.add_white_noise(self.f[i], sigma2_noise)
@@ -201,7 +242,11 @@ class Drag3D(Stokes3DGenerator):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")  # 3Dサブプロットを追加
 
-        ax.scatter(self.r[0][:, 0], self.r[0][:, 1], self.r[0][:, 2], c="k")
+        alpha = 0.5
+        ax.scatter(self.r[0][:, 0], self.r[0][:, 1], self.r[0][:, 2], c="k", alpha=alpha, label="$u_x$")
+        if not np.all(self.r[0] == self.r[1]):
+            ax.scatter(self.r[1][:, 0], self.r[1][:, 1], self.r[1][:, 2], c="b", marker="x", alpha=alpha, label="$u_y$")
+            ax.scatter(self.r[2][:, 0], self.r[2][:, 1], self.r[2][:, 2], c="r", marker="+", alpha=alpha, label="$u_z$")
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.set_zlabel("z")

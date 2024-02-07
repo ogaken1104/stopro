@@ -21,6 +21,7 @@ generate_training:
   div_num: 8
   f_num: 8
   u_num: 6
+  u_2D2C: False
 generate_test:
   test_num: 30
   z_plane: 0.
