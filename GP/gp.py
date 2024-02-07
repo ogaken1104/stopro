@@ -315,7 +315,7 @@ class GPmodel:
 
             return jax.jacfwd(K_given_theta_i, argnums=0)(
                 theta_i, theta_other, index_theta, r, rp
-            )
+            )[0]
 
         return dK_wrt_theta_i
 
