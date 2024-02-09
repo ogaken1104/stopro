@@ -57,7 +57,18 @@ class Drag3D(Stokes3DGenerator):
         uy = self.change_outside_values_to_zero(r, uy)
         uz = self.change_outside_values_to_zero(r, uz)
         return ux, uy, uz
-
+    
+    def func_difp_along_x(self, r):
+        r2_in = np.sum(r**2, axis=1)
+        r_norm_in = np.sqrt(r2_in)
+        r3_in = r2_in * r_norm_in
+        r2_out = np.sum((r+np.array([self.L, 0., 0.]))**2, axis=1)
+        r_norm_out = np.sqrt(r2_out)
+        r3_out = r2_out * r_norm_out
+        difp = -3/2*self.U0*self.a*(self.L/1/r3_out-r[:, 0]/r3_in)
+        difp = self.change_outside_values_to_zero(r, difp)
+        return difp
+    
     def get_index_in_domain(self, r, radius_min=None):
         rx = r[:, 0]
         ry = r[:, 1]
@@ -185,7 +196,24 @@ class Drag3D(Stokes3DGenerator):
         self.r += [r]
         self.f += [div]
 
-    def generate_test(self, test_num, z_plane=0.0):
+    def generate_test(self, test_num, z_plane=0.0, infer_difp: bool=False):
+        if infer_difp:
+            r = self.make_r_mesh(
+                self.start,
+                self.end,
+                self.start,
+                self.end,
+                self.start,
+                self.end,
+                1,
+                test_num,
+                test_num,
+            )
+            difp = self.func_difp_along_x(r)
+            self.r_test += [r]
+            self.f_test += [difp]
+            return self.r_test, self.f_test
+
         if z_plane is None:
             r = self.make_r_mesh(
                 self.start,
@@ -266,28 +294,44 @@ class Drag3D(Stokes3DGenerator):
     def plot_test(self, save=False, path=None, show=False, val_limits=None):
         # num_surface = 100
         # r_surface = self.make_r_surface(num_surface)
-
-        fig, axs = plt.subplots(figsize=(5 * 3, 3), ncols=3, sharex=True, sharey=True)
         y_num = int(np.sqrt(len(self.r_test[0])))
         x_num = y_num
         y_grid = np.linspace(self.start, self.end, y_num)
         x_grid = np.linspace(self.start, self.end, x_num)
         cmaps = [cmo.cm.dense, cmo.cm.balance, cmo.cm.balance]
-        for i, ax in enumerate(axs):
-            f_mesh = self.f_test[i].reshape(y_num, x_num)
+        if len(self.r_test) == 1:
+            fig, ax = plt.subplots(figsize=(5, 3))
+            f_mesh = self.f_test[0].reshape(y_num, x_num)
             mappable = ax.pcolormesh(
                 x_grid,
                 y_grid,
                 f_mesh,
-                cmap=cmaps[i],
-                vmin=val_limits[i][0],
-                vmax=val_limits[i][1],
+                cmap=cmaps[0],
+                vmin=np.min(self.f_test[0]),
+                vmax=np.max(self.f_test[0]),
                 shading="nearest",
             )
             divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", size="5%", pad=0.1)
             fig.colorbar(mappable, cax=cax)
             ax.set_aspect("equal", adjustable="box")
+        else:
+            fig, axs = plt.subplots(figsize=(5 * 3, 3), ncols=3, sharex=True, sharey=True)
+            for i, ax in enumerate(axs):
+                f_mesh = self.f_test[i].reshape(y_num, x_num)
+                mappable = ax.pcolormesh(
+                    x_grid,
+                    y_grid,
+                    f_mesh,
+                    cmap=cmaps[i],
+                    vmin=val_limits[i][0],
+                    vmax=val_limits[i][1],
+                    shading="nearest",
+                )
+                divider = make_axes_locatable(ax)
+                cax = divider.append_axes("right", size="5%", pad=0.1)
+                fig.colorbar(mappable, cax=cax)
+                ax.set_aspect("equal", adjustable="box")
             # ax.plot(r_surface[:, 0], r_surface[:, 1], color="k")
         # ax.legend()
         if save:

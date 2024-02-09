@@ -35,19 +35,35 @@ def plot_each_drag3D(contents, params_plot, params_prepare, params_main, lbls, v
     x_grid = np.linspace(-sample.L, sample.L, x_num)
 
     if "all" in contents:
-        plot_output_all(
-            vnames,
-            f,
-            abs_error,
-            std,
-            num_per_side,
-            x_grid,
-            y_grid,
-            val_limits,
-            error_limit,
-            std_limit,
-            sample,
-        )
+        if vnames["infer"] == ["difp"]:
+            val_limits = [[np.min(f_test[0]), np.max(f_test[0])]]
+            plot_difp(
+                vnames,
+                f,
+                abs_error,
+                std,
+                num_per_side,
+                x_grid,
+                y_grid,
+                val_limits,
+                error_limit,
+                std_limit,
+                sample,
+            )
+        else:
+            plot_output_all(
+                vnames,
+                f,
+                abs_error,
+                std,
+                num_per_side,
+                x_grid,
+                y_grid,
+                val_limits,
+                error_limit,
+                std_limit,
+                sample,
+            )
     if "loss" in contents:
         plot_modules.plot_loss(hdf_operator)
     if "rel_error" in contents:
@@ -124,6 +140,84 @@ def plot_output_all(
             cmap=mpl.cm.cool,
             norm=mpl.colors.LogNorm,
         )
+    fig.tight_layout()
+    fig.savefig(
+        f"../fig/output_all.png",
+        bbox_inches="tight",
+    )
+    plt.clf()
+    plt.close()
+
+def plot_difp(
+    vnames,
+    f,
+    abs_error,
+    std,
+    num_per_side,
+    x_grid,
+    y_grid,
+    val_limits,
+    error_limit,
+    std_limit,
+    sample,
+):
+    fig, axs = plt.subplots(
+        figsize=(5 * 3, 5 * 2), nrows=1, ncols=3, sharex=True, sharey=True
+    )
+    cmaps = [cmo.cm.dense, cmo.cm.balance, cmo.cm.balance]
+    shading = "nearest"
+    i = 0
+    # plot values
+    ax_index = 0
+    # axs[ax_index].set_title(vnames[i])
+    f[i] = np.array(f[i])
+    f_mesh = f[i].reshape(num_per_side, num_per_side)
+    sample.plot_heatmap(
+        fig,
+        axs[ax_index],
+        x_grid,
+        y_grid,
+        f_mesh,
+        shading=shading,
+        vmin=val_limits[i][0],
+        vmax=val_limits[i][1],
+        cmap=cmaps[i],
+    )
+
+    # plot abs error
+    ax_index = 1
+    # axs[ax_index].set_title()
+    abs_error[i] = np.array(abs_error[i])
+    f_mesh = abs_error[i].reshape(num_per_side, num_per_side)
+    sample.plot_heatmap(
+        fig,
+        axs[ax_index],
+        x_grid,
+        y_grid,
+        f_mesh,
+        shading=shading,
+        vmin=error_limit[0],
+        vmax=error_limit[1],
+        cmap=mpl.cm.cool,
+        norm=mpl.colors.LogNorm,
+    )
+
+    # plot std
+    ax_index = 2
+    std[i] = np.array(std[i])
+    f_mesh = std[i].reshape(num_per_side, num_per_side)
+    sample.plot_heatmap(
+        fig,
+        axs[ax_index],
+        x_grid,
+        y_grid,
+        f_mesh,
+        shading=shading,
+        vmin=std_limit[0],
+        vmax=std_limit[1],
+        cmap=mpl.cm.cool,
+        norm=mpl.colors.LogNorm,
+    )
     fig.tight_layout()
     fig.savefig(
         f"../fig/output_all.png",

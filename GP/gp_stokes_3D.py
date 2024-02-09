@@ -19,6 +19,7 @@ class GPStokes3D(GPmodel3DStokesIndependent):
         infer_governing_eqs: bool = False,
         Kernel: callable = None,
         index_optimize_noise: list = None,
+        infer_difp: bool=False,
         # kernel_type: str = None,
         # approx_non_pd: bool = False,
     ):
@@ -34,6 +35,7 @@ class GPStokes3D(GPmodel3DStokesIndependent):
         self.lbox = lbox
         self.use_difp = use_difp
         self.use_difu = use_difu
+        self.infer_difp = infer_difp
         self.infer_governing_eqs = infer_governing_eqs
         self.Kernel = Kernel
         self.K = self.outermap(Kernel)
@@ -107,8 +109,18 @@ class GPStokes3D(GPmodel3DStokesIndependent):
             #         self.Kdivdiv,
             #     ],
             # ]
-        elif self.use_difp:
-            pass
+        elif self.infer_difp:
+            self.mixedKs = [
+                [
+                    self.Kdifpux,
+                    self.Kdifpuy,
+                    self.Kdifpuz,
+                    self.Kdifpfx,
+                    self.Kdifpfy,
+                    self.Kdifpfz,
+                    self.Kdifpdiv,
+                ],
+            ]
         else:
             self.mixedKs = [
                 [
@@ -148,6 +160,10 @@ class GPStokes3D(GPmodel3DStokesIndependent):
             #     [self.Kfyfy, self.Kfydiv],
             #     [self.Kdivdiv],
             # ]
+        elif self.infer_difp:
+            self.testKs = [
+                [self.Kdifpdifp],
+            ]
         else:
             self.testKs = [
                 [self.Kuxux, self.Kuxuy, self.Kuxuz],

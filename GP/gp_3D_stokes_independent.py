@@ -75,6 +75,49 @@ class GPmodel3DStokesIndependent(GPmodel3D, GPmodel2DStokesIndependent):
 
     def Kuzdiv(self, r, rp, theta):
         return self.d12(r, rp, theta[self.ind_uzuz])
+    
+    ## Kernels for infer difp
+    def Kpux(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
+
+    def Kpuy(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
+
+    def Kpuz(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
+    
+    def Kpfx(self, r, rp, theta):
+        return self.d10(r, rp, theta[self.ind_pp])
+
+    def Kpfy(self, r, rp, theta):
+        return self.d11(r, rp, theta[self.ind_pp])
+
+    def Kpfz(self, r, rp, theta):
+        return self.d12(r, rp, theta[self.ind_pp])
+    
+    def Kpdiv(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
+    
+    def Kdifpux(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpux)(r, rp, theta)
+
+    def Kdifpuy(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpuy)(r, rp, theta)
+
+    def Kdifpuz(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpuz)(r, rp, theta)
+    
+    def Kdifpfx(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpfx)(r, rp, theta)
+
+    def Kdifpfy(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpfy)(r, rp, theta)
+
+    def Kdifpfz(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpfz)(r, rp, theta)
+    
+    def Kdifpdiv(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpdiv)(r, rp, theta)
 
     # ## Kernels between variable with differential operators and variable without (used for inference of governing eqs.)
     # def Kfxp(self, r, rp, theta):
@@ -192,8 +235,8 @@ class GPmodel3DStokesIndependent(GPmodel3D, GPmodel2DStokesIndependent):
     # def Kdifuydifp(self, r, rp, theta):
     #     return self.setup_kernel_difdif(self.Kuyp)(r, rp, theta)
 
-    # def Kdifpdifp(self, r, rp, theta):
-    #     return self.setup_kernel_difdif(self.Kpp)(r, rp, theta)
+    def Kdifpdifp(self, r, rp, theta):
+        return self.setup_kernel_difdif(self.Kpp)(r, rp, theta)
 
     # def Kfxdifux(self, r, rp, theta):
     #     return self.setup_kernel_include_difference_prime(self.Kfxux)(r, rp, theta)
