@@ -304,7 +304,7 @@ class Sinusoidal(StokesDataGenerator):
 
     # generation of training data
     def generate_u(
-        self, u_num, u_b=0.0, u_1D2C=False, sigma2_noise=None, u_split=4, u_1D1C=False
+        self, u_num, u_b=0.0, u_1D2C=False, sigma2_noise=None, u_split=4, u_1D1C=False, u_num_wall=None
     ):
         """
         premise: ux,uy values are taken at same points
@@ -491,6 +491,12 @@ class Sinusoidal(StokesDataGenerator):
             r_ux = r_u
             r_uy = r_u
             ux, uy = f_train[0][index_for_train], f_train[1][index_for_train]
+            if u_num_wall:
+                r_u_wall, u_wall = self.generate_wall_points(int(u_num_wall/2))
+                r_ux = np.concatenate([r_ux, r_u_wall])
+                r_uy = np.concatenate([r_uy, r_u_wall])
+                ux = np.concatenate([ux, u_wall])
+                uy = np.concatenate([uy, u_wall])
 
         elif self.use_1d_u:
             # with open('/work/jh210017a/q24015/template_data/test_from_fenics/0303_1d_training_50.pickle', 'rb') as file:
@@ -1146,10 +1152,11 @@ class Sinusoidal(StokesDataGenerator):
         u_split=4,
         difu_pad=0.03,
         u_1D1C=False,
+        u_num_wall=None,
     ):
         self.without_f = without_f
         if without_f:
-            self.generate_u(u_num, u_1D2C=u_1D2C, u_1D1C=u_1D1C)
+            self.generate_u(u_num, u_1D2C=u_1D2C, u_1D1C=u_1D1C, u_num_wall=u_num_wall)
             self.generate_difu(difu_num)
             self.generate_div(div_num, div_pad)
             self.generate_difp(difp_num, difp_pad, difp_loc)
@@ -1162,6 +1169,7 @@ class Sinusoidal(StokesDataGenerator):
                 sigma2_noise=sigma2_noise,
                 u_split=u_split,
                 u_1D1C=u_1D1C,
+                u_num_wall=u_num_wall,
             )
             if self.use_difu:
                 self.generate_difu(difu_num, difu_pad=difu_pad)

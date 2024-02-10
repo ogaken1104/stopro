@@ -6,137 +6,96 @@ from stopro.GP.gp_sinusoidal_independent import GPSinusoidalWithoutPIndependent
 
 
 class GPSinusoidalInferDifP(GPSinusoidalWithoutPIndependent):
-    def trainingK_all(self, θ, train_pts):
+    def Kpux(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
+
+    def Kpuy(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
+
+    def Kpfx(self, r, rp, theta):
+        return self.d10(r, rp, theta[self.ind_pp])
+
+    def Kpfy(self, r, rp, theta):
+        return self.d11(r, rp, theta[self.ind_pp])
+
+    def Kpdiv(self, r, rp, theta):
+        return self.Kzero(r, rp, self.dummy_theta)
+    
+    def Kdifpux(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpux)(r, rp, theta)
+
+    def Kdifpuy(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpuy)(r, rp, theta)
+
+    def Kdifpfx(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpfx)(r, rp, theta)
+
+    def Kdifpfy(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpfy)(r, rp, theta)
+
+    def Kdifpdiv(self, r, rp, theta):
+        return self.setup_kernel_include_difference(self.Kpdiv)(r, rp, theta)
+
+    def Kdifpdifux(self, r, rp, theta):
+        return self.setup_kernel_difdif(self.Kpux)(r, rp, theta)
+
+    def Kdifpdifuy(self, r, rp, theta):
+        return self.setup_kernel_difdif(self.Kpuy)(r, rp, theta)
+    
+    def setup_trainingKs(self):
         """
         Args :
-        θ  : kernel hyperparameters
-        args: training points r_ux,r_uy,r_p,r_fx,r_fy,r_div
         """
-
-        Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
-        (
-            Kuxfx,
-            Kuyfx,
-            Kuxfy,
-            Kuyfy,
-            Kuxdiv,
-            Kuydiv,
-            Kuxdifux,
-            Kuxdifuy,
-            Kuydifux,
-            Kuydifuy,
-            Kuxdifp,
-            Kuydifp,
-            _,
-        ) = self.setup_latter_difop_kerenl(θ)
-        Kfxfx, Kfxfy, Kfyfy, Kfxdiv, Kfydiv, Kdivdiv = self.setup_gov_gov_kernel(θ)
-
-        Kdifuxdifux = self.setup_kernel_difdif(Kuxux)
-        Kdifuxdifuy = self.setup_kernel_difdif(Kuxuy)
-        Kdifuxfx = self.setup_kernel_include_difference(Kuxfx)
-        Kdifuxfy = self.setup_kernel_include_difference(Kuxfy)
-        Kdifuxdiv = self.setup_kernel_include_difference(Kuxdiv)
-        Kdifuydifuy = self.setup_kernel_difdif(Kuyuy)
-        Kdifuyfx = self.setup_kernel_include_difference(Kuyfx)
-        Kdifuyfy = self.setup_kernel_include_difference(Kuyfy)
-        Kdifuydiv = self.setup_kernel_include_difference(Kuydiv)
-
-        if self.use_difp:
-            Kfxdifp, Kfydifp, Kdivdifp = self.setup_latter_difp_kernel(θ)
-            Kdifpdifp = self.setup_kernel_difdif(Kpp)
-            Kdifuydifp = self.setup_kernel_difdif(Kuyp)
-            Kdifuxdifp = self.setup_kernel_difdif(Kuxp)
-            Ks = [
-                [Kuxux, Kuxuy, Kuxdifux, Kuxdifuy, Kuxfx, Kuxfy, Kuxdiv, Kuxdifp],
-                [Kuyuy, Kuydifux, Kuydifuy, Kuyfx, Kuyfy, Kuydiv, Kuydifp],
-                [
-                    Kdifuxdifux,
-                    Kdifuxdifuy,
-                    Kdifuxfx,
-                    Kdifuxfy,
-                    Kdifuxdiv,
-                    Kdifuxdifp,
-                ],
-                [Kdifuydifuy, Kdifuyfx, Kdifuyfy, Kdifuydiv, Kdifuydifp],
-                [Kfxfx, Kfxfy, Kfxdiv, Kfxdifp],
-                [Kfyfy, Kfydiv, Kfydifp],
-                [Kdivdiv, Kdivdifp],
-                [Kdifpdifp],
-            ]
-        else:
-            Ks = [
-                [Kuxux, Kuxuy, Kuxdifux, Kuxdifuy, Kuxfx, Kuxfy, Kuxdiv],
-                [Kuyuy, Kuydifux, Kuydifuy, Kuyfx, Kuyfy, Kuydiv],
-                [
-                    Kdifuxdifux,
-                    Kdifuxdifuy,
-                    Kdifuxfx,
-                    Kdifuxfy,
-                    Kdifuxdiv,
-                ],
-                [Kdifuydifuy, Kdifuyfx, Kdifuyfy, Kdifuydiv],
-                [Kfxfx, Kfxfy, Kfxdiv],
-                [Kfyfy, Kfydiv],
-                [Kdivdiv],
-            ]
-
-        return self.calculate_K_training(train_pts, Ks)
-
-    def mixedK_all(self, θ, test_pts, train_pts):
-        θuxux, θuyuy, θpp = self.split_hyperparam(θ)
-
-        def Kpux(r, rp):
-            return self.Kzero(r, rp, self.dummy_theta)
-
-        def Kpuy(r, rp):
-            return self.Kzero(r, rp, self.dummy_theta)
-
-        def Kpfx(r, rp):
-            return self.d10(r, rp, θpp)
-
-        def Kpfy(r, rp):
-            return self.d11(r, rp, θpp)
-
-        def Kpdiv(r, rp):
-            return self.Kzero(r, rp, self.dummy_theta)
-
-        Kdifpux = self.setup_kernel_include_difference(Kpux)
-        Kdifpuy = self.setup_kernel_include_difference(Kpuy)
-        Kdifpfx = self.setup_kernel_include_difference(Kpfx)
-        Kdifpfy = self.setup_kernel_include_difference(Kpfy)
-        Kdifpdiv = self.setup_kernel_include_difference(Kpdiv)
-
-        Kdifpdifux = self.setup_kernel_difdif(Kpux)
-        Kdifpdifuy = self.setup_kernel_difdif(Kpuy)
-
-        if self.use_difp:
-            _, _, _, _, _, Kpp = self.setup_no_diffop_kernel(θ)
-            Kdifpdifp = self.setup_kernel_difdif(Kpp)
-            Ks = [
-                [
-                    Kdifpux,
-                    Kdifpuy,
-                    Kdifpdifux,
-                    Kdifpdifuy,
-                    Kdifpfx,
-                    Kdifpfy,
-                    Kdifpdiv,
-                    Kdifpdifp,
-                ],
-            ]
-        else:
-            Ks = [
-                [Kdifpux, Kdifpuy, Kdifpdifux, Kdifpdifuy, Kdifpfx, Kdifpfy, Kdifpdiv],
-            ]
-
-        return self.calculate_K_asymmetric(train_pts, test_pts, Ks)
-
-    def testK_all(self, θ, test_pts):
-        Kuxux, Kuxuy, Kuyuy, Kuxp, Kuyp, Kpp = self.setup_no_diffop_kernel(θ)
-        Kdifpdifp = self.setup_kernel_difdif(Kpp)
-
-        Ks = [
-            [Kdifpdifp],
+        self.trainingKs = [
+            [self.Kuxux, self.Kuxuy, self.Kuxdifux, self.Kuxdifuy, self.Kuxfx, self.Kuxfy, self.Kuxdiv],
+            [self.Kuyuy, self.Kuydifux, self.Kuydifuy, self.Kuyfx, self.Kuyfy, self.Kuydiv],
+            [
+                self.Kdifuxdifux,
+                self.Kdifuxdifuy,
+                self.Kdifuxfx,
+                self.Kdifuxfy,
+                self.Kdifuxdiv,
+            ],
+            [self.Kdifuydifuy, self.Kdifuyfx, self.Kdifuyfy, self.Kdifuydiv],
+            [self.Kfxfx, self.Kfxfy, self.Kfxdiv],
+            [self.Kfyfy, self.Kfydiv],
+            [self.Kdivdiv],
         ]
 
-        return self.calculate_K_test(test_pts, Ks)
+    def setup_mixedKs(self):
+        self.mixedKs = [
+            [self.Kdifpux, self.Kdifpuy, self.Kdifpdifux, self.Kdifpdifuy, self.Kdifpfx, self.Kdifpfy, self.Kdifpdiv],
+        ]
+
+    def setup_testKs(self):
+        self.testKs = [
+            [self.Kdifpdifp],
+        ]
+
+class GPSinusoidalInferUWithoutDifP(GPSinusoidalWithoutPIndependent):
+    def setup_mixedKs(self):
+        self.mixedKs = [
+            [self.Kuxux, self.Kuxuy, self.Kuxdifux, self.Kuxdifuy, self.Kuxfx, self.Kuxfy, self.Kuxdiv],
+            [self.Kuyux, self.Kuyuy, self.Kuydifux, self.Kuydifuy, self.Kuyfx, self.Kuyfy, self.Kuydiv],
+        ]
+
+    def setup_testKs(self):
+        self.testKs = [
+            [self.Kuxux, self.Kuxuy],
+            [self.Kuyuy],
+        ]
+
+class GPSinusoidalInferGovWithoutDifP(GPSinusoidalWithoutPIndependent):
+    def setup_mixedKs(self):
+        self.mixedKs = [
+            [self.Kfxux, self.Kfxuy, self.Kfxdifux, self.Kfxdifuy, self.Kfxfx, self.Kfxfy, self.Kfxdiv],
+            [self.Kfyux, self.Kfyuy, self.Kfydifux, self.Kfydifuy, self.Kfyfx, self.Kfyfy, self.Kfydiv],
+            [self.Kdivux, self.Kdivuy, self.Kdivdifux, self.Kdivdifuy, self.Kdivfx, self.Kdivfy, self.Kdivdiv],
+        ]
+
+    def setup_testKs(self):
+        self.testKs = [
+            [self.Kfxfx, self.Kfxuy, self.Kfxdiv],
+            [self.Kfyfy, self.Kfydiv],
+            [self.Kdivdiv],
+        ]
