@@ -13,10 +13,6 @@ from stopro.analyzer.make_each_plot import *
 from stopro.analyzer.plot_sin_1D_each import plot_each_sin1D
 from stopro.analyzer.plot_sinusoidal import plot_each_sinusoidal
 from stopro.data_handler.data_handle_module import *
-from stopro.GP.gp_sinusoidal_without_p import GPSinusoidalWithoutP
-from stopro.GP.gp_sinusoidal_independent import GPSinusoidalWithoutPIndependent
-from stopro.GP.gp_sinusoidal_4kernels import GPSinusoidal4Kernels
-from stopro.GP.gp_sinusoidal_infer_difp import GPSinusoidalInferDifP
 from stopro.GP.gp_poiseuille_independent import GPPoiseuilleIndependent
 
 from stopro.GP.kernels import define_kernel
