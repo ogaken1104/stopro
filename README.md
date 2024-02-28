@@ -2,9 +2,14 @@
 libraries for implementing Physics-Informed Gaussian Process Regression mainly on fluid problems
 
 # Requirements
+GPU
 - cuda: 11.x (5~)
 - cudnn: 8.x.x (3.3~)
-- nccl: 2.x.x
+- nccl: 2.x.x  
+- 
+Python
+- python=3.11
+- Summarized in requirements.txt
 
 # MEMO
 ## confirm algorithm for implementing BBMM
@@ -29,5 +34,15 @@ libraries for implementing Physics-Informed Gaussian Process Regression mainly o
 - implement loss and gradient of loss
   - calc the log deterninant for loss
   - calc the trace term for gradient of loss
+  
+## Installation
+Clone this repository to the location where your Python can refer.
+In this example, we assume that this repository is clone to the directory `$HOME/opt/`.
+```bash
+cd ~/opt
+git clone https://github.com/ogaken1104/stopro.git
+```
+
+
 
 
