@@ -1,7 +1,7 @@
 # stopro
 libraries for implementing Physics-Informed Gaussian Process Regression mainly on fluid problems
 
-# Requirements
+## Requirements
 GPU
 - cuda: 11.x (5~)
 - cudnn: 8.x.x (3.3~)
@@ -11,29 +11,6 @@ Python
 - python=3.11
 - Summarized in `requirements.txt`
 
-<!-- # MEMO
-## confirm algorithm for implementing BBMM
-
-1. preapare data
-2. setup func to calc loss and gradient of loss
-   1. setup func to calculate covariance matrix
-   2. setup func to calculate matrix-matri multiplication
-3. training
-   1. calculate gradient of loss and loss to update hyperparameters
-   2. check convergence
-4. prediction
-   1. calculate mean and variance of prediction
-
-## what to develop
-- algorithm to calculate loss and gradient of loss
-- algorithm to calculate mean and variance of prediction
-  
-## Todo
-- implement prediction
-  - calc $K_{XX}^{-1}\boldsymbol{y}, K_{XX}^{-1}\boldsymbol{k}_{Xx^*}$ by bbmm
-- implement loss and gradient of loss
-  - calc the log deterninant for loss
-  - calc the trace term for gradient of loss -->
   
 ## Installation
 Clone this repository to the location where your Python can refer.
@@ -41,6 +18,10 @@ In this example, we assume that this repository is clone to the directory `$HOME
 ```bash
 cd ~/opt
 git clone https://github.com/ogaken1104/stopro.git
+```
+Please make sure your python can refer to the directory `~/opt/stopro`, by adding below script to your .bashrc or .zshrc.
+```bash
+export PYTHONPATH=$PYTHONPATH:~/opt/stopro
 ```
 
 ## Structure of Program
@@ -96,3 +77,27 @@ By running the above command, you can test for
 In `tests_develop`, tests code under development are stored.
 
 
+
+<!-- # MEMO
+## confirm algorithm for implementing BBMM
+
+1. preapare data
+2. setup func to calc loss and gradient of loss
+   1. setup func to calculate covariance matrix
+   2. setup func to calculate matrix-matri multiplication
+3. training
+   1. calculate gradient of loss and loss to update hyperparameters
+   2. check convergence
+4. prediction
+   1. calculate mean and variance of prediction
+
+## what to develop
+- algorithm to calculate loss and gradient of loss
+- algorithm to calculate mean and variance of prediction
+  
+## Todo
+- implement prediction
+  - calc $K_{XX}^{-1}\boldsymbol{y}, K_{XX}^{-1}\boldsymbol{k}_{Xx^*}$ by bbmm
+- implement loss and gradient of loss
+  - calc the log deterninant for loss
+  - calc the trace term for gradient of loss -->
