@@ -44,6 +44,40 @@ git clone https://github.com/ogaken1104/stopro.git
 ```
 
 ## Structure of Program
+We summarize the structure of the program. Details are described in docstrings of each script.
+### Modules for GP calculations
+`GP`
+- GP classes for handling all calculations about GP.
+- `gp.py`: base class for all GP.
+- `gp_2D.py`, `gp_3D.py`: base class for 2D and 3D GP. `gp_3D.py` inherits `gp_2D.py`.
+
+`solver`
+- optimization scheme.
+
+`sub_modules`
+
+### Other modules
+`data_handler`
+- `data_handle_module.py`: class for loading and saving data.
+
+`data_generator`
+- classes for generating data for each system
+
+`data_preparer`
+- `data_preparer.py`: class for preparing data, using `data_generator`, `data_handler`
+
+`analyzer`
+- `analysis.py`: common functions for analyzing calculation results
+- `plot_xxx.py`: plot functions for each system
+
+### Data
+`default_params`: 
+- `params_prepare.yaml`: settings for preparing data
+- `params_main.yaml`: settings for main calculation
+- `lbls.yaml`: common labels for data
+
+`template_data`:
+- FEM or SPM references
 
 ## Test
 ```bash

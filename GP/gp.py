@@ -1,8 +1,7 @@
 import jax
 import jax.numpy as jnp
 import numpy as np
-from jax import grad, jit, vmap
-import copy
+from jax import vmap
 
 
 class GPmodel:
@@ -13,31 +12,73 @@ class GPmodel:
     def __init__(self, index_optimize_noise: jnp.array = None):
         """
         Args:
-            approx_non_pd: if approximate non positive semi-difinite covariance matrix with a poisitive semi-difinite matix
+            index_optimize_noised (jnp.array): the index of block covariance matrices for optimize the noise
         """
         self.index_optimize_noise = False
 
-    def _add_jiggle(self, Σ, jiggle_constant, noise_parameter=None):
+    @staticmethod
+    def outermap(f):
+        return vmap(vmap(f, in_axes=(None, 0, None)), in_axes=(0, None, None))
+
+    def _add_jiggle(
+        self,
+        Σ: jnp.ndarray,
+        jiggle_constant: jnp.ndarray,
+        noise_parameter: jnp.ndarray = None,
+    ):
+        """Add small artificial jiggle to covariance matrix for constant noise.
+
+        noise_parameter is dummy.
+
+        Args:
+            Σ (jnp.array): covariance matrix
+            jiggle_constant (float): the constant for adding jiggle noise
+            noise_parameter (float): dummy
+
+        Returns:
+            jnp.array: covariance matrix with jiggle noise
+        """
         jiggle = jnp.ones(len(Σ)) * jiggle_constant
         return Σ + jnp.diag(jiggle)
 
-    def _add_jiggle_noise(self, Σ, jiggle_constant, noise_parameter=None):
-        # noise_jiggle = jnp.ones(len(Σ)) * jiggle_constant
+    def _add_jiggle_noise(
+        self,
+        Σ: jnp.ndarray,
+        jiggle_constant: jnp.ndarray,
+        noise_parameter: jnp.ndarray = None,
+    ):
+        """Add small artificial jiggle and noise to covariance matrix for the case we optimize the noise parameter.
+
+        Args:
+            Σ (jnp.array): covariance matrix
+            jiggle_constant (float): the constant for adding jiggle noise
+            noise_parameter (float): the noise parameter for adding noise
+
+        Returns:
+            jnp.array: covariance matrix with jiggle noise
+        """
         noise_jiggle = jnp.ones(len(Σ))
         r_index_noise_start = self.index_optimize_noise[0]
         r_index_noise_end = self.index_optimize_noise[-1]
         index_noise_start = self.sec_tr[r_index_noise_start]
         index_noise_end = self.sec_tr[r_index_noise_end + 1]
-        # noise = jnp.ones(index_noise_end - index_noise_start) * noise_parameter
-        noise = jnp.ones(index_noise_end - index_noise_start)
+
         noise_jiggle = noise_jiggle.at[index_noise_start:index_noise_end].multiply(
             jnp.exp(noise_parameter)
         )
         noise_jiggle = noise_jiggle.at[index_noise_end:].multiply(jiggle_constant)
         return Σ + jnp.diag(noise_jiggle)
 
-    def logpGP(self, δf, Σ, ϵ):
-        """Compute minus log-likelihood of observing δf = f - <f>, for GP with covariance matrix Σ"""
+    def logpGP(self, δf: jnp.ndarray, Σ: jnp.ndarray):
+        """Compute minus log-likelihood of observing δf = f - <f>, for GP with covariance matrix Σ
+
+        Args:
+            δf (jnp.array): the difference of the function value and the average
+            Σ (jnp.array): the covariance matrix
+
+        Returns:
+            jnp.array: minus log-likelihood
+        """
         n = len(δf)
         L = jnp.linalg.cholesky(Σ)
         v = jnp.linalg.solve(L, δf)
@@ -47,10 +88,20 @@ class GPmodel:
             + 0.5 * n * jnp.log(2.0 * jnp.pi)
         )
 
-    def postGP(self, δfb, Kaa, Kab, Kbb, ϵ):
+    def postGP(self, δfb, Kaa, Kab, Kbb):
         """Compute posterior average and covariance from conditional GP p(fa | xa, xb, fb)
         [fa,fb] ~ 𝒩([μ_fa, μ_fb], [[Kaa, Kab],[Kab^T, Kbb]])])
         fa|fb   ~ 𝒩(μf + Kab Kbb \ (fb - μ_fb) , Kaa - Kab Kbb \ Kab^T)
+
+        Args:
+            δfb (jnp.array): the difference of the function value and the average
+            Kaa (jnp.array): the covariance matrix of test points
+            Kab (jnp.array): the covariance matrix between test and training points
+            Kbb (jnp.array): the covariance matrix of training points
+
+        Returns:
+            jnp.array: posterior average
+            jnp.array: posterior covariance
         """
         L = jnp.linalg.cholesky(Kbb)
 
@@ -68,8 +119,17 @@ class GPmodel:
         Kpost = Kaa - jnp.einsum("ji, jk->ik", V, V)  # V^tV
         return μpost, Kpost  # note should add μ(x*) to average
 
-    def calculate_K_training(self, pts, Ks, theta, std_noise_list=[None] * 8):
-        """Compute symmetric part of covariance matrix (training_K and test_K)"""
+    def calculate_K_training(self, pts, Ks, theta):
+        """Compute training covariance matrix
+
+        Args:
+            pts (list[jnp.array]): list of coodinates of training points
+            Ks (list[list[function]]): list of list of kernel functions
+            theta (jnp.array): kernel hyperparameters
+
+        Returns:
+            jnp.array: training covariance matrix
+        """
         Σ = jnp.zeros((self.sec_tr[self.num_tr], self.sec_tr[self.num_tr]))
         for i in range(self.num_tr):
             for j in range(i, self.num_tr):
@@ -93,8 +153,18 @@ class GPmodel:
                     )
         return Σ
 
-    def calculate_K_test(self, pts, Ks, theta, std_noise_list=[None] * 8):
-        """Compute symmetric part of covariance matrix (training_K and test_K)"""
+    def calculate_K_test(self, pts, Ks, theta):
+        """Compute test covariance matrix
+
+        Args:
+            pts (list[jnp.array]): list of coodinates of test points
+            Ks (list[list[function]]): list of list of kernel functions
+            theta (jnp.array): kernel hyperparameters
+
+        Returns:
+            jnp.array: test covariance matrix
+
+        """
         Σ = jnp.zeros((self.sec_te[self.num_te], self.sec_te[self.num_te]))
         for i in range(self.num_te):
             for j in range(i, self.num_te):
@@ -119,7 +189,18 @@ class GPmodel:
         return Σ
 
     def calculate_K_asymmetric(self, train_pts, test_pts, Ks, theta):
-        """Compute asymmetric part of covariance matrix (mixed_K)"""
+        """Compute asymmetric part of covariance matrix (mixed_K)
+
+        Args:
+            train_pts (list[jnp.array]): list of coodinates of training points
+            test_pts (list[jnp.array]): list of coodinates of test points
+            Ks (list[list[function]]): list of list of kernel functions
+            theta (jnp.array): kernel hyperparameters
+
+        Returns:
+            jnp.array: mixed covariance matrix
+
+        """
         Σ = jnp.zeros((self.sec_te[self.num_te], self.sec_tr[self.num_tr]))
         for i in range(self.num_te):
             for j in range(self.num_tr):
@@ -131,35 +212,27 @@ class GPmodel:
 
     def trainingFunction_all(self, theta, *args):
         """Returns minus log-likelihood given Kernel hyperparamters θ and training data args
-        args = velocity position, velocity average, velocity values,
-            force position, force average, force values,
-            jiggle parameter
+
+        Args:
+            theta: kernel hyperparameters
+            args: training input, delta_y, jiggle parameter
         """
-        # r,μ,f,ϵ=args
         r, delta_y, ϵ = args
-        r_num = len(r)
-        # ##### TODO it may be better to precompute \delta y #####
-        # for i in range(r_num):
-        #     if i == 0:
-        #         δy = jnp.array(f[i] - μ[i])
-        #     else:
-        #         δy = jnp.concatenate([δy, f[i] - μ[i]], 0)
         θ, noise = self.split_hyp_and_noise(theta)
         Σ = self.trainingK_all(θ, r)
         Σ = self.add_eps_to_sigma(Σ, ϵ, noise_parameter=noise)
-        return self.logpGP(delta_y, Σ, ϵ)
+        return self.logpGP(delta_y, Σ)
 
     def predictingFunction_all(self, theta, *args):
         """Returns conditional posterior average and covariance matrix given Kernel hyperparamters θ  and test and training data
-        args = test velocity position, test velocity average,
-            training velocity position, training velocity average, training velocity values
-            training force position, training force average, training force values
-            jiggle parameter
 
-        Returns
-        -----------------
-        μpost=[μux,μuy,μp]
-        Σpost=[Σux,Σuy,Σp]
+        Args:
+            theta: kernel hyperparameters
+            args: test input, test average, training input, delta_y, jiggle parameter
+
+        Returns:
+            μpost (jnp.ndarray): [μux,μuy,μp]
+            Σpost (jnp.ndarray): [Σux,Σuy,Σp]
         """
         r_test, μ_test, r_train, delta_y_train, ϵ = args
         θ, noise = self.split_hyp_and_noise(theta)
@@ -167,13 +240,8 @@ class GPmodel:
         Σab = self.mixedK_all(θ, r_test, r_train)
         Σbb = self.add_eps_to_sigma(Σbb, ϵ, noise_parameter=noise)
         Σaa = self.testK_all(θ, r_test)
-        # for i in range(len(r_train)):
-        #     if i == 0:
-        #         δfb = jnp.array(f_train[i] - μ[i])
-        #     else:
-        #         δfb = jnp.concatenate([δfb, f_train[i] - μ[i]])
         # create single training array, with velocities and forces (second derivatives)
-        μposts, Σposts = self.postGP(delta_y_train, Σaa, Σab, Σbb, ϵ)
+        μposts, Σposts = self.postGP(delta_y_train, Σaa, Σab, Σbb)
         # seperate μpost,Σpost to 3 self.sec_teion (ux,uy,p)
         sec0 = 0
         sec1 = 0
@@ -188,10 +256,12 @@ class GPmodel:
         return μpost, Σpost
 
     def calc_sec(self, pts):
+        """Calculate the section of the covariance matrix for each point"""
         sec = np.concatenate([np.zeros(1, dtype=int), np.cumsum([len(x) for x in pts])])
         return sec
 
     def set_constants(self, *args, only_training=False):
+        """Set constants for the model"""
         if only_training:
             r_train, delta_y_train, ϵ = args
         else:
@@ -217,11 +287,11 @@ class GPmodel:
     def trainingK_all(self, theta, train_pts):
         """
         Args:
-        - theta (jnp.ndarray) : kernel hyperparameters
-        - train_pts (list[jnp.ndarray]) : list of coodinates of training points
+            theta (jnp.ndarray) : kernel hyperparameters
+            train_pts (list[jnp.ndarray]) : list of coodinates of training points
 
         Retruns:
-        - jnp.ndarray: traininc covariance matrix
+            jnp.ndarray: traininc covariance matrix
         """
         Ks = self.trainingKs
 
@@ -300,37 +370,6 @@ class GPmodel:
         Σ = self.trainingK_all(θ, r)
         Σ = self.add_eps_to_sigma(Σ, ϵ, noise_parameter=noise)
         return Σ
-
-    def generate_dK_wrt_theta_i(self, _K, index_theta):
-        def dK_wrt_theta_i(r, rp, theta):
-            theta_i = theta[index_theta]
-            theta_other = jnp.delete(theta, index_theta)
-
-            def K_given_theta_i(theta_i, theta_other, index_theta, r, rp):
-                theta = jnp.zeros(len(theta_other) + 1)
-                theta = theta.at[index_theta].set(theta_i)
-                theta = theta.at[:index_theta].set(theta_other[:index_theta])
-                theta = theta.at[index_theta + 1 :].set(theta_other[index_theta:])
-                return _K(r, rp, theta)
-
-            return jax.jacfwd(K_given_theta_i, argnums=0)(
-                theta_i, theta_other, index_theta, r, rp
-            )[0]
-
-        return dK_wrt_theta_i
-
-    def setup_dKss_theta_i(
-        self,
-        index_theta,
-    ):
-        dKss = []
-        for Ks in self.trainingKs:
-            dKss_row = []
-            for _K in Ks:
-                dK_wrt_theta_i = self.generate_dK_wrt_theta_i(_K, index_theta)
-                dKss_row.append(copy.copy(dK_wrt_theta_i))
-            dKss.append(dKss_row)
-        return dKss
 
     def setup_kernel_include_difference_prime(self, K_func):
         """
@@ -420,7 +459,7 @@ class GPmodel:
             calc_dKdtheta_i = jax.jacfwd(self.calc_K_given_theta_i, argnums=0)
             dKdtheta_i = calc_dKdtheta_i(theta_i, theta_other, index_theta, r, ϵ)
 
-            # # v2こちらの方が，BBMMの際にメモリを節約できるが，コンパイルに非常に非常に時間がかかる ##
+            # # v2こちらの方が，BBMMの際にメモリを節約できるが，コンパイルに非常に非常に時間がかかる This compilation takes too long time##
             # ## ノイズを最適化する場合，dKdthetaは，最適化するノイズに該当する対角成分が1，それ以外が0の行列となる
             # if self.index_optimize_noise and index_theta == len(theta) - 1:
             #     dKdtheta_i = jnp.zeros(
@@ -451,10 +490,13 @@ class GPmodel:
 
     def d_logposterior(self, theta, *args):
         loglikelihood = self.d_trainingFunction_all(theta, *args)
-        return loglikelihood + 1.0  # gradient of jeffery's prior len(theta)
+        return loglikelihood + 1.0  # gradient of jeffery's prior sum(theta)
 
     def _calc_yKinvy(self, theta, *args):
-        """Returns y^TK^{-1}y given Kernel hyperparamters θ and training data args"""
+        """Returns y^TK^{-1}y given Kernel hyperparamters θ and training data args
+
+        for bbmm test only
+        """
         # r,μ,f,ϵ=args
         r, delta_y, ϵ = args
         θ, noise = self.split_hyp_and_noise(theta)
@@ -466,7 +508,10 @@ class GPmodel:
         return jnp.dot(v, v)
 
     def _calc_yKdKKy(self, theta, *args):
-        """Returns y^TK^{-1}y given Kernel hyperparamters θ and training data args"""
+        """Returns y^TK^{-1}y given Kernel hyperparamters θ and training data args
+
+        for bbmm test only.
+        """
         # r,μ,f,ϵ=args
         r, delta_y, ϵ = args
         θ, noise = self.split_hyp_and_noise(theta)
@@ -490,3 +535,34 @@ class GPmodel:
             "j, ij -> i", α.T, jnp.einsum("ijk, k ->ij", dKdtheta, α)
         )
         return first_term
+
+    # def generate_dK_wrt_theta_i(self, _K, index_theta):
+    #     def dK_wrt_theta_i(r, rp, theta):
+    #         theta_i = theta[index_theta]
+    #         theta_other = jnp.delete(theta, index_theta)
+
+    #         def K_given_theta_i(theta_i, theta_other, index_theta, r, rp):
+    #             theta = jnp.zeros(len(theta_other) + 1)
+    #             theta = theta.at[index_theta].set(theta_i)
+    #             theta = theta.at[:index_theta].set(theta_other[:index_theta])
+    #             theta = theta.at[index_theta + 1 :].set(theta_other[index_theta:])
+    #             return _K(r, rp, theta)
+
+    #         return jax.jacfwd(K_given_theta_i, argnums=0)(
+    #             theta_i, theta_other, index_theta, r, rp
+    #         )[0]
+
+    #     return dK_wrt_theta_i
+
+    # def setup_dKss_theta_i(
+    #     self,
+    #     index_theta,
+    # ):
+    #     dKss = []
+    #     for Ks in self.trainingKs:
+    #         dKss_row = []
+    #         for _K in Ks:
+    #             dK_wrt_theta_i = self.generate_dK_wrt_theta_i(_K, index_theta)
+    #             dKss_row.append(copy.copy(dK_wrt_theta_i))
+    #         dKss.append(dKss_row)
+    #     return dKss

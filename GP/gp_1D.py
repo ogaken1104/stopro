@@ -12,7 +12,3 @@ class GPmodel1D(GPmodel):
 
     def __init__(self):
         super().__init__()
-
-    @staticmethod
-    def outermap(f):
-        return vmap(vmap(f, in_axes=(None, 0, None)), in_axes=(0, None, None))

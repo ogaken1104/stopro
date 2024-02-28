@@ -95,7 +95,7 @@ def test_sinusoidal_direct_main():
         func, dfunc, hess, theta_for_compile, params_optimization, *args_predict[2:]
     )
     params_optimization["maxiter_GD"] = maxiter_GD
-    params_optimization["maxiter_GD"] = 1
+    # params_optimization["maxiter_GD"] = 1
 
     ############## training ####################
     train_start_time = time.time()

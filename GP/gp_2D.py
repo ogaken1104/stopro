@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as jnp
-from jax import grad, vmap
+from jax import grad
 
 from stopro.GP.gp import GPmodel
 
@@ -12,10 +12,6 @@ class GPmodel2D(GPmodel):
 
     def __init__(self):
         super().__init__()
-
-    @staticmethod
-    def outermap(f):
-        return vmap(vmap(f, in_axes=(None, 0, None)), in_axes=(0, None, None))
 
     def setup_differential_oprators(self):
         # define operators
