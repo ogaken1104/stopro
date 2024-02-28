@@ -26,23 +26,7 @@ def get_init(
         init = jnp.concatenate([θuxux, θuyuy, θuzuz, θpp])
     elif system_type == "Stokes_2D":
         if use_gradp_training:
-            pass
-            # θ_same = jnp.array([eta1, l1, l1])
-            # θ_diff = jnp.array([eta2, l2, l2])
-            # init = jnp.concatenate(
-            #     [
-            #         θ_same,
-            #         θ_diff,
-            #         θ_diff,
-            #         θ_diff,
-            #         θ_same,
-            #         θ_diff,
-            #         θ_diff,
-            #         θ_same,
-            #         θ_diff,
-            #         θ_same,
-            #     ]
-            # )
+            raise ValueError("Not implemented yet")
         elif len(hyperparams) == 3:
             θuxux = jnp.array(hyperparams["uxux"])
             θuyuy = jnp.array(hyperparams["uyuy"])
@@ -62,16 +46,6 @@ def get_init(
             θuxp = jnp.array(hyperparams["uxp"])
             θuyp = jnp.array(hyperparams["uyp"])
             init = jnp.concatenate([θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp])
-        # ## when using std of noise included in training data as hyperparams
-        # elif len(hyperparams) == 7:
-        #     θuxux = jnp.array(hyperparams["uxux"])
-        #     θuyuy = jnp.array(hyperparams["uyuy"])
-        #     θpp = jnp.array(hyperparams["pp"])
-        #     θuxuy = jnp.array(hyperparams["uxuy"])
-        #     θuxp = jnp.array(hyperparams["uxp"])
-        #     θuyp = jnp.array(hyperparams["uyp"])
-        #     θstdnoise = jnp.array(hyperparams["std_noise"])
-        #     init = jnp.concatenate([θuxux, θuyuy, θpp, θuxuy, θuxp, θuyp, θstdnoise])
 
     else:
         init = jnp.array(hyperparams)
@@ -81,7 +55,7 @@ def get_init(
 
 
 def reshape_init(init, params_model, params_kernel_arg):
-    # init = init["yy"]
+    """for SM kernel, reshape initial kernel hyper-parameters"""
     num_mixture = params_model["num_mixture"]
     input_dim = params_model["input_dim"]
     init_dict = init
