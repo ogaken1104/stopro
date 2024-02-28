@@ -8,6 +8,7 @@ import numpy as np
 from jax import grad, vmap
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from scipy import integrate
+from pathlib import Path
 
 from stopro.data_generator.stokes_2D_generator import StokesDataGenerator
 from stopro.data_handler.data_handle_module import HdfOperator
@@ -304,7 +305,14 @@ class Sinusoidal(StokesDataGenerator):
 
     # generation of training data
     def generate_u(
-        self, u_num, u_b=0.0, u_1D2C=False, sigma2_noise=None, u_split=4, u_1D1C=False, u_num_wall=None
+        self,
+        u_num,
+        u_b=0.0,
+        u_1D2C=False,
+        sigma2_noise=None,
+        u_split=4,
+        u_1D1C=False,
+        u_num_wall=None,
     ):
         """
         premise: ux,uy values are taken at same points
@@ -316,7 +324,7 @@ class Sinusoidal(StokesDataGenerator):
             r_u_wall, u_wall = self.generate_wall_points(u_num_x)
 
             with open(
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_random_training_50.pickle',
+                f"{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_from_fenics/0303_random_training_50.pickle",
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -380,7 +388,7 @@ class Sinusoidal(StokesDataGenerator):
             # uy = u_wall
 
             with open(
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_random_training_50.pickle',
+                f"{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_from_fenics/0303_random_training_50.pickle",
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -476,7 +484,7 @@ class Sinusoidal(StokesDataGenerator):
 
             ########## when using fem as reference solution #################
             with open(
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_random_training_50.pickle',
+                f"{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_from_fenics/0303_random_training_50.pickle",
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -492,7 +500,7 @@ class Sinusoidal(StokesDataGenerator):
             r_uy = r_u
             ux, uy = f_train[0][index_for_train], f_train[1][index_for_train]
             if u_num_wall:
-                r_u_wall, u_wall = self.generate_wall_points(int(u_num_wall/2))
+                r_u_wall, u_wall = self.generate_wall_points(int(u_num_wall / 2))
                 r_ux = np.concatenate([r_ux, r_u_wall])
                 r_uy = np.concatenate([r_uy, r_u_wall])
                 ux = np.concatenate([ux, u_wall])
@@ -514,7 +522,7 @@ class Sinusoidal(StokesDataGenerator):
             #     ux = uy[::split]
             ########## when using fem as reference solution #################
             with open(
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_random_training_50.pickle',
+                f"{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_from_fenics/0303_random_training_50.pickle",
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -646,7 +654,7 @@ class Sinusoidal(StokesDataGenerator):
         #     # データの読み込み
         #     try:
         #         with open(
-        #             f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/0303_interpolation_50.pickle',
+        #             f'{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_from_fenics/0303_interpolation_50.pickle',
         #             "rb",
         #         ) as file:
         #             save_dict = pickle.load(file)
@@ -794,7 +802,7 @@ class Sinusoidal(StokesDataGenerator):
 
         if use_spm_result:
             hdf_operator = HdfOperator(
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidal_from_spm_adimentionalized'
+                f"{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_sinusoidal_from_spm_adimentionalized"
             )
             r_test, f_test = hdf_operator.load_test_data(["r", "f"], ["ux", "uy"])
             self.r_test = r_test
@@ -810,7 +818,7 @@ class Sinusoidal(StokesDataGenerator):
                 elif test_num == 54:
                     file_name = "0508_interpolation_num_54.pickle"
                 with open(
-                    f'{os.environ["HOME"]}/opt/stopro/template_data/test_from_fenics/{file_name}',
+                    f"{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_from_fenics/{file_name}",
                     "rb",
                 ) as file:
                     save_dict = pickle.load(file)

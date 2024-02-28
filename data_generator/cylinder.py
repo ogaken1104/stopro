@@ -5,7 +5,7 @@ import cmocean as cmo
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
-
+from pathlib import Path
 from stopro.data_generator.drag import Drag
 from stopro.data_generator.stokes_2D_generator import StokesDataGenerator
 
@@ -87,7 +87,7 @@ class Cylinder(Drag):
             with open(
                 # "/work/jh210017a/q24015/template_data/0314_cylinder_test_484.pickle",
                 # "/work/jh210017a/q24015/template_data/0501_cylinder_25_test_484.pickle",
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_cylinder_spm/{filename}',
+                f"{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_cylinder_spm/{filename}",
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)

@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 
 import yaml
 
@@ -30,19 +31,18 @@ class DataPreparer:
         os.makedirs(self.simulation_path + "/scripts")
 
     def load_params(self, system_name="sinusoidal", use_existing_params=False):
+        dir_default_params = (
+            Path(os.path.abspath(__file__)).parent.parent / "default_params"
+        )
         if use_existing_params:
             params_path = use_existing_params
         else:
-            params_path = (
-                f'{os.environ["HOME"]}/opt/stopro/default_params/{system_name}'
-            )
+            params_path = f"{dir_default_params}/{system_name}"
         with open(f"{params_path}/params_prepare.yaml") as file:
             params_prepare = yaml.safe_load(file)
         with open(f"{params_path}/params_main.yaml") as file:
             params_main = yaml.safe_load(file)
-        with open(
-            f'{os.environ["HOME"]}/opt/stopro/default_params/common/lbls.yaml'
-        ) as file:
+        with open(f"{dir_default_params}/common/lbls.yaml") as file:
             self.lbls = yaml.safe_load(file)
         self.vnames = params_prepare["vnames"]
         self.params_setting = params_prepare["setting"]

@@ -8,6 +8,7 @@ import numpy as np
 from jax import grad, vmap
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from scipy import integrate
+from pathlib import Path
 
 from stopro.data_generator.cylinder import Cylinder
 from stopro.data_generator.sinusoidal import Sinusoidal
@@ -69,9 +70,7 @@ class SinusoidalCylinder(Sinusoidal):
             # index_out_cylinder = np.where(
             #     rx**2 + ry**2 > self.particle_radius**2
             # )[0]
-            index_out_cylinder = np.where(
-                rx**2 + ry**2 > self.particle_radius**2
-            )[0]
+            index_out_cylinder = np.where(rx**2 + ry**2 > self.particle_radius**2)[0]
         else:
             index_out_cylinder = np.where(rx**2 + ry**2 > radius_min**2)[0]
         return index_out_cylinder
@@ -122,10 +121,10 @@ class SinusoidalCylinder(Sinusoidal):
             elif self.__class__.__name__ == "SinusoidalRectangular":
                 fname = "test_sinusoidalrectangular_fem/fem_train_2930.pickle"
             with open(
-                # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0801_sinusoidalcylinder_train_24968.pickle',
-                # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/0817_sinusoidalcylinder_train_2802.pickle',
-                # f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_fem/fem_train_1524.pickle',
-                f'{os.environ["HOME"]}/opt/stopro/template_data/{fname}',
+                # f'{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_sinusoidalcylinder_spm/0801_sinusoidalcylinder_train_24968.pickle',
+                # f'{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_sinusoidalcylinder_spm/0817_sinusoidalcylinder_train_2802.pickle',
+                # f'{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_sinusoidalcylinder_fem/fem_train_1524.pickle',
+                f"{Path(os.path.abspath(__file__)).parent.parent}/template_data/{fname}",
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -398,7 +397,7 @@ class SinusoidalCylinder(Sinusoidal):
             with open(
                 # "/work/jh210017a/q24015/template_data/0314_cylinder_test_484.pickle",
                 # "/work/jh210017a/q24015/template_data/0501_cylinder_25_test_484.pickle",
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_sinusoidalcylinder_spm/{filename}',
+                f"{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_sinusoidalcylinder_spm/{filename}",
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
@@ -424,7 +423,7 @@ class SinusoidalCylinder(Sinusoidal):
                 elif test_num == 54:
                     filename = "fem_test_96x54.pickle"
             with open(
-                f'{os.environ["HOME"]}/opt/stopro/template_data/test_{class_name}_fem/{filename}',
+                f"{Path(os.path.abspath(__file__)).parent.parent}/template_data/test_{class_name}_fem/{filename}",
                 "rb",
             ) as file:
                 save_dict = pickle.load(file)
