@@ -11,5 +11,6 @@ test/sin_1D_direct/**
 test/gaussian3D/**
 test/drag3D/**
 test/outputs/**
+sample_notebooks/data/**
 
 # 無視しないファイル

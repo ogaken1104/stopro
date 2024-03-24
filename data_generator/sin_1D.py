@@ -55,7 +55,7 @@ class Sin1D(DataGenerator):
         self.generate_ly(ly_num)
         return self.r, self.f
 
-    def plot_train(self, save=False, path=None):
+    def plot_train(self, save=False, path=None, show=False):
         fig, ax = plt.subplots()
         ax.plot(
             self.r_test[0], self.f_test[0], label="answer", linestyle="--", color="k"
@@ -81,12 +81,14 @@ class Sin1D(DataGenerator):
         )
         ax.set_xlabel("x")
         ax.set_ylabel("y")
-        ax.legend()
+        ax.legend(loc="lower left", bbox_to_anchor=(1.0, 0.0))
         if save:
             dir_path = f"{path}/fig"
             fig.savefig(
                 f"{dir_path}/train.png",
                 bbox_inches="tight",
             )
+        if show:
+            plt.show()
         plt.clf()
         plt.close()
