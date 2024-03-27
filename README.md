@@ -1,15 +1,15 @@
-# stopro
-libraries for implementing Physics-Informed Gaussian Process Regression mainly on fluid problems
+# stopro (Stokesian Processes)
+libraries for implementing Physics-Informed Gaussian Process Regression mainly on stokes flow problems
 
 ## Requirements
 GPU
 - cuda: 11.x (5~)
 - cudnn: 8.x.x (3.3~)
 - nccl: 2.x.x  
-- 
 Python
 - python=3.11
 - Summarized in `requirements.txt`
+  - important part is "jax" versioning. 0.4.8~ will work, but currently these program doesn't use "jax.Array" so the latest jax may not work.
 
   
 ## Installation
@@ -75,6 +75,9 @@ By running the above command, you can test for
 - flow between sinusoidal walls (using explicit derivative of loss)
 
 In `tests_develop`, tests code under development are stored.
+
+## Sample notebooks
+In the ``sample notebooks'' directory, you can see two notebooks for detailed use of this library. (for sinusoidal one, it is only before training of the model because of the memory usage of the machine)
 
 
 
